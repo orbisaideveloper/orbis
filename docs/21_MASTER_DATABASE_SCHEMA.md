@@ -622,3 +622,103 @@ Every business table must:
 - One Inventory Database
 - One Payment Database
 - One Transaction
+---
+
+# PART 4 — Database Governance & Future Expansion
+
+## Purpose
+
+This section defines the permanent governance rules of the ORBIS Master Database.
+
+Every current and future database modification must follow these standards.
+
+The database foundation must remain stable while business modules continue to evolve.
+
+---
+
+# Database Relationship Architecture
+
+```text
+                    Organization
+                          │
+                          ▼
+                       Branch
+                          │
+                          ▼
+                      Business Module
+                          │
+        ┌─────────────────┼─────────────────┐
+        ▼                 ▼                 ▼
+    Customers         Products        Suppliers
+        │                 │                 │
+        └──────────┬──────┴──────────┬──────┘
+                   ▼                 ▼
+              Transactions      Inventory
+                   │                 │
+                   └──────────┬──────┘
+                              ▼
+                       Ledger Entries
+                              │
+                              ▼
+                         Audit Logs
+```
+
+---
+
+# Foreign Key Standards
+
+Every business table should reference shared platform entities whenever applicable.
+
+Common foreign keys include:
+
+- organization_id
+- branch_id
+- module_id
+- customer_id
+- supplier_id
+- product_id
+- transaction_id
+- user_id
+
+Relationships must be enforced through database constraints.
+
+---
+
+# Index Strategy
+
+Indexes should be created for:
+
+- Primary Keys
+- Foreign Keys
+- Frequently searched columns
+- Frequently filtered columns
+- Frequently sorted columns
+
+Duplicate or unnecessary indexes should be avoided.
+
+---
+
+# Migration Policy
+
+Database changes must always be version controlled.
+
+Every migration must:
+
+- be reversible
+- preserve existing data
+- avoid breaking existing modules
+- include validation before deployment
+
+---
+
+# Module Extension Rules
+
+Every new business module must:
+
+- reuse Shared Core tables
+- reuse Universal Business tables
+- create only module-specific tables when required
+- avoid duplicate structures
+- maintain backward compatibility
+
+The Shared Core Database must never be modified
