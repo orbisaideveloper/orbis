@@ -584,6 +584,7 @@ The platform should support:
 - Payment Gateway
 - Maps
 - Cloud Storage
+- Government APIs
 - Future Integrations
 
 ---
