@@ -161,3 +161,211 @@ The database must always be:
 # End of Part 1
 
 ---
+---
+
+# PART 2 — Shared Core Database Schema
+
+## Purpose
+
+The Shared Core Database is the permanent foundation of the ORBIS Platform.
+
+Every current and future business module must use these shared tables.
+
+Business modules may extend the database but must never duplicate the Shared Core.
+
+---
+
+# Shared Core Database Architecture
+
+```text
+                  SHARED CORE DATABASE
+
+                         │
+ ┌───────────────────────┼────────────────────────┐
+ │                       │                        │
+ ▼                       ▼                        ▼
+
+Organizations         Users                 Roles
+
+Branches              Permissions           Sessions
+
+Settings              Notifications         Files
+
+Audit Logs            AI Logs               API Keys
+
+System Config         Activity Logs         Integrations
+```
+
+---
+
+# Shared Core Tables
+
+The following tables belong to the platform and are shared by every business module.
+
+```text
+organizations
+branches
+users
+roles
+permissions
+user_roles
+organization_members
+settings
+notifications
+files
+audit_logs
+activity_logs
+ai_logs
+api_keys
+integrations
+system_config
+```
+
+---
+
+# Table Responsibilities
+
+### organizations
+
+Stores every organization registered on the ORBIS Platform.
+
+---
+
+### branches
+
+Supports multiple branches under a single organization.
+
+---
+
+### users
+
+Stores all platform users.
+
+Authentication information is linked to this table.
+
+---
+
+### roles
+
+Defines platform roles.
+
+Examples:
+
+- Super Admin
+- Organization Admin
+- Manager
+- Staff
+- Viewer
+
+---
+
+### permissions
+
+Stores reusable permission definitions.
+
+Role-based access control must use this table.
+
+---
+
+### settings
+
+Stores organization and platform settings.
+
+---
+
+### notifications
+
+Stores all user notifications.
+
+Supports push, email, SMS and future notification channels.
+
+---
+
+### files
+
+Stores metadata for uploaded files.
+
+Actual file storage may be handled externally.
+
+---
+
+### audit_logs
+
+Stores every important business event.
+
+Audit records must never be deleted.
+
+---
+
+### activity_logs
+
+Stores user activity for monitoring and troubleshooting.
+
+---
+
+### ai_logs
+
+Stores AI requests, responses and processing history.
+
+---
+
+### api_keys
+
+Stores external provider configuration.
+
+Sensitive values must always remain encrypted.
+
+---
+
+### integrations
+
+Stores third-party integration settings.
+
+Examples:
+
+- OpenAI
+- Gemini
+- WhatsApp
+- Payment Gateway
+- Email
+- Maps
+
+---
+
+### system_config
+
+Stores platform-wide configuration.
+
+Only platform administrators may modify these records.
+
+---
+
+# Shared Database Rules
+
+Shared Core tables:
+
+- must never be duplicated
+- must remain reusable
+- must remain backward compatible
+- must support future modules
+
+Business modules must reference these tables instead of creating their own copies.
+
+---
+
+# Shared Core Golden Rules
+
+- One Shared Core
+- One User System
+- One Organization System
+- One Permission System
+- One Notification System
+- One Audit System
+- One AI Logging System
+- One Integration Layer
+
+---
+
+# End of Part 2
+
+---
