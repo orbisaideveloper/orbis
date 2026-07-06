@@ -169,3 +169,197 @@ Application Launch
 ---
 
 # End of Part 1
+---
+
+# PART 2 — Universal Business Foundation
+
+## Purpose
+
+The ORBIS Platform is designed as a Universal Business Operating System.
+
+Every business module must share the same platform foundation.
+
+Business logic may differ.
+
+The platform architecture must remain consistent.
+
+---
+
+# Universal Business Foundation
+
+```text
+                    ORBIS PLATFORM
+
+                          │
+                          ▼
+
+             Universal Business Foundation
+
+ ┌──────────────────────────────────────────────────┐
+ │                                                  │
+ │  Organization                                    │
+ │  Branch                                          │
+ │  Users                                           │
+ │  Roles                                           │
+ │  Customers                                       │
+ │  Suppliers                                       │
+ │  Products                                        │
+ │  Services                                        │
+ │  Inventory                                       │
+ │  Transactions                                    │
+ │  Ledger                                          │
+ │  Reports                                         │
+ │  Notifications                                   │
+ │  Audit Logs                                      │
+ │                                                  │
+ └──────────────────────────────────────────────────┘
+```
+
+Every business module must build upon this shared foundation.
+
+---
+
+# Dynamic Business Module Engine
+
+```text
+             Dynamic Module Registration
+
+                      │
+                      ▼
+
+           Module Registration Engine
+
+                      │
+     ┌────────────────┼────────────────┐
+     │                │                │
+     ▼                ▼                ▼
+
+ Current Modules   Optional Modules   Future Modules
+
+     │                │                │
+     └────────────────┼────────────────┘
+                      ▼
+             Shared Core Platform
+```
+
+Business modules are dynamically attached to the platform.
+
+No business module is permanently hardcoded.
+
+---
+
+# Shared Business Objects
+
+```text
+                 Shared Business Objects
+
+ Organization
+      │
+      ├── Branch
+      ├── Users
+      ├── Employees
+      ├── Customers
+      ├── Suppliers
+      ├── Products
+      ├── Inventory
+      ├── Transactions
+      ├── Payments
+      ├── Ledger
+      ├── Reports
+      ├── Files
+      └── Audit Logs
+```
+
+Every module must reuse these shared objects whenever possible.
+
+Duplicate business entities are prohibited.
+
+---
+
+# Shared Core Engines
+
+```text
+                 Shared Core Engines
+
+ Authentication
+ Authorization
+ Accounting
+ Ledger
+ Inventory
+ Workflow
+ Notification
+ Reporting
+ Search
+ File Engine
+ AI Engine
+ API Gateway
+ Audit Engine
+ Analytics
+```
+
+Business modules must extend these engines.
+
+Business modules must never replace them.
+
+---
+
+# Module Registration Standard
+
+Every module must provide:
+
+- Module ID
+- Module Name
+- Version
+- Category
+- Permissions
+- Navigation
+- Dashboard Widgets
+- Reports
+- Settings
+- API Endpoints
+
+Only registered modules may become active.
+
+---
+
+# Reuse First Policy
+
+Before creating any new:
+
+- Table
+- API
+- Component
+- Engine
+- Workflow
+- Business Object
+
+AI must first verify whether the platform already provides it.
+
+Reuse existing resources whenever possible.
+
+Create new resources only when absolutely necessary.
+
+---
+
+# Future Expansion Rule
+
+New businesses must fit into the existing architecture.
+
+The platform must grow by adding modules.
+
+The platform foundation must never be redesigned because of a new business.
+
+---
+
+# Golden Rules
+
+- One Platform
+- One Shared Core
+- Unlimited Business Modules
+- Reuse Before Build
+- Documentation Before Development
+- Architecture Before Implementation
+
+---
+
+# End of Part 2
