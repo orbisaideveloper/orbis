@@ -217,5 +217,55 @@ New tools, AI providers and quality practices may be adopted without changing th
 18_PRODUCT_ROADMAP.md
 
 ---
+---
 
+# AI Development Completion Policy
+
+The AI developer must never declare any task as completed until all of the following conditions have been satisfied.
+
+## Mandatory Requirements
+
+- The requested functionality has been fully implemented.
+
+- The application builds successfully.
+
+- Development preview runs correctly.
+
+- No critical runtime errors exist.
+
+- No unresolved console errors remain.
+
+- Git changes have been committed.
+
+- Changes have been pushed to the GitHub repository.
+
+- GitHub repository is synchronized.
+
+- SonarCloud has analyzed the latest commit.
+
+- SonarCloud Quality Gate has passed.
+
+- All Critical and Blocker issues are resolved.
+
+- No unintended changes were made to unrelated modules.
+
+- The implementation follows the project documentation.
+
+## If Any Requirement Fails
+
+The AI must:
+
+- Stop declaring the task as completed.
+
+- Clearly explain what remains unfinished.
+
+- Fix the remaining issues.
+
+- Repeat verification.
+
+- Continue until every verification succeeds or the user explicitly pauses the task.
+
+The AI must never assume completion.
+
+---
 End of Document
