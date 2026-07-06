@@ -305,5 +305,59 @@ Deployment & Infrastructure → 13_DEPLOYMENT_AND_INFRASTRUCTURE.md
 Module Development Standard → 15_MODULE_DEVELOPMENT_STANDARD.md
 
 ---
+---
 
+# Completion Verification Checklist
+
+A development task must never be marked as completed until every verification step below has passed.
+
+## Mandatory Verification Checklist
+
+Before declaring a task completed, AI must verify:
+
+- Source code compiles successfully.
+
+- Project builds successfully.
+
+- Development preview launches correctly.
+
+- No critical runtime errors exist.
+
+- No unresolved console errors remain.
+
+- The implemented feature behaves exactly as specified.
+
+- Existing features continue to work.
+
+- Documentation has been updated (if required).
+
+---
+
+## Completion Declaration Policy
+
+AI must never claim:
+
+- "Completed"
+
+- "Done"
+
+- "Finished"
+
+unless every verification item above has been successfully completed.
+
+---
+
+## Verification Failure Policy
+
+If any verification step fails:
+
+- Do not mark the task as completed.
+
+- Clearly explain the failure.
+
+- Fix the issue.
+
+- Repeat verification.
+
+Only after all verification steps pass may the task be declared complete.
 End of Document
