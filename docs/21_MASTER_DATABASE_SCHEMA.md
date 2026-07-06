@@ -621,7 +621,7 @@ Every business table must:
 - One Ledger Database
 - One Inventory Database
 - One Payment Database
-- One Transaction
+- One Transaction Database
 ---
 
 # PART 4 — Database Governance & Future Expansion
@@ -721,4 +721,4 @@ Every new business module must:
 - avoid duplicate structures
 - maintain backward compatibility
 
-The Shared Core Database must never be modified
+The Shared Core Database must never be modified in a way that breaks backward compatibility or existing business modules.
