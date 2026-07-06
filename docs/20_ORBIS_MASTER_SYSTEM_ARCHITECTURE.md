@@ -563,3 +563,216 @@ All external communication must pass through the API Hub.
 # End of Part 3
 
 ---
+---
+
+# PART 4 — Architecture Governance & Development Rules
+
+## Purpose
+
+This section defines the permanent governance rules of the ORBIS Platform.
+
+Every developer, AI assistant, automation tool, and future contributor must follow these rules.
+
+These rules protect platform stability, scalability, maintainability, and long-term consistency.
+
+---
+
+# ORBIS Development Workflow
+
+```text
+Requirement
+
+      │
+      ▼
+
+Documentation
+
+      │
+      ▼
+
+Architecture Review
+
+      │
+      ▼
+
+User Approval
+
+      │
+      ▼
+
+Implementation
+
+      │
+      ▼
+
+Testing
+
+      │
+      ▼
+
+Quality Verification
+
+      │
+      ▼
+
+GitHub Commit
+
+      │
+      ▼
+
+SonarCloud Analysis
+
+      │
+      ▼
+
+Production Ready
+```
+
+---
+
+# Architecture Governance Rules
+
+Every implementation must follow the approved architecture.
+
+Architecture must never be bypassed.
+
+Shared Core Platform must remain stable.
+
+Business modules may evolve independently.
+
+No implementation may weaken platform consistency.
+
+---
+
+# AI Development Rules
+
+Every AI developer must:
+
+- Read documentation before coding.
+- Follow architecture before implementation.
+- Reuse existing platform services.
+- Never duplicate business logic.
+- Never redesign shared components without approval.
+- Keep documentation synchronized with implementation.
+
+AI must behave as a platform engineer, not only as a code generator.
+
+---
+
+# GitHub Workflow Rules
+
+Every completed task must follow this order:
+
+Documentation
+
+↓
+
+Implementation
+
+↓
+
+Testing
+
+↓
+
+Commit
+
+↓
+
+Push
+
+↓
+
+Quality Analysis
+
+↓
+
+Next Task
+
+No new feature may begin before the previous task is verified.
+
+---
+
+# SonarCloud Quality Rules
+
+Every commit should be analyzed.
+
+Quality Gate should pass before major releases.
+
+Critical issues must be fixed before continuing development.
+
+Code quality must improve continuously.
+
+---
+
+# Documentation Policy
+
+Documentation is the single source of truth.
+
+Implementation must follow documentation.
+
+If implementation changes, documentation must be updated immediately.
+
+Documentation and implementation must always remain synchronized.
+
+---
+
+# Change Approval Policy
+
+The following items require explicit approval:
+
+- Architecture
+- Database Schema
+- Shared Core Platform
+- Security Rules
+- Authentication
+- Authorization
+- AI Hub
+- API Hub
+
+No AI may modify these components without approval.
+
+---
+
+# Future Module Policy
+
+Every future module must:
+
+- Register itself
+- Reuse Shared Core
+- Follow Communication Rules
+- Follow Security Rules
+- Follow Documentation Rules
+
+Future modules must extend the platform, never redesign it.
+
+---
+
+# ORBIS Master Golden Rules
+
+- Documentation First
+- Architecture First
+- Shared Core First
+- Platform First
+- Security First
+- AI Ready
+- API Ready
+- Offline Ready
+- Zero Data Loss
+- Continuous Quality Improvement
+
+---
+
+# Final Architecture Declaration
+
+This document defines the permanent architectural foundation of the ORBIS Platform.
+
+All current and future business modules must comply with this architecture.
+
+Any architectural modification requires documentation updates and user approval before implementation.
+
+---
+
+# End of Document 20
+
+---
