@@ -186,6 +186,7 @@ Input Fields
 Dropdowns
 Cards
 Tables
+Data Tables
 Dialogs
 Bottom Sheets
 Navigation Bars
@@ -463,6 +464,7 @@ The platform should support:
 - Tablets
 - Desktop
 - Large Displays
+- Foldable Devices
 - Future Devices
 
 Every screen must automatically adapt to different screen sizes.
