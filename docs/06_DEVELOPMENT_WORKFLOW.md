@@ -235,5 +235,93 @@ Deployment → 13_DEPLOYMENT.md
 Admin & Audit → 14_ADMIN_AUDIT_CENTER.md
 
 ---
+---
 
+# Task Execution Policy
+
+Every development task must follow the rules below.
+
+## One Task Policy
+
+• Only one logical task may be developed at a time.
+
+• A new task must never begin until the current task has been fully completed and verified.
+
+---
+
+## Task Completion Requirements
+
+A task can only be marked as completed when:
+
+• The assigned functionality has been fully implemented.
+
+• The project builds successfully.
+
+• The preview is running correctly.
+
+• No critical runtime errors exist.
+
+• The feature behaves as documented.
+
+---
+
+## Interrupted Task Policy
+
+If development is interrupted for any reason:
+
+• Do not mark the task as completed.
+
+• Do not start a different task.
+
+• Report exactly what has been completed.
+
+• Report what remains unfinished.
+
+• Continue from the same task after user approval.
+
+---
+
+## Architecture Protection Policy
+
+AI must never modify:
+
+• Core Architecture
+
+• Database Schema
+
+• Project Structure
+
+• Security Rules
+
+• Shared Components
+
+without explicit user approval.
+
+---
+
+## Approval Workflow
+
+Task Assigned
+
+↓
+
+Implementation
+
+↓
+
+Self Review
+
+↓
+
+User Review
+
+↓
+
+Approval
+
+↓
+
+Next Task
+
+No next task may begin before user approval.
 End of Document
