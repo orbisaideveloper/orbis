@@ -154,3 +154,199 @@ Security must never be optional.
 # End of Part 1
 
 ---
+---
+
+# PART 2 — Internal Platform APIs
+
+## Purpose
+
+The Internal Platform APIs provide reusable services for every ORBIS module.
+
+These APIs form the Shared Core communication layer and must be reused by all business modules.
+
+Business modules must never implement duplicate platform APIs.
+
+---
+
+# Internal API Architecture
+
+```text
+                 INTERNAL PLATFORM APIs
+
+                          │
+ ┌────────────────────────┼────────────────────────┐
+ │                        │                        │
+ ▼                        ▼                        ▼
+
+Authentication       Organization          User Management
+
+Authorization        Roles & Permissions   Branch Management
+
+Notifications        File Management       Audit Logging
+
+Settings             AI Services           System Health
+
+Reporting            Search               Activity Logs
+```
+
+---
+
+# Shared Core APIs
+
+The platform provides the following reusable API groups:
+
+```text
+/auth
+/users
+/organizations
+/branches
+/roles
+/permissions
+/settings
+/notifications
+/files
+/audit
+/activity
+/reports
+/search
+/ai
+/system
+```
+
+---
+
+# API Responsibilities
+
+### Authentication API
+
+Responsible for:
+
+- Login
+- Logout
+- Session Validation
+- Token Refresh
+- Password Reset
+
+---
+
+### Organization API
+
+Responsible for:
+
+- Organization Creation
+- Organization Update
+- Organization Configuration
+
+---
+
+### User API
+
+Responsible for:
+
+- User Registration
+- User Profile
+- User Status
+- User Preferences
+
+---
+
+### Role & Permission API
+
+Responsible for:
+
+- Role Management
+- Permission Assignment
+- Access Validation
+
+---
+
+### Notification API
+
+Supports:
+
+- Push Notification
+- SMS
+- Email
+- In-App Notification
+- Future Channels
+
+---
+
+### File API
+
+Responsible for:
+
+- Upload
+- Download
+- Delete
+- File Metadata
+- Secure Access
+
+---
+
+### Audit API
+
+Responsible for:
+
+- Audit Events
+- Change Tracking
+- Activity History
+- Compliance Logs
+
+Audit records must never be deleted.
+
+---
+
+### AI API
+
+Provides communication with AI providers.
+
+Supported examples:
+
+- OpenAI
+- Gemini
+- Future AI Providers
+
+Business modules must use this shared API instead of connecting directly.
+
+---
+
+### System API
+
+Responsible for:
+
+- Health Check
+- Configuration
+- Diagnostics
+- Platform Status
+
+---
+
+# Internal API Rules
+
+- Shared APIs must remain reusable.
+- API contracts must remain backward compatible.
+- Duplicate APIs are prohibited.
+- Business modules must consume Shared APIs.
+- Every request must be authenticated unless explicitly public.
+
+---
+
+# Internal API Golden Rules
+
+- One Authentication API
+- One User API
+- One Organization API
+- One Notification API
+- One File API
+- One Audit API
+- One AI API
+- One System API
+
+Reuse before creating new APIs.
+
+---
+
+# End of Part 2
+
+---
