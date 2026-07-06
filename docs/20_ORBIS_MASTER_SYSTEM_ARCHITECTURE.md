@@ -363,3 +363,203 @@ The platform foundation must never be redesigned because of a new business.
 ---
 
 # End of Part 2
+---
+
+# PART 3 — System Communication Architecture
+
+## Purpose
+
+Every request inside ORBIS must follow one approved communication path.
+
+Business modules must never communicate directly with the database or external services.
+
+All communication must pass through the Shared Core Platform.
+
+---
+
+# System Communication Architecture
+
+```text
+                     USER
+                      │
+                      ▼
+
+             Presentation Layer
+        React • TypeScript • Vite • PWA
+
+                      │
+                      ▼
+
+          Business Service Layer
+
+                      │
+                      ▼
+
+            Shared Core Platform
+
+ ┌──────────────────────────────────────────────┐
+ │                                              │
+ │ Authentication                               │
+ │ Authorization                                │
+ │ Organization                                 │
+ │ Users                                        │
+ │ Roles                                        │
+ │ Notifications                                │
+ │ Reports                                      │
+ │ Audit Logs                                   │
+ │ AI Hub                                       │
+ │ API Hub                                      │
+ │ File Manager                                 │
+ │ Analytics                                    │
+ │                                              │
+ └──────────────────────────────────────────────┘
+
+                      │
+         ┌────────────┴────────────┐
+         ▼                         ▼
+
+     Database                 External Services
+
+ Supabase Database        OpenAI
+ Authentication           Gemini
+ Storage                  Claude
+ Edge Functions           WhatsApp
+                           SMS
+                           Email
+                           Payment Gateway
+                           Maps
+                           Future Integrations
+```
+
+---
+
+# Communication Rules
+
+Only the following communication paths are allowed:
+
+Presentation Layer
+
+↓
+
+Business Service Layer
+
+↓
+
+Shared Core Platform
+
+↓
+
+Database
+
+or
+
+↓
+
+API Hub
+
+↓
+
+External Services
+
+Any direct communication outside this flow is prohibited.
+
+---
+
+# Layer Responsibilities
+
+### Presentation Layer
+
+Responsible for:
+
+- User Interface
+- Navigation
+- User Interaction
+- Input Validation
+- Display
+
+Must never communicate directly with the database.
+
+---
+
+### Business Service Layer
+
+Responsible for:
+
+- Business Logic
+- Workflow
+- Validation
+- Transactions
+- Module Coordination
+
+---
+
+### Shared Core Platform
+
+Responsible for:
+
+- Authentication
+- Authorization
+- Shared Services
+- AI Integration
+- API Management
+- Reporting
+- Notifications
+- Audit Logging
+
+---
+
+### Database Layer
+
+Responsible for:
+
+- Data Storage
+- Security
+- Transactions
+- Backup
+- Recovery
+
+Business rules must not be implemented in the database.
+
+---
+
+### External Service Layer
+
+Responsible for:
+
+- AI Providers
+- Payment Providers
+- Messaging
+- Email
+- Maps
+- Future Integrations
+
+All external communication must pass through the API Hub.
+
+---
+
+# Platform Communication Principles
+
+- Platform First
+- Shared Core First
+- API First
+- AI First
+- Security First
+- Offline First
+- Zero Data Loss
+- Full Audit Trail
+
+---
+
+# Golden Rules
+
+- Never bypass the Shared Core Platform.
+- Never connect UI directly to the database.
+- Never call external APIs directly from business modules.
+- Every business transaction must generate an audit record.
+- Every future module must follow this communication architecture.
+
+---
+
+# End of Part 3
+
+---
