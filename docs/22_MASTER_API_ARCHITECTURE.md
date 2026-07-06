@@ -529,3 +529,159 @@ Response
 # End of Part 3
 
 ---
+---
+
+# PART 4 — External Integration & API Governance
+
+## Purpose
+
+This section defines the permanent standards for external integrations, API governance, security, monitoring, and future expansion.
+
+All external communication must pass through the ORBIS API Gateway.
+
+---
+
+# External Integration Architecture
+
+```text
+                   ORBIS API GATEWAY
+
+                           │
+     ┌─────────────────────┼─────────────────────┐
+     │                     │                     │
+     ▼                     ▼                     ▼
+
+ AI Providers      Communication APIs    Payment APIs
+
+ OpenAI            SMS                   UPI
+ Gemini            Email                 Banking
+ Future AI         WhatsApp              Future Payment
+
+                           │
+                           ▼
+
+                    Monitoring Layer
+
+                           │
+                           ▼
+
+                     Audit & Logging
+```
+
+---
+
+# Supported External Integrations
+
+The platform should support:
+
+- OpenAI
+- Gemini
+- Future AI Providers
+- WhatsApp
+- SMS
+- Email
+- UPI
+- Payment Gateway
+- Maps
+- Cloud Storage
+- Future Integrations
+
+---
+
+# API Gateway Rules
+
+Every external request must pass through the API Gateway.
+
+The API Gateway is responsible for:
+
+- Authentication
+- Authorization
+- Rate Limiting
+- Request Validation
+- Response Validation
+- Error Handling
+- Logging
+- Monitoring
+- Provider Selection
+
+Direct external API calls are prohibited.
+
+---
+
+# API Security Standards
+
+Every API must support:
+
+- HTTPS
+- Authentication
+- Authorization
+- API Keys
+- JWT Tokens
+- Rate Limiting
+- Request Validation
+- Response Validation
+- Audit Logging
+
+Security must always take priority.
+
+---
+
+# Monitoring & Logging
+
+Every API interaction should be monitored.
+
+The platform should record:
+
+- Request ID
+- Timestamp
+- Organization ID
+- User ID
+- Response Time
+- Error Logs
+- Provider Status
+
+These logs support troubleshooting and future analytics.
+
+---
+
+# Future Integration Rules
+
+Before adding a new provider:
+
+- Verify existing integration capabilities.
+- Reuse Shared API infrastructure.
+- Maintain backward compatibility.
+- Update documentation before implementation.
+
+Every new integration must comply with the ORBIS API architecture.
+
+---
+
+# ORBIS API Golden Rules
+
+- One API Gateway
+- One Authentication Layer
+- One Security Standard
+- One Monitoring System
+- One Logging System
+- One Integration Strategy
+- API First
+- Security First
+- Documentation First
+- Future Ready
+
+---
+
+# Final API Declaration
+
+This document defines the permanent API architecture of the ORBIS Platform.
+
+All current and future modules, services, AI providers, and external integrations must comply with these standards.
+
+The API Gateway remains the single approved communication channel for the entire platform.
+
+---
+
+# End of Document 22
+
+---
