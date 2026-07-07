@@ -48,13 +48,19 @@ Application Launch
  Organization Selection
         │
         ▼
- Dashboard
+Dashboard
         │
         ▼
- Business Module
+Unified Workspace
         │
         ▼
- Business Operation
+ORBIS Brain
+        │
+        ▼
+Business Module / AI Capability
+        │
+        ▼
+Business Operation
         │
         ▼
  Save
@@ -189,7 +195,6 @@ Instead, it manages every provider through a unified orchestration process.
 - New AI providers must be attachable without redesigning the platform.
 - Every capability must behave like a LEGO Brick and connect through official platform connectors.
 
----
 ---
 
 # Core Design Principles
@@ -447,18 +452,28 @@ All communication must pass through the Shared Core Platform.
                       │
                       ▼
 
-             Presentation Layer
-        React • TypeScript • Vite • PWA
+              Presentation Layer
+React • TypeScript • Vite • PWA
 
-                      │
-                      ▼
+            │
+            ▼
 
-          Business Service Layer
+     Unified Workspace
 
-                      │
-                      ▼
+            │
+            ▼
 
-            Shared Core Platform
+ ORBIS Brain (Decision Layer)
+
+            │
+            ▼
+
+   Business Service Layer
+
+            │
+            ▼
+
+    Shared Core Platform
 
  ┌──────────────────────────────────────────────┐
  │                                              │
@@ -501,6 +516,14 @@ All communication must pass through the Shared Core Platform.
 Only the following communication paths are allowed:
 
 Presentation Layer
+
+↓
+
+Unified Workspace
+
+↓
+
+ORBIS Brain
 
 ↓
 
