@@ -94,6 +94,20 @@ Read the documents in the following order.
 
 14_ROADMAP.md
 
+Approved Master Architecture Documents
+
+20_MASTER_SYSTEM_ARCHITECTURE.md
+
+21_MASTER_DATABASE_SCHEMA.md
+
+22_MASTER_API_ARCHITECTURE.md
+
+23_MASTER_UI_UX_ARCHITECTURE.md
+
+These documents define the permanent architecture of the ORBIS Platform.
+
+If implementation conflicts with these documents, the documentation takes precedence until officially updated.
+
 ---
 
 # AI Working Rules
@@ -200,13 +214,17 @@ Completed
 
 # Next Objective
 
-Complete all documentation.
+Complete the ORBIS Platform Foundation.
 
-Complete infrastructure setup.
+Complete the approved architecture implementation.
 
-Start architecture implementation.
+Complete the Unified Workspace.
 
-Begin Orbis core development.
+Complete the ORBIS Brain foundation.
+
+Complete the Administrator Workspace.
+
+Prepare the platform for future AI Provider integration through the ORBIS Brain and API Gateway architecture.
 
 ---
 
