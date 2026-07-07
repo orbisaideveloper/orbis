@@ -5,7 +5,7 @@
 **Status:** Architecture Foundation  
 **Project:** ORBIS Platform
 
----
+--- 
 
 # Golden Rule
 
