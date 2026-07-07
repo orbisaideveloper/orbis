@@ -10,9 +10,9 @@ Document Name : Project Index
 
 Document ID : ORB-DOC-000
 
-Version : 1.0
+Version : 2.0
 
-Status : Draft
+Status : Approved
 
 Project : Orbis
 
@@ -131,6 +131,9 @@ Every AI developer must:
 8. Explain changed files.
 
 9. Update documentation if required.
+
+10. Push all completed changes to the connected GitHub repository before considering the task complete.
+    
 
 ---
 
@@ -365,4 +368,3 @@ Only after the build succeeds, GitHub is updated, the Preview works, and the use
 
 # End of Document
 
-End of Document
