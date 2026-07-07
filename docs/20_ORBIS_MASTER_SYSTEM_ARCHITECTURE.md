@@ -84,6 +84,8 @@ The user interacts only with ORBIS.
 
 The provider remains transparent to the user.
 
+---
+
 # High-Level Platform Architecture
 
 ```text
