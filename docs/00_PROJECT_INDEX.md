@@ -210,4 +210,141 @@ Begin Orbis core development.
 
 ---
 
+---
+
+# Mandatory Development Workflow
+
+The following rules are mandatory for every AI model, developer, and automation tool working on the ORBIS Platform.
+
+These rules remain permanently active unless officially updated.
+
+---
+
+## Development Rules
+
+1. Documentation is always the first source of truth.
+
+2. GitHub is the only implementation source of truth.
+
+3. Read the required documentation before writing any code.
+
+4. Work on ONE task at a time.
+
+5. Never jump ahead to future features.
+
+6. Never redesign the approved architecture without approval.
+
+7. Reuse existing components and Shared Core before creating new ones.
+
+8. Never duplicate business logic.
+
+9. Keep the platform modular and production-ready.
+
+---
+
+## Mandatory Development Workflow
+
+Every development task must follow this sequence:
+
+Documentation
+
+↓
+
+Development Plan
+
+↓
+
+User Approval (when required)
+
+↓
+
+Implementation
+
+↓
+
+Build
+
+↓
+
+Testing
+
+↓
+
+Git Commit
+
+↓
+
+GitHub Push
+
+↓
+
+Preview
+
+↓
+
+Self Review
+
+↓
+
+Final Report
+
+A task is NOT considered complete until every step above has been completed.
+
+---
+
+## Mandatory Build Verification
+
+Before marking any task complete, always run:
+
+- npm install
+- npm run lint
+- npm run build
+
+If tests exist:
+
+- npm test
+
+All build, lint, and TypeScript errors must be fixed before continuing.
+
+---
+
+## GitHub Rules
+
+Every completed change must be committed and pushed to the connected ORBIS GitHub repository.
+
+Never leave completed work only inside the local Bolt workspace.
+
+If GitHub Push cannot be completed, stop immediately and report the exact reason before ending the task.
+
+---
+
+## AI Integration Policy
+
+The ORBIS Brain must remain AI-provider independent.
+
+Do NOT hard-code any AI provider.
+
+Prepare the platform so providers such as OpenAI, Gemini, Claude, and future providers can be connected through the approved ORBIS Brain and API Gateway architecture.
+
+---
+
+## Completion Policy
+
+Before declaring any task complete, always provide:
+
+- Development Plan
+- What was changed
+- Build Status
+- Git Commit ID
+- GitHub Push Confirmation
+- Preview URL
+- Self Review
+- Remaining Issues (if any)
+
+Only after the build succeeds, GitHub is updated, the Preview works, and the user approves the result may the task be considered complete.
+
+---
+
+# End of Document
+
 End of Document
