@@ -83,6 +83,7 @@ The ORBIS Brain understands the user's intent, selects the best available capabi
 The user interacts only with ORBIS.
 
 The provider remains transparent to the user.
+
 # High-Level Platform Architecture
 
 ```text
@@ -96,9 +97,23 @@ The provider remains transparent to the user.
 
                                    │
                                    ▼
-                     Business Service Layer
 
-                  Dynamic Business Module Engine
+                      Unified Workspace
+
+                                   │
+                                   ▼
+
+                 ORBIS Brain (Decision Layer)
+
+                                   │
+                                   ▼
+
+                    Business Service Layer
+
+                                   │
+                                   ▼
+
+               Dynamic Business Module Engine
 
         ┌──────────────────────────────────────────────┐
         │                                              │
