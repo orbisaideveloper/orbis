@@ -70,7 +70,19 @@ Application Launch
 ```
 
 ---
+# ORBIS Intelligent Workspace
 
+After Dashboard, users enter a single Unified Workspace.
+
+Users never communicate directly with AI providers, development tools, or business services.
+
+Every request is first received by the ORBIS Brain.
+
+The ORBIS Brain understands the user's intent, selects the best available capability, coordinates execution, validates the response, and returns one unified result.
+
+The user interacts only with ORBIS.
+
+The provider remains transparent to the user.
 # High-Level Platform Architecture
 
 ```text
