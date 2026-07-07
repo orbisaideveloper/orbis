@@ -155,7 +155,41 @@ The provider remains transparent to the user.
  OpenAI • Gemini • Claude • WhatsApp • SMS • Email
  Payment Gateway • Maps • Future Integrations
 ```
+---
 
+# ORBIS Brain
+
+The ORBIS Brain is the intelligent orchestration layer of the platform.
+
+It receives every request from the Unified Workspace, understands the user's intent, selects the most appropriate capability, coordinates execution, validates the response, and returns one unified experience.
+
+The ORBIS Brain is provider-independent.
+
+It never exposes AI providers directly to users.
+
+Instead, it manages every provider through a unified orchestration process.
+
+## Core Responsibilities
+
+- Intent Analysis
+- Task Planning
+- Decision Making
+- Capability Selection
+- Provider Selection
+- Intelligent Routing
+- API Coordination
+- Response Validation
+
+## Architecture Principles
+
+- Users communicate only with ORBIS.
+- Every request passes through the ORBIS Brain.
+- AI Providers never communicate directly with users.
+- Provider selection must remain configurable.
+- New AI providers must be attachable without redesigning the platform.
+- Every capability must behave like a LEGO Brick and connect through official platform connectors.
+
+---
 ---
 
 # Core Design Principles
