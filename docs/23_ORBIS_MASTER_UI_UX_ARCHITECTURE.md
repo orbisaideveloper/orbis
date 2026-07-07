@@ -29,31 +29,59 @@ The goal is to provide a consistent, intuitive, modern, and scalable user experi
 
 ---
 
+# ORBIS Intelligent Workspace
+
+The ORBIS user interface is centered around a single Unified Workspace.
+
+Users never interact directly with AI providers, business modules, APIs, or development tools.
+
+Every request begins inside the Unified Workspace.
+
+The ORBIS Brain silently analyzes the user's intent, selects the required capability, coordinates execution, and returns one unified experience.
+
+Regardless of which provider, module, or service performs the work, the interface always remains consistent.
+
+The user always interacts only with ORBIS.
+
+---
+
 # ORBIS UI Architecture
 
 ```text
-                    ORBIS PLATFORM
+                   ORBIS PLATFORM
                            │
                            ▼
 
-                MASTER UI/UX SYSTEM
-
- ┌──────────────────────────────────────────────┐
- │                                              │
- │ Design System                                │
- │ Shared Components                            │
- │ Navigation Standards                         │
- │ Layout System                                │
- │ Responsive Framework                         │
- │ Accessibility Standards                      │
- │                                              │
- └──────────────────────────────────────────────┘
+                 Unified Workspace
                            │
                            ▼
 
- Lottery      Dairy      Grocery
- CRM          Pharmacy   Agriculture
- Finance      Inventory  Future Modules
+            ORBIS Brain (Decision Layer)
+                           │
+                           ▼
+
+                Dynamic Workspace
+                           │
+          ┌────────────────┼────────────────┐
+          ▼                ▼                ▼
+
+   AI Capabilities   Business Modules   Development
+
+ Chat              Lottery            AI Builder
+ Image             Dairy              Live Preview
+ Document          Grocery            GitHub
+ Voice             CRM                Supabase
+ Automation        Future Modules     Vercel
+
+                           │
+                           ▼
+
+             Shared UI Components
+
+                           │
+                           ▼
+
+                ORBIS Design System
 ```
 
 ---
@@ -336,35 +364,26 @@ Every module must provide a familiar and predictable user experience.
                 ORBIS NAVIGATION
 
 Dashboard
-
      │
-
      ▼
-
-Business Modules
-
+Unified Workspace
      │
-
      ▼
-
+ORBIS Brain
+     │
+     ▼
+Business Module
+     │
+     ▼
 Module Dashboard
-
      │
-
      ▼
-
 Records
-
      │
-
      ▼
-
 Details
-
      │
-
      ▼
-
 Actions
 ```
 
@@ -514,6 +533,8 @@ Every new screen must:
 - Preserve Mobile First Design
 - Remain Backward Compatible
 - Be Fully Documented
+- Use the Unified Workspace architecture
+- Route AI capabilities through the ORBIS Brain
 
 Independent design systems are not permitted.
 
