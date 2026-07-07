@@ -29,36 +29,64 @@ The API Layer serves as the single communication gateway for the entire platform
 
 ---
 
+# ORBIS AI Orchestration Layer
+
+The ORBIS Brain is the only intelligent decision layer of the platform.
+
+Every AI request, API request, business request, automation request, and future capability request must first pass through the ORBIS Brain.
+
+The ORBIS Brain analyzes the request, selects the required capability, chooses the most appropriate provider, routes the request through the API Gateway, validates the response, and returns one unified result.
+
+Users and business modules never communicate directly with external AI providers.
+
+The provider remains transparent to users.
+
+---
+
 # API Architecture
 
 ```text
-                    ORBIS PLATFORM
+                     ORBIS PLATFORM
                            │
                            ▼
 
-                  API GATEWAY LAYER
-
- ┌──────────────────────────────────────────────┐
- │                                              │
- │ Internal Platform APIs                       │
- │ Business Module APIs                         │
- │ AI Integration APIs                          │
- │ External Service APIs                        │
- │ Authentication APIs                          │
- │ Monitoring & Logging APIs                    │
- │                                              │
- └──────────────────────────────────────────────┘
+                  Unified Workspace
                            │
                            ▼
 
- Internal Services     AI Providers     External Services
-      │                    │                  │
-      ▼                    ▼                  ▼
+             ORBIS Brain (Decision Layer)
+                           │
+                           ▼
 
- Database            OpenAI / Gemini     SMS / Email
- Authentication      Future AI           Payment Gateway
- Notifications                           Maps
- Storage                                 Future APIs
+                 Capability Registry
+                           │
+                           ▼
+
+                    AI Registry
+                           │
+                           ▼
+
+                   API Gateway Layer
+                           │
+                           ▼
+ ┌────────────────────────────────────────────────────┐
+ │ Internal Platform APIs                             │
+ │ Business Module APIs                               │
+ │ AI Provider Connectors                             │
+ │ External Service APIs                              │
+ │ Authentication APIs                                │
+ │ Monitoring & Logging APIs                          │
+ └────────────────────────────────────────────────────┘
+                           │
+          ┌────────────────┼────────────────┐
+          ▼                ▼                ▼
+
+ Internal Services    AI Providers    External Services
+
+ Database             OpenAI          SMS / Email
+ Authentication       Gemini          Payment Gateway
+ Notifications        Claude          Maps
+ Storage              Future AI       Future APIs
 ```
 
 ---
