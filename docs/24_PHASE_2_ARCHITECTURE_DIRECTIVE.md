@@ -14,7 +14,9 @@ Category: Architecture
 
 Author: ORBIS Architecture Team
 
-Chief Architect: ChatGPT
+Architecture Owner: ORBIS Architecture Team
+
+Architecture Review: ChatGPT
 
 Implementation Partner: Gemini
 
@@ -42,7 +44,7 @@ Document Status: Active
 
 Implementation Status: In Progress
 
-Review Status: Architecture Approved
+Architecture Status: Approved
 
 Target Audience:
 - Developers
@@ -107,3 +109,16 @@ Dependencies:
 
 22. Revision History
 
+---
+
+## Document Footer
+
+This document is part of the ORBIS Master Documentation.
+
+This Architecture Directive serves as the official implementation contract for ORBIS Phase 2.
+
+All architectural decisions, code implementations, AI-generated contributions, and future development activities must comply with the standards and principles defined in this document.
+
+This document is maintained by the ORBIS Architecture Team and reviewed as the architecture evolves.
+
+Copyright © 2026 ORBIS Project. All rights reserved.
