@@ -1,13 +1,14 @@
-import { MockProvider } from '../providers/MockProvider.js';
+import { test, expect } from '@jest/globals';
+import { DecisionEngine } from './DecisionEngine.js';
 
-export class DecisionEngine {
-  constructor() {
-    this.provider = new MockProvider();
-  }
-
-  async processRequest(input) {
-    // DecisionEngine প্রোভাইডারের মাধ্যমে রেসপন্স জেনারেট করবে
-    return await this.provider.generateResponse(input);
-  }
-}
+test('DecisionEngine should process request and return a valid response', async () => {
+  const engine = new DecisionEngine();
+  const input = 'Hello ORBIS';
+  const result = await engine.processRequest(input);
+  
+  // আমরা নিশ্চিত করছি যে রেসপন্সটি নাল নয় এবং একটি সঠিক ফরম্যাটে আছে
+  expect(result).toBeDefined();
+  expect(typeof result).toBe('string');
+  expect(result.length).toBeGreaterThan(0);
+});
 
