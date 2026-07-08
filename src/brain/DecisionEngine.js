@@ -1,9 +1,18 @@
-class DecisionEngine {
-  status = 'ready';
+import BrainController from './BrainController.js';
 
-  analyze(input) {
-    console.log('Analyzing decision for:', input);
-    return 'Decision generated';
+class DecisionEngine {
+  constructor() {
+    this.brain = new BrainController();
+  }
+
+  processTask(task) {
+    const status = this.brain.getSystemStatus();
+    
+    if (status === 'active') {
+      return `Task "${task}" is being processed by ORBIS.`;
+    } else {
+      return "System is inactive. Cannot process task.";
+    }
   }
 }
 
