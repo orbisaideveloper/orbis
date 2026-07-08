@@ -1,11 +1,9 @@
 class DecisionEngine {
-  constructor() {
-    this.status = "ready";
-  }
+  status = 'ready';
 
   analyze(input) {
-    console.log("Analyzing decision for:", input);
-    return "Decision generated";
+    console.log('Analyzing decision for:', input);
+    return 'Decision generated';
   }
 }
 
