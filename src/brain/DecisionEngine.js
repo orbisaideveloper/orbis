@@ -1,4 +1,4 @@
-import { MockProvider } from './providers/MockProvider.js';
+import { MockProvider } from '../providers/MockProvider.js';
 
 export class DecisionEngine {
   constructor() {
@@ -6,7 +6,6 @@ export class DecisionEngine {
   }
 
   async processRequest(input) {
-    // DecisionEngine এখন প্রোভাইডারের মাধ্যমে রেসপন্স জেনারেট করবে
     return await this.provider.generateResponse(input);
   }
 }
