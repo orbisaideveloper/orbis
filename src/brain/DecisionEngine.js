@@ -1,19 +1,12 @@
-import BrainController from './BrainController.js';
+import { MockProvider } from './providers/MockProvider.js';
 
-class DecisionEngine {
+export class DecisionEngine {
   constructor() {
-    this.brain = new BrainController();
+    this.provider = new MockProvider();
   }
 
-  processTask(task) {
-    const status = this.brain.getSystemStatus();
-    
-    if (status === 'active') {
-      return `Task "${task}" is being processed by ORBIS.`;
-    } else {
-      return "System is inactive. Cannot process task.";
-    }
+  async processRequest(input) {
+    // DecisionEngine এখন প্রোভাইডারের মাধ্যমে রেসপন্স জেনারেট করবে
+    return await this.provider.generateResponse(input);
   }
 }
-
-export default DecisionEngine;
