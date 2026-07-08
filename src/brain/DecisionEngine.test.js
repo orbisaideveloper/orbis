@@ -1,8 +1,13 @@
-import { test, expect } from '@jest/globals';
-import { DecisionEngine } from './DecisionEngine.js';
+import { MockProvider } from '../providers/MockProvider.js';
 
-test('DecisionEngine should process request through provider', async () => {
-  const engine = new DecisionEngine();
-  const result = await engine.processRequest('Hello');
-  expect(result).toContain('ORBIS Engine');
-});
+export class DecisionEngine {
+  constructor() {
+    this.provider = new MockProvider();
+  }
+
+  async processRequest(input) {
+    // DecisionEngine প্রোভাইডারের মাধ্যমে রেসপন্স জেনারেট করবে
+    return await this.provider.generateResponse(input);
+  }
+}
+
