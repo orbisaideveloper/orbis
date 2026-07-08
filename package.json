@@ -5,8 +5,7 @@
   "main": "src/Main.js",
   "type": "module",
   "scripts": {
-    "test": "npx jest",
-    "start": "node src/Main.js"
+    "test": "npx jest --config jest.config.cjs"
   },
   "devDependencies": {
     "eslint": "^8.0.0",
