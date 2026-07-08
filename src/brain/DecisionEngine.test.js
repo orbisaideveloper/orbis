@@ -1,5 +1,5 @@
-/* eslint-env jest */
+const { test, expect } = require('@jest/globals');
+
 test('System check', () => {
-  const status = true;
-  expect(status).toBe(true);
+  expect(true).toBe(true);
 });

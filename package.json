@@ -5,7 +5,7 @@
   "main": "src/Main.js",
   "type": "module",
   "scripts": {
-    "test": "jest",
+    "test": "npx jest",
     "start": "node src/Main.js"
   },
   "devDependencies": {
