@@ -20,7 +20,7 @@ jobs:
       - name: Install dependencies
         run: npm install
       - name: Run Tests & Collect Coverage
-        run: npm test -- --coverage
+        run: node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
