@@ -11,4 +11,6 @@ jobs:
           node-version: '18'
       - run: npm install
       - run: npx eslint .
-      - run: npx jest
+      - run: |
+          NODE_OPTIONS=--experimental-vm-modules npx jest
+
