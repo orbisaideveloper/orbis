@@ -1,12 +1,12 @@
-import DecisionEngine from './DecisionEngine.js';
+import config from './brain_config.json';
 
 class BrainController {
   constructor() {
-    this.engine = new DecisionEngine();
+    this.config = config;
   }
 
-  process(data) {
-    return this.engine.analyze(data);
+  getSystemStatus() {
+    return this.config.status;
   }
 }
 

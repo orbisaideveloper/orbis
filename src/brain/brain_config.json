@@ -1,14 +1,5 @@
 {
-  "brain_version": "1.0.0",
-  "status": "initialization",
-  "layers": {
-    "layer_05": {
-      "name": "ORBIS Brain",
-      "components": [
-        "IntentAnalyzer",
-        "TaskPlanner",
-        "DecisionEngine"
-      ]
-    }
-  }
+  "systemName": "ORBIS",
+  "version": "2.0.0",
+  "status": "active"
 }
