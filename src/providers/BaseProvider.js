@@ -10,7 +10,7 @@ export class BaseProvider {
   }
 
   // প্রতিটি প্রোভাইডারে এই মেথডটি থাকতে হবে
-  async generateResponse(prompt) {
+  async generateResponse(_prompt) {
     throw new Error("Method 'generateResponse()' must be implemented.");
   }
 }
