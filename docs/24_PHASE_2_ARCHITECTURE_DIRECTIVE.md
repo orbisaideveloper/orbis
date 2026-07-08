@@ -121,4 +121,6 @@ All architectural decisions, code implementations, AI-generated contributions, a
 
 This document is maintained by the ORBIS Architecture Team and reviewed as the architecture evolves.
 
+Document Version: 2.0
+
 Copyright © 2026 ORBIS Project. All rights reserved.
