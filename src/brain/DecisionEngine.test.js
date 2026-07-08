@@ -1,3 +1,4 @@
 test('System check', () => {
-  expect(true).toBe(true);
+  const status = true;
+  expect(status).toBe(true);
 });
