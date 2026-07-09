@@ -1,25 +1,8 @@
 {
   "name": "orbis",
   "version": "1.0.0",
-  "description": "ORBIS Brain System",
-  "main": "src/Main.js",
   "type": "module",
   "scripts": {
     "test": "npx jest"
-  },
-  "devDependencies": {
-    "eslint": "^8.0.0",
-    "jest": "^29.0.0"
-  },
-  "jest": {
-    "testEnvironment": "node",
-    "transform": {},
-    "moduleNameMapper": {
-      "^(\\.{1,2}/.*)\\.js$": "$1"
-    },
-    "collectCoverage": true,
-    "coverageDirectory": "coverage",
-    "coverageReporters": ["lcov", "text-summary"],
-    "collectCoverageFrom": ["src/**/*.js"]
   }
 }
