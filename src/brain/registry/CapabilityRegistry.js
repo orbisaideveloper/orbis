@@ -1,20 +1,18 @@
-/**
- * CapabilityRegistry: Brick for storing AI provider capabilities.
- */
+// CapabilityRegistry.js
 export const CapabilityRegistry = {
   providers: {
-    gemini: {
-      id: 'gemini-pro',
-      name: 'Gemini',
-      capabilities: ['CODING', 'REASONING', 'GENERAL'],
-      strengths: ['COMPLEX_LOGIC', 'CODE_GENERATION'],
-      status: 'active'
-    },
     openai: {
       id: 'gpt-4o',
       name: 'GPT-4o',
       capabilities: ['GENERAL', 'CREATIVE', 'CODING'],
       strengths: ['NATURAL_LANGUAGE', 'INSTRUCTION_FOLLOWING'],
+      status: 'active'
+    },
+    gemini: {
+      id: 'gemini-1.5-pro',
+      name: 'Gemini 1.5 Pro',
+      capabilities: ['GENERAL', 'ANALYSIS', 'CODING', 'MULTIMODAL'],
+      strengths: ['LARGE_CONTEXT', 'REASONING'],
       status: 'active'
     }
   },
