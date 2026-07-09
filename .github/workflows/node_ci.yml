@@ -19,11 +19,8 @@ jobs:
           node-version: '18'
       - name: Install dependencies
         run: npm install
-            - name: Run Tests & Collect Coverage
-        run: |
-          node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage
-          ls -R coverage/
-      - name: SonarCloud Scan
+      - name: Run Tests & Collect Coverage
+        run: node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage
         uses: SonarSource/sonarqube-scan-action@a8497d5102555543c72b2257d07997a3a8e93836
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
