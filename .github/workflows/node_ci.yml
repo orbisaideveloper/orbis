@@ -28,4 +28,6 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
+            -Dsonar.projectKey=orbis
+            -Dsonar.organization=orbis
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
