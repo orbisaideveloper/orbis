@@ -1,11 +1,24 @@
-import { DecisionManager } from './DecisionManager.js';
+// src/brain/decision/DecisionManager.test.js
+import DecisionManager from './DecisionManager.js';
 
-describe('DecisionManager Brick', () => {
-  test('should successfully route task through the manager', async () => {
-    const manager = new DecisionManager();
-    const result = await manager.processRequest('CODING', 'Hello ORBIS');
+describe('DecisionManager', () => {
+  let dm;
+
+  beforeEach(() => {
+    dm = new DecisionManager();
+  });
+
+  test('should register and retrieve a provider for a task', () => {
+    const mockProvider = { name: 'TestProvider' };
+    dm.registerDecision('CODING', mockProvider);
     
-    expect(result).toBeDefined();
-    expect(result).toContain('Gemini');
+    const provider = dm.getDecision('CODING');
+    expect(provider).toBeDefined();
+    expect(provider.name).toBe('TestProvider');
+  });
+
+  test('should return undefined for unregistered task', () => {
+    const provider = dm.getDecision('UNKNOWN_TASK');
+    expect(provider).toBeUndefined();
   });
 });

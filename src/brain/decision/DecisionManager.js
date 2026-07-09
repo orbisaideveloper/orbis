@@ -1,22 +1,20 @@
-import { CapabilityRegistry } from '../registry/CapabilityRegistry.js';
-import { ProviderOrchestrator } from '../orchestrator/ProviderOrchestrator.js';
+// src/brain/decision/DecisionManager.js
 
-/**
- * DecisionManager: Brick that intelligently routes tasks to the best AI provider.
- */
-export class DecisionManager {
+class DecisionManager {
   constructor() {
-    this.orchestrator = new ProviderOrchestrator();
+    this.decisions = new Map();
   }
 
-  async processRequest(taskType, prompt) {
-    console.log(`[ORBIS Manager] Analyzing task type: ${taskType}`);
-    
-    const provider = CapabilityRegistry.getProviderByTask(taskType);
-    if (!provider) {
-      throw new Error(`No capability found for: ${taskType}`);
+  registerDecision(task, provider) {
+    if (!task || !provider) {
+      throw new Error('Task and Provider are required');
     }
+    this.decisions.set(task, provider);
+  }
 
-    return await this.orchestrator.executeTask(taskType, prompt);
+  getDecision(task) {
+    return this.decisions.get(task);
   }
 }
+
+export default DecisionManager;
