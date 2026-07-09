@@ -10,21 +10,17 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      
-      - name: Use Node.js 18
-        uses: actions/setup-node@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v3
         with:
           node-version: '18'
-      
       - name: Install dependencies
         run: npm install
-      
-      - name: Run Tests
+      - name: Run Tests & Collect Coverage
         run: node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage
-      
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v5
         env:
@@ -35,6 +31,4 @@ jobs:
             -Dsonar.projectKey=orbis
             -Dsonar.organization=orbis
             -Dsonar.sources=src
-            -Dsonar.tests=src
-            -Dsonar.test.inclusions=**/*.test.js
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
