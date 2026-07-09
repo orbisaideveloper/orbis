@@ -22,7 +22,8 @@ jobs:
       - name: Run Tests & Collect Coverage
         run: node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage
       - name: SonarCloud Scan
-        uses: SonarSource/sonarqube-scan-action@v5
+        uses: SonarSource/sonarqube-scan-action@0c4d7e3b9760920401490214300345037d45c363 # বর্তমান ভার্সনের SHA হ্যাশ
+
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
