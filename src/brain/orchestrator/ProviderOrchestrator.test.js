@@ -1,9 +1,9 @@
-import { ProviderOrchestrator } from './ProviderOrchestrator.js';
+import { DecisionManager } from './DecisionManager.js';
 
-describe('ProviderOrchestrator', () => {
-  test('should return response', async () => {
-    const orchestrator = new ProviderOrchestrator();
-    const response = await orchestrator.executeTask('CODING', 'Test');
-    expect(response).toBeDefined();
+describe('DecisionManager', () => {
+  test('should process request', async () => {
+    const manager = new DecisionManager();
+    const result = await manager.processRequest('CODING', 'Test');
+    expect(result).toBeDefined();
   });
 });
