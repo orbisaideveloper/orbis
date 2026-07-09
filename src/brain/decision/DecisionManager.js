@@ -1,20 +1,13 @@
-// src/brain/decision/DecisionManager.js
+import { CapabilityRegistry } from '../registry/CapabilityRegistry.js';
+import { ProviderOrchestrator } from '../orchestrator/ProviderOrchestrator.js';
 
-class DecisionManager {
+export class DecisionManager {
   constructor() {
-    this.decisions = new Map();
+    this.orchestrator = new ProviderOrchestrator();
   }
-
-  registerDecision(task, provider) {
-    if (!task || !provider) {
-      throw new Error('Task and Provider are required');
-    }
-    this.decisions.set(task, provider);
-  }
-
-  getDecision(task) {
-    return this.decisions.get(task);
+  async processRequest(task, prompt) {
+    const provider = CapabilityRegistry.getProviderByTask(task);
+    if (!provider) throw new Error("No provider");
+    return await this.orchestrator.executeTask(task, prompt);
   }
 }
-
-export default DecisionManager;
