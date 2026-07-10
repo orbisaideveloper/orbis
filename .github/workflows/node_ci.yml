@@ -22,8 +22,8 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Run Tests
-        run: npx jest --coverage
+      - name: Run Tests & Collect Coverage
+        run: NODE_OPTIONS=--experimental-vm-modules npx jest --coverage
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@master
