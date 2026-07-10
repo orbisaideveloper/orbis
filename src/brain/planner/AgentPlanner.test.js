@@ -8,21 +8,21 @@ describe('AgentPlanner', () => {
     planner = new AgentPlanner();
   });
 
-  test('should generate a generic execution plan for standard tasks', () => {
+  test('should generate a generic execution plan with capabilities', () => {
     const plan = planner.generatePlan('Write a python script');
     
     expect(plan.originalTask).toBe('Write a python script');
     expect(plan.status).toBe('planned');
-    expect(plan.steps.length).toBe(3);
-    expect(plan.steps[0].action).toBe('Analyze Request');
+    expect(plan.steps.length).toBe(1);
+    expect(plan.steps[0].capability).toBe('general_logic');
   });
 
-  test('should generate a specific execution plan for complex analytical tasks', () => {
-    const plan = planner.generatePlan('Analyze the server logs and create a report');
+  test('should generate a specific execution plan for analytical tasks', () => {
+    const plan = planner.generatePlan('Analyze the server logs');
     
-    expect(plan.steps.length).toBe(3);
-    expect(plan.steps[0].action).toBe('Gather Data');
-    expect(plan.steps[2].action).toBe('Generate Report');
+    expect(plan.steps.length).toBe(2);
+    expect(plan.steps[0].capability).toBe('data_processing');
+    expect(plan.steps[1].capability).toBe('analytical_reasoning');
   });
 
   test('should throw an error for empty task input', () => {
