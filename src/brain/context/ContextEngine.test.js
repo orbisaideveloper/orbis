@@ -1,31 +1,28 @@
 import { jest } from '@jest/globals';
 import { ContextEngine } from './ContextEngine.js';
-import { MemoryInterface } from '../memory/MemoryInterface.js';
+import { MemoryEngine } from '../memory/MemoryEngine.js';
+import { VectorEngine } from '../memory/VectorEngine.js';
 
-describe('ContextEngine', () => {
+describe('ContextIntelligenceEngine (Step 04)', () => {
   let contextEngine;
-  let memoryInterface;
+  let memory;
+  let vector;
 
   beforeEach(() => {
-    contextEngine = new ContextEngine();
-    memoryInterface = new MemoryInterface();
+    memory = new MemoryEngine();
+    vector = new VectorEngine();
+    contextEngine = new ContextEngine(memory, vector);
   });
 
-  test('should combine memory and task context successfully', () => {
-    // মেমরিতে কিছু ডামি ডেটা সেট করা হচ্ছে
-    memoryInterface.setUserContext('theme', 'dark');
-    memoryInterface.setProjectContext('projectId', 'ORBIS-PHASE-3');
-    memoryInterface.addConversation('user', 'Hello ORBIS');
+  test('should aggregate context from memory and vector engines', async () => {
+    // Setup dummy data
+    memory.saveConversation('user', 'Hello');
+    await vector.store('mem-id', 'User likes Python');
 
-    // কনটেক্সট ইঞ্জিন দিয়ে ডেটা কম্বাইন করা হচ্ছে
-    const enrichedContext = contextEngine.buildContext(memoryInterface, 'Analyze this code');
+    const result = await contextEngine.buildContext('task-1', 'Write code');
 
-    // টেস্ট করা হচ্ছে যে ডেটাগুলো ঠিকমতো কম্বাইন হয়েছে কি না
-    expect(enrichedContext.task).toBe('Analyze this code');
-    expect(enrichedContext.environment.theme).toBe('dark');
-    expect(enrichedContext.environment.projectId).toBe('ORBIS-PHASE-3');
-    expect(enrichedContext.history.length).toBe(1);
-    expect(enrichedContext.history[0].message).toBe('Hello ORBIS');
-    expect(enrichedContext.timestamp).toBeDefined();
+    expect(result.finalPrompt).toContain('Write code');
+    expect(result.finalPrompt).toContain('User likes Python');
+    expect(result.contextData.history.length).toBe(1);
   });
 });

@@ -1,27 +1,30 @@
 /**
- * ContextEngine: Combines Memory, User Context, and Task Context
- * before routing the request to the AI provider.
+ * ContextIntelligenceEngine: Aggregates User, Project, and Memory data
+ * to build an intelligent, context-aware prompt for AI providers.
  */
 export class ContextEngine {
-  constructor() {}
+  constructor(memoryEngine, vectorEngine) {
+    this.memoryEngine = memoryEngine;
+    this.vectorEngine = vectorEngine;
+  }
 
-  buildContext(memoryInterface, taskInput) {
-    // মেমরি ইন্টারফেস থেকে সব ডেটা সংগ্রহ করা হচ্ছে
-    const userContext = memoryInterface.getUserContext('theme') || 'default';
-    const projectContext = memoryInterface.getProjectContext('projectId') || 'none';
-    const sessionMemory = memoryInterface.getSessionMemory('activeTask') || 'idle';
-    const history = memoryInterface.getConversationHistory();
-
-    // সবকিছু মিলিয়ে একটি এনরিচড (Enriched) কনটেক্সট তৈরি করা হচ্ছে
+  async buildContext(taskId, userPrompt) {
+    // 1. Fetch relevant memories via semantic search
+    const relevantMemories = await this.vectorEngine.retrieve(userPrompt);
+    
+    // 2. Fetch recent conversation history
+    const history = this.memoryEngine.getRecentConversations(5);
+    
+    // 3. Assemble the "Context-Aware" Prompt
     return {
-      task: taskInput,
-      environment: {
-        theme: userContext,
-        projectId: projectContext,
-        activeTask: sessionMemory
+      task: taskId,
+      originalPrompt: userPrompt,
+      contextData: {
+        memories: relevantMemories,
+        history: history,
+        timestamp: Date.now()
       },
-      history: history,
-      timestamp: Date.now()
+      finalPrompt: `Task: ${userPrompt}\n\nRelevant History: ${JSON.stringify(history)}\n\nMemory Context: ${JSON.stringify(relevantMemories)}`
     };
   }
 }
