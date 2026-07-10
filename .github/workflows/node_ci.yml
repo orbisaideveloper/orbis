@@ -11,15 +11,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # actions/checkout@v4 এর ভেরিফাইড SHA Hash (v4.2.2)
     - name: Checkout code
       uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
-    # actions/setup-node@v4 এর ভেরিফাইড SHA Hash (v4.2.0)
     - name: Setup Node.js
       uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a
       with:
-        node-version: '20'
+        node-version: '24'
         cache: 'npm'
 
     - name: Install dependencies
@@ -30,9 +28,10 @@ jobs:
 
     - name: Run Jest Tests
       run: npm test
+      env:
+        NODE_OPTIONS: --experimental-vm-modules
 
     - name: SonarQube Scan
-      # Dependabot-এর জন্য SonarQube স্ক্যান স্কিপ করা হচ্ছে
       if: github.actor != 'dependabot[bot]'
       uses: SonarSource/sonarcloud-github-action@master
       env:
