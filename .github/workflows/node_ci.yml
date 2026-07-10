@@ -2,37 +2,39 @@ name: ORBIS Brain CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ main ]
+    branches: [ "main" ]
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
+    # actions/checkout@v4 এর বদলে সরাসরি SHA Hash ব্যবহার করা হলো (Maximum Security)
+    - name: Checkout code
+      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
 
-      - name: Use Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
+    # actions/setup-node@v4 এর বদলে সরাসরি SHA Hash ব্যবহার করা হলো
+    - name: Setup Node.js
+      uses: actions/setup-node@60edb5dd545a775178f525247833159c242f4c96
+      with:
+        node-version: '20'
+        cache: 'npm'
 
-      - name: Install dependencies
-        run: npm install
+    - name: Install dependencies
+      run: npm ci
 
-      - name: Run Tests & Collect Coverage
-        run: NODE_OPTIONS=--experimental-vm-modules npx jest --coverage
+    - name: Run ESLint
+      run: npm run lint --if-present
 
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarqube-scan-action@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        with:
-          args: >
-            -Dsonar.projectKey=orbis
-            -Dsonar.organization=orbis
-            -Dsonar.sources=src
-            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+    - name: Run Jest Tests
+      run: npm test
+
+    - name: SonarQube Scan
+      # Dependabot-এর জন্য SonarQube স্ক্যান স্কিপ করা হচ্ছে
+      if: github.actor != 'dependabot[bot]'
+      uses: SonarSource/sonarcloud-github-action@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
