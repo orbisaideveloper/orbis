@@ -1,43 +1,40 @@
 const os = require('os');
 
-// ORBIS-এর গ্লোবাল সিস্টেম স্টেট ট্র্যাক করার জন্য অবজেক্ট
 const systemState = {
-    workflowState: 'IDLE', // অবস্থাগুলো হতে পারে: IDLE, PROCESSING, ERROR ইত্যাদি
-    errorCount: 0
+    workflowState: 'IDLE',
+    errorCount: 0,
+    requestCount: 0
 };
 
-// সিস্টেমের লাইভ পারফরম্যান্স এবং টেলিমেট্রি ডেটা পাওয়ার ফাংশন
 const getTelemetryData = () => {
     const totalMemory = os.totalmem();
     const freeMemory = os.freemem();
     const usedMemory = totalMemory - freeMemory;
 
+    // আপনার ড্যাশবোর্ড ঠিক যেভাবে ডেটা খুঁজছে, সেই স্ট্রাকচারে ডেটা পাঠানো হচ্ছে
     return {
-        timestamp: new Date().toISOString(),
-        uptimeSeconds: process.uptime(), // সার্ভার কতক্ষণ ধরে চলছে
-        memory: {
-            totalMB: (totalMemory / 1024 / 1024).toFixed(2),
-            usedMB: (usedMemory / 1024 / 1024).toFixed(2),
-            freeMB: (freeMemory / 1024 / 1024).toFixed(2),
-            usagePercent: ((usedMemory / totalMemory) * 100).toFixed(2) + '%'
+        brainHub: {
+            status: 'ONLINE',
+            uptime: process.uptime().toFixed(0),
+            activeWorkflow: systemState.workflowState
         },
-        workflow: systemState.workflowState,
-        errors: systemState.errorCount
+        memoryEngine: {
+            ramUsageMB: (usedMemory / 1024 / 1024).toFixed(2)
+        },
+        performance: {
+            totalRequests: systemState.requestCount,
+            errorCount: systemState.errorCount
+        }
     };
 };
 
-// ওয়ার্কফ্লো স্টেট আপডেট করার জন্য হেল্পার ফাংশন
-const updateWorkflowState = (newState) => {
-    systemState.workflowState = newState;
-};
-
-// এরর ট্র্যাক করার জন্য হেল্পার ফাংশন
-const logSystemError = () => {
-    systemState.errorCount += 1;
-};
+const updateWorkflowState = (newState) => { systemState.workflowState = newState; };
+const logSystemError = () => { systemState.errorCount += 1; };
+const logRequest = () => { systemState.requestCount += 1; };
 
 module.exports = {
     getTelemetryData,
     updateWorkflowState,
-    logSystemError
+    logSystemError,
+    logRequest
 };
