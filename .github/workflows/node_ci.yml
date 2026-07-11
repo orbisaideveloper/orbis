@@ -33,6 +33,9 @@ jobs:
       env:
         NODE_OPTIONS: --experimental-vm-modules
 
+    - name: ORBIS Live Architecture Output
+      run: node src/run.js
+
     - name: SonarQube Scan
       if: github.actor != 'dependabot[bot]'
       uses: SonarSource/sonarcloud-github-action@master
@@ -43,15 +46,3 @@ jobs:
         args: >
           -Dsonar.projectKey=orbis
           -Dsonar.organization=orbis
-    - name: Run Jest Tests
-      run: npm test
-      env:
-        NODE_OPTIONS: --experimental-vm-modules
-
-    # --- এই নতুন ব্লকটি যোগ করুন ---
-    - name: ORBIS Live Architecture Output
-      run: node src/run.js
-    # --------------------------------
-
-    - name: SonarQube Scan
-      if: github.actor != 'dependabot[bot]'
