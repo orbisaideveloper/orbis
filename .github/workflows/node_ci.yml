@@ -19,8 +19,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24'
-          cache: 'npm'
-
+          # এখান থেকে cache: 'npm' লাইনটি সরিয়ে দেওয়া হয়েছে যাতে আর লক ফাইল না খোঁজে
+      
       - name: Install dependencies
         run: npm install
 
