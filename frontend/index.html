@@ -64,11 +64,10 @@
         .msg-dev { align-self: flex-end; background-color: #fffbeb; border-right: 4px solid var(--saffron); color: var(--text-main); }
         .msg-orbis { align-self: flex-start; background-color: #f0fdf4; border-left: 4px solid var(--green); color: var(--text-main); }
 
-        /* 🔥 INPUT AREA FIX FOR MOBILE 🔥 */
         .input-area { 
             padding: 12px; border-top: 1px solid var(--border-color); 
             display: flex; align-items: center; gap: 8px; 
-            background-color: #f8fafc; flex-wrap: wrap; /* Added flex-wrap */
+            background-color: #f8fafc; flex-wrap: wrap; 
         }
         .icon-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 8px; border-radius: 4px; color: var(--text-main); transition: 0.2s;}
         .icon-btn:hover { background-color: #e2e8f0; }
@@ -78,7 +77,7 @@
         select.lang-select { background-color: #fff; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; font-weight: bold; outline: none; cursor: pointer;}
         input[type="text"] { flex: 1; min-width: 150px; background-color: #fff; border: 1px solid var(--border-color); padding: 12px; border-radius: 6px; font-size: 1rem; outline: none; color: var(--text-main); }
         input[type="text"]:focus { border-color: var(--saffron); }
-        #send-btn { background-color: var(--green); color: white; border: none; padding: 12px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        #send-btn { background-color: var(--green); color: white; border: none; padding: 12px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s;}
         #send-btn:disabled { background-color: #94a3b8; cursor: not-allowed; }
         #file-input { display: none; }
 
@@ -87,7 +86,6 @@
         .text-red { color: var(--red) !important; }
         .text-blue { color: var(--blue) !important; }
 
-        /* MOBILE RESPONSIVE MATRIX */
         @media (max-width: 900px) {
             body { overflow-y: auto; height: auto; display: block; }
             .dashboard-wrapper { flex-direction: column; display: block; overflow: visible; }
@@ -98,7 +96,6 @@
             .chat-area { flex: 1; min-height: 350px; }
             .logs-container { min-height: 180px; }
             
-            /* Mobile Input Fix: Input box goes full width on top row */
             #prompt-input { order: -1; flex: 1 1 100%; margin-bottom: 8px; }
             .lang-select { flex: 1; }
             #send-btn { flex: 1; }
@@ -269,6 +266,15 @@
             commitLog('INFO', 'SYS', 'Active structural telemetry log terminal cleared.');
         }
 
+        // Dummy functions to prevent errors when UI buttons are clicked
+        function triggerDevAction(action) {
+            commitLog('INFO', 'DEV', `Triggered Action: ${action}`);
+        }
+
+        function startVoiceEngine() {
+            commitLog('WARNING', 'MIC', 'Voice engine module is currently on STANDBY.');
+        }
+
         async function runTelemetryStream() {
             try {
                 const res = await fetch('/api/telemetry');
@@ -316,9 +322,4 @@
             chatBox.scrollTop = chatBox.scrollHeight;
         }
 
-        async function executeSecureDispatch() {
-            const input = promptInput.value.trim();
-            if (!input) return;
-
-            appendMessageFrame('Dev', input, 'msg-dev');
-            promp
+        // Enter press event listen
