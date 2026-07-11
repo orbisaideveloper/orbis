@@ -7,7 +7,8 @@ import { BrainHub } from './brain/core/BrainHub.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const PORT = 3000;
+// ক্লাউড সার্ভারের জন্য ডাইনামিক পোর্ট সেটআপ
+const PORT = process.env.PORT || 3000;
 const brain = new BrainHub();
 
 const server = http.createServer(async (req, res) => {
@@ -24,14 +25,13 @@ const server = http.createServer(async (req, res) => {
       res.end(data);
     });
   } 
-  // ২. কনসোল থেকে ব্রেইনে প্রম্পট পাঠানোর API API Gateway
+  // ২. কনসোল থেকে ব্রেইনে প্রম্পট পাঠানোর API Gateway
   else if (req.method === 'POST' && req.url === '/api/chat') {
     let body = '';
     req.on('data', chunk => { body += chunk.toString(); });
     req.on('end', async () => {
       try {
         const { prompt } = JSON.parse(body);
-        // BrainHub এর মাধ্যমে প্রসেস করা হচ্ছে
         const result = await brain.processRequest(prompt);
         
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -48,5 +48,5 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`[ORBIS Engine] Developer Preview Console live at http://localhost:${PORT}`);
+  console.log(`[ORBIS Engine] Developer Preview Console live on port ${PORT}`);
 });
