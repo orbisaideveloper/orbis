@@ -21,10 +21,14 @@ export class MemoryEngine {
   async saveMemory(category, key, value) {
     if (!key) throw new Error("Key cannot be null or undefined");
     
-    // Route to specific maps for backward compatibility
-    if (category === 'user') this.userMemory.set(key, value);
-    else if (category === 'project') this.projectMemory.set(key, value);
-    else this.cache.set(`${category}_${key}`, value);
+    if (category === 'user') {
+      this.userMemory.set(key, value);
+    } else if (category === 'project') {
+      if (!this.projectMemory.has(key)) this.projectMemory.set(key, []);
+      this.projectMemory.get(key).push(value); // Push to array
+    } else {
+      this.cache.set(`${category}_${key}`, value);
+    }
 
     if (this.repository) {
       await this.repository.save(category, key, value).catch(() => {});
@@ -46,26 +50,31 @@ export class MemoryEngine {
       const dbValue = await this.repository.get(category, key);
       if (dbValue !== null) {
         if (category === 'user') this.userMemory.set(key, dbValue);
-        else if (category === 'project') this.projectMemory.set(key, dbValue);
+        else if (category === 'project') this.projectMemory.set(key, dbValue); // Assume DB returns array
         else this.cache.set(`${category}_${key}`, dbValue);
         return dbValue;
       }
     }
-    return null;
+    return category === 'project' ? [] : null; // Return empty array for projects
   }
 
   // ==============================================================
   // ⚠️ EXACT BACKWARD COMPATIBILITY (Restored for Phase 1-4 Tests)
   // ==============================================================
   
-  saveProjectData(key, value) {
-    if (!key) throw new Error("Key is required");
-    this.projectMemory.set(key, value);
+  saveProjectData(projectId, data) {
+    if (!projectId) throw new Error("Key is required");
+    // Ensure it's stored as an Array so `.length` works in tests
+    if (!this.projectMemory.has(projectId)) {
+      this.projectMemory.set(projectId, []);
+    }
+    this.projectMemory.get(projectId).push(data);
   }
 
-  getProjectData(key) {
-    if (!key) throw new Error("Key is required");
-    return this.projectMemory.get(key) || null;
+  getProjectData(projectId) {
+    if (!projectId) throw new Error("Key is required");
+    // Return the array, or an empty array if not found
+    return this.projectMemory.get(projectId) || [];
   }
 
   saveUserDetail(key, value) {
