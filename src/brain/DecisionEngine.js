@@ -1,4 +1,4 @@
-import { MockProvider } from '../providers/MockProvider.js';
+import { MockProvider } from './providers/MockProvider.js';
 
 export class DecisionEngine {
   constructor() {
