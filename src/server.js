@@ -1,69 +1,41 @@
-import http from 'http';
-import fs from 'fs';
+import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { BrainHub } from './brain/core/BrainHub.js';
+import { GeminiProvider } from './brain/providers/GeminiProvider.js';
 
+// ES Module এ __dirname সাপোর্ট করানোর জন্য
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const PORT = process.env.PORT || 3000;
-const brain = new BrainHub();
+const app = express();
+const port = process.env.PORT || 3000;
 
-const server = http.createServer(async (req, res) => {
-  // Step 1: Stabilize Console (CORS & Security Headers)
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+// JSON ডেটা রিসিভ করার জন্য মিডলওয়্যার
+app.use(express.json());
 
-  // Handle Browser Preflight requests
-  if (req.method === 'OPTIONS') {
-    res.writeHead(200);
-    return res.end();
-  }
+// আমাদের নতুন frontend ফোল্ডারটিকে সার্ভারের সাথে যুক্ত করা হলো
+app.use(express.static(path.join(__dirname, '../frontend')));
 
-  // Route 1: Load Developer Preview Console UI
-  if (req.method === 'GET' && (req.url === '/' || req.url === '/index.html')) {
-    const htmlPath = path.join(__dirname, 'console', 'index.html');
-    fs.readFile(htmlPath, 'utf8', (err, data) => {
-      if (err) {
-        // Step 2: Ensure errors return valid JSON
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: false, error: 'Error loading Console UI' }));
-        return;
-      }
-      res.writeHead(200, { 'Content-Type': 'text/html' });
-      res.end(data);
-    });
-  } 
-  // Route 2: API Gateway for BrainHub
-  else if (req.method === 'POST' && req.url.includes('/api/chat')) {
-    let body = '';
-    req.on('data', chunk => { body += chunk.toString(); });
-    req.on('end', async () => {
-      try {
-        const parsedBody = body ? JSON.parse(body) : {};
-        const prompt = parsedBody.prompt || "Empty prompt";
+// জেমিনি প্রোভাইডার ইনিশিয়ালাইজ করা (Render থেকে API Key নেবে)
+const gemini = new GeminiProvider(process.env.GEMINI_API_KEY);
+
+// এপিআই রুট - যেখান থেকে চ্যাটের ইনপুট আসবে এবং আউটপুট যাবে
+app.post('/api/chat', async (req, res) => {
+    try {
+        const { prompt } = req.body;
         
-        // Step 3: Verify BrainHub -> Decision -> MockProvider execution
-        const result = await brain.processRequest(prompt);
+        // জেমিনি প্রোভাইডারের মাধ্যমে প্রসেস করা
+        const responseText = await gemini.process(prompt);
         
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(result));
-      } catch (error) {
-        console.error("[Server Error]", error);
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: false, error: error.message }));
-      }
-    });
-  } 
-  // Route 3: Catch-all MUST return valid JSON (Fulfilling Rule #2)
-  else {
-    res.writeHead(404, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ success: false, error: `Route ${req.method} ${req.url} not found` }));
-  }
+        // সফল হলে ইউজারের কাছে শুধু টেক্সট পাঠানো
+        res.json({ success: true, response: responseText });
+    } catch (error) {
+        console.error("Chat API Error:", error);
+        res.status(500).json({ success: false, response: "Internal System Error" });
+    }
 });
 
-server.listen(PORT, () => {
-  console.log(`[ORBIS Engine] Developer Preview Console live on port ${PORT}`);
+// সার্ভার চালু করা
+app.listen(port, () => {
+    console.log(`ORBIS Server is online and listening on port ${port}`);
 });

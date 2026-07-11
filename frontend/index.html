@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ORBIS Developer Console</title>
+    <!-- আইকনের জন্য FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --panel-bg: #111827;
+            --saffron: #FF9933;
+            --white: #FFFFFF;
+            --green: #138808;
+            --border-color: #374151;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--white);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            padding: 10px;
+        }
+
+        .console-container {
+            width: 100%;
+            max-width: 900px;
+            height: 90vh;
+            background-color: var(--panel-bg);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        /* ইন্ডিয়ান ফ্ল্যাগের গ্রেডিয়েন্ট বর্ডার ইফেক্ট */
+        .console-container::before {
+            content: "";
+            position: absolute;
+            top: -2px; left: -2px; right: -2px; bottom: -2px;
+            background: linear-gradient(135deg, var(--saffron), var(--white), var(--green));
+            z-index: -1;
+            border-radius: 14px;
+            animation: borderGlow 5s linear infinite;
+        }
+
+        @keyframes borderGlow {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; box-shadow: 0 0 15px var(--saffron), 0 0 15px var(--green); }
+        }
+
+        .header {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            background: linear-gradient(to right, var(--saffron), var(--white), var(--green));
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        .chat-area {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            max-width: 85%;
+            padding: 10px 15px;
+            border-radius: 8px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        .msg-dev {
+            align-self: flex-end;
+            background-color: rgba(255, 153, 51, 0.1);
+            border-left: 4px solid var(--saffron);
+            color: var(--white);
+        }
+
+        .msg-orbis {
+            align-self: flex-start;
+            background-color: rgba(19, 136, 8, 0.1);
+            border-left: 4px solid var(--green);
+            color: var(--green);
+        }
+
+        .input-area {
+            padding: 15px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background-color: #1f2937;
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+        }
+
+        .icon-btn {
+            background: none;
+            border: none;
+            color: var(--white);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+
+        .icon-btn:hover { background-color: var(--border-color); }
+        #file-btn { color: var(--saffron); }
+        #mic-btn { color: var(--white); }
+        
+        .recording { color: var(--green) !important; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+
+        input[type="text"] {
+            flex: 1;
+            background-color: transparent;
+            border: none;
+            color: var(--white);
+            font-size: 1rem;
+            outline: none;
+            padding: 10px;
+        }
+
+        #send-btn {
+            background-color: var(--green);
+            color: var(--white);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        #send-btn:hover { background-color: #0f6c06; }
+        #file-input { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="console-container">
+        <div class="header">🚀 ORBIS Developer Preview Console</div>
+        
+        <div class="chat-area" id="chat-box">
+            <div class="message msg-orbis">
+                <strong>ORBIS:</strong> System Online. Secure Developer Channel active. How can I assist you today?
+            </div>
+        </div>
+
+        <div class="input-area">
+            <input type="file" id="file-input" accept="image/*,.pdf,.txt">
+            <button class="icon-btn" id="file-btn" onclick="document.getElementById('file-input').click()">
+                <i class="fa-solid fa-plus"></i>
+            </button>
+
+            <input type="text" id="prompt-input" placeholder="Type a message or use the mic..." autocomplete="off">
+            
+            <button class="icon-btn" id="mic-btn" onclick="startVoice()">
+                <i class="fa-solid fa-microphone"></i>
+            </button>
+
+            <button id="send-btn" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const chatBox = document.getElementById('chat-box');
+        const promptInput = document.getElementById('prompt-input');
+        const micBtn = document.getElementById('mic-btn');
+
+        function appendUserMessage(text) {
+            chatBox.innerHTML += `<div class="message msg-dev"><strong>Dev:</strong> ${text}</div>`;
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function appendOrbisMessage(text) {
+            // বোল্ড (**) টেক্সটগুলোকে HTML এর <strong> ট্যাগে কনভার্ট করার জন্য ছোট্ট লজিক
+            const formattedText = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            chatBox.innerHTML += `<div class="message msg-orbis"><strong>ORBIS:</strong> ${formattedText}</div>`;
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const text = promptInput.value.trim();
+            if (!text) return;
+
+            appendUserMessage(text);
+            promptInput.value = '';
+
+            try {
+                // সার্ভারের /api/chat এন্ডপয়েন্টে রিকোয়েস্ট পাঠানো হচ্ছে
+                const response = await fetch('/api/chat', { 
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: text })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.response) {
+                    appendOrbisMessage(data.response);
+                } else {
+                    appendOrbisMessage("Error processing response from BrainHub.");
+                }
+            } catch (error) {
+                appendOrbisMessage("System Error: Could not connect to the server.");
+            }
+        }
+
+        promptInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        // ভয়েস ইনপুট
+        function startVoice() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                alert("Your browser does not support voice input.");
+                return;
+            }
+
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'en-US'; 
+            recognition.interimResults = false;
+
+            recognition.onstart = function() { micBtn.classList.add('recording'); };
+            
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                promptInput.value = transcript;
+                micBtn.classList.remove('recording');
+            };
+
+            recognition.onerror = function() { micBtn.classList.remove('recording'); };
+            recognition.onend = function() { micBtn.classList.remove('recording'); };
+
+            recognition.start();
+        }
+    </script>
+</body>
+</html>
