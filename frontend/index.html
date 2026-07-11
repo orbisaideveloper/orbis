@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ORBIS Developer Console</title>
+    <title>ORBIS Engineering Control Center</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
         :root {
-            --bg-color: #f3f4f6; /* লাইট গ্রে ব্যাকগ্রাউন্ড */
-            --panel-bg: #ffffff; /* হোয়াইট প্যানেল */
-            --text-main: #1f2937; /* ডার্ক টেক্সট */
-            --saffron: #d97706; /* রিডেবল গেরুয়া */
-            --green: #15803d; /* রিডেবল সবুজ */
+            --bg-color: #f3f4f6;
+            --panel-bg: #ffffff;
+            --text-main: #1f2937;
+            --saffron: #d97706;
+            --green: #15803d;
             --border-color: #e5e7eb;
         }
 
@@ -27,7 +27,6 @@
             gap: 10px;
         }
 
-        /* লেআউট: ডেক্সটপে ২ কলাম, মোবাইলে ১ কলাম */
         .dashboard-wrapper {
             display: flex;
             width: 100%;
@@ -37,7 +36,7 @@
             flex-direction: row;
         }
 
-        /* বাম দিকের প্যানেল (টেলিমেট্রি ও লগস) */
+        /* টেলিমেট্রি প্যানেল */
         .telemetry-panel {
             flex: 1;
             background-color: var(--panel-bg);
@@ -76,10 +75,11 @@
         .status-box span { font-weight: bold; display: block; margin-top: 5px; }
         .text-green { color: var(--green); }
         .text-saffron { color: var(--saffron); }
+        .text-gray { color: #6b7280; }
 
         .logs-container {
             flex: 1;
-            background-color: #1e293b; /* লগের জায়গাটা ডার্ক রাখলাম ডেভেলপার ফিল আসার জন্য */
+            background-color: #1e293b;
             color: #10b981;
             padding: 15px;
             font-size: 0.85rem;
@@ -87,7 +87,7 @@
             border-top: 1px solid var(--border-color);
         }
 
-        /* ডান দিকের প্যানেল (চ্যাট/ব্রেইনহাব) */
+        /* চ্যাট প্যানেল */
         .chat-panel {
             flex: 2;
             background-color: var(--panel-bg);
@@ -120,17 +120,14 @@
             align-self: flex-end;
             background-color: #fffbeb;
             border-right: 4px solid var(--saffron);
-            color: var(--text-main);
         }
 
         .msg-orbis {
             align-self: flex-start;
             background-color: #f0fdf4;
             border-left: 4px solid var(--green);
-            color: var(--text-main);
         }
 
-        /* ইনপুট এরিয়া ফিক্স করা হয়েছে (আর বাইরে যাবে না) */
         .input-area {
             padding: 10px;
             border-top: 1px solid var(--border-color);
@@ -143,16 +140,27 @@
         .icon-btn {
             background: none; border: none; font-size: 1.2rem;
             cursor: pointer; padding: 10px; border-radius: 5px;
+            color: var(--text-main);
         }
-        #file-btn { color: var(--saffron); }
-        #mic-btn { color: var(--text-main); }
         
         .recording { color: red !important; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
+        /* ল্যাঙ্গুয়েজ সিলেক্টর ড্রপডাউন */
+        select.lang-select {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 8px 5px;
+            border-radius: 5px;
+            outline: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
         input[type="text"] {
             flex: 1;
-            min-width: 0; /* ওভারফ্লো ফিক্স */
+            min-width: 0;
             background-color: var(--panel-bg);
             border: 1px solid var(--border-color);
             color: var(--text-main);
@@ -170,10 +178,9 @@
         #send-btn:disabled { background-color: gray; cursor: not-allowed; }
         #file-input { display: none; }
 
-        /* মোবাইল রেসপন্সিভ */
         @media (max-width: 768px) {
             .dashboard-wrapper { flex-direction: column; }
-            .telemetry-panel { min-height: 250px; flex: none; }
+            .telemetry-panel { min-height: 280px; flex: none; }
             .chat-panel { flex: 1; }
         }
     </style>
@@ -181,30 +188,43 @@
 <body>
 
     <div class="dashboard-wrapper">
+        <!-- রিয়েল-টাইম টেলিমেট্রি প্যানেল -->
         <div class="telemetry-panel">
             <div class="panel-header">⚙️ System Telemetry</div>
             <div class="status-grid">
-                <div class="status-box">BrainHub <span class="text-green">ONLINE</span></div>
-                <div class="status-box">Provider <span class="text-saffron">Gemini-3.5</span></div>
-                <div class="status-box">Memory <span class="text-saffron">STANDBY</span></div>
+                <div class="status-box">BrainHub <span id="tel-brainhub" class="text-gray">FETCHING...</span></div>
+                <div class="status-box">Provider <span id="tel-provider" class="text-gray">FETCHING...</span></div>
+                <div class="status-box">Memory <span id="tel-memory" class="text-gray">FETCHING...</span></div>
+                <div class="status-box">RAM Usage <span id="tel-ram" class="text-gray">-- MB</span></div>
+                <div class="status-box">Uptime <span id="tel-uptime" class="text-gray">-- s</span></div>
                 <div class="status-box">Ping <span id="ping-status" class="text-green">-- ms</span></div>
             </div>
             <div class="logs-container" id="log-box">
                 > System Boot Sequence Initiated...<br>
-                > UI Module Loaded Successfully.<br>
+                > Telemetry Link Established.<br>
             </div>
         </div>
 
+        <!-- কন্ট্রোল সেন্টার ইন্টারফেস -->
         <div class="chat-panel">
             <div class="panel-header">🚀 ORBIS Dev Bridge</div>
             <div class="chat-area" id="chat-box"></div>
 
             <div class="input-area">
                 <input type="file" id="file-input">
-                <button class="icon-btn" id="file-btn" onclick="document.getElementById('file-input').click()">
+                <button class="icon-btn" id="file-btn" onclick="document.getElementById('file-input').click()" style="color: var(--saffron);">
                     <i class="fa-solid fa-paperclip"></i>
                 </button>
+                
                 <input type="text" id="prompt-input" placeholder="Enter prompt..." autocomplete="off">
+                
+                <!-- ডাইনামিক ল্যাঙ্গুয়েজ সিলেক্টর -->
+                <select id="lang-select" class="lang-select">
+                    <option value="en-US">EN</option>
+                    <option value="bn-IN">BN</option>
+                    <option value="hi-IN">HI</option>
+                </select>
+
                 <button class="icon-btn" id="mic-btn" onclick="startVoice()">
                     <i class="fa-solid fa-microphone"></i>
                 </button>
@@ -219,7 +239,45 @@
         const sendBtn = document.getElementById('send-btn');
         const logBox = document.getElementById('log-box');
         const pingStatus = document.getElementById('ping-status');
+        const langSelect = document.getElementById('lang-select');
 
+        // ==========================================
+        // 🔄 REAL-TIME TELEMETRY SYSTEM
+        // ==========================================
+        async function fetchTelemetry() {
+            try {
+                const res = await fetch('/api/telemetry');
+                const json = await res.json();
+                if (json.success) {
+                    const data = json.data;
+                    document.getElementById('tel-brainhub').innerText = data.brainHub.status;
+                    document.getElementById('tel-brainhub').className = "text-green";
+                    
+                    document.getElementById('tel-provider').innerText = data.provider.model;
+                    document.getElementById('tel-provider').className = "text-saffron";
+                    
+                    document.getElementById('tel-memory').innerText = data.memoryEngine.status;
+                    document.getElementById('tel-memory').className = "text-saffron";
+                    
+                    document.getElementById('tel-ram').innerText = data.memoryEngine.ramUsageMB + ' MB';
+                    document.getElementById('tel-ram').className = "text-green";
+
+                    document.getElementById('tel-uptime').innerText = data.brainHub.uptime + 's';
+                    document.getElementById('tel-uptime').className = "text-green";
+                }
+            } catch (error) {
+                document.getElementById('tel-brainhub').innerText = "OFFLINE";
+                document.getElementById('tel-brainhub').className = "text-gray";
+            }
+        }
+        
+        // প্রতি ৫ সেকেন্ড পর পর সার্ভার থেকে আসল ডেটা টানবে
+        setInterval(fetchTelemetry, 5000);
+        fetchTelemetry(); // পেজ লোড হওয়ার সাথে সাথে একবার কল
+
+        // ==========================================
+        // 💬 CHAT & LOGGING SYSTEM
+        // ==========================================
         function addLog(message) {
             const time = new Date().toLocaleTimeString();
             logBox.innerHTML += `> [${time}] ${message}<br>`;
@@ -239,10 +297,9 @@
             appendMessage('Dev', text, 'msg-dev');
             promptInput.value = '';
             
-            // UI State change during process
             sendBtn.disabled = true;
             sendBtn.innerText = 'Wait...';
-            addLog(`Requesting BrainHub processing...`);
+            addLog(`Requesting BrainHub...`);
             
             const startTime = Date.now();
 
@@ -257,13 +314,12 @@
                 const timeTaken = Date.now() - startTime;
                 
                 pingStatus.innerText = `${timeTaken} ms`;
-                addLog(`Response received in ${timeTaken}ms.`);
+                addLog(`Response in ${timeTaken}ms.`);
 
                 if (data.success) {
                     appendMessage('ORBIS', data.response, 'msg-orbis');
                 } else {
                     appendMessage('System', 'Error processing response.', 'msg-orbis');
-                    addLog(`ERROR: API request failed.`);
                 }
             } catch (error) {
                 appendMessage('System', 'Connection Error.', 'msg-orbis');
@@ -276,23 +332,40 @@
 
         promptInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
 
+        // ==========================================
+        // 🎤 MULTI-LANGUAGE VOICE INPUT
+        // ==========================================
         function startVoice() {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SpeechRecognition) return alert("Voice not supported here.");
+            if (!SpeechRecognition) return alert("Voice not supported in this browser.");
             
             const recognition = new SpeechRecognition();
             const micBtn = document.getElementById('mic-btn');
             
-            recognition.onstart = () => micBtn.classList.add('recording');
-            recognition.onresult = (e) => promptInput.value = e.results[0][0].transcript;
+            // সিলেক্ট করা ভাষা অনুযায়ী মাইক কাজ করবে
+            recognition.lang = langSelect.value; 
+            
+            recognition.onstart = () => {
+                micBtn.classList.add('recording');
+                addLog(`Voice input started (${langSelect.value})...`);
+            };
+            
+            recognition.onresult = (e) => {
+                promptInput.value = e.results[0][0].transcript;
+                addLog(`Voice transcribed successfully.`);
+            };
+            
             recognition.onend = () => micBtn.classList.remove('recording');
+            recognition.onerror = (e) => {
+                micBtn.classList.remove('recording');
+                addLog(`Voice Error: ${e.error}`);
+            };
+            
             recognition.start();
         }
 
-        // Initial Boot Message
         setTimeout(() => {
             appendMessage('ORBIS', 'System Ready. Awaiting developer input...', 'msg-orbis');
-            addLog(`Ready for connections.`);
         }, 500);
     </script>
 </body>
