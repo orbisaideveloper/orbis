@@ -1,11 +1,8 @@
-});
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
-// ESM-এ ফাইল ইমপোর্টের সময় শেষে .js দেওয়া বাধ্যতামূলক
 import { getTelemetryData } from './brain/telemetry.js'; 
 
-// ES Module-এর জন্য __dirname তৈরি করা
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
