@@ -1,21 +1,25 @@
-const express = require('express');
-const path = require('path');
-const { getTelemetryData } = require('./brain/telemetry'); 
+});
+import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
+// ESM-এ ফাইল ইমপোর্টের সময় শেষে .js দেওয়া বাধ্যতামূলক
+import { getTelemetryData } from './brain/telemetry.js'; 
+
+// ES Module-এর জন্য __dirname তৈরি করা
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json()); 
 
-// ফ্রন্টএন্ড ফোল্ডারকে সার্ভারের সাথে সরাসরি হোস্ট করা হলো
 app.use(express.static(path.join(__dirname, '../frontend')));
 
-// কেউ মূল লিংকে (/) গেলে যেন index.html দেখতে পায়
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
 
-// --- টেলিমেট্রি এন্ডপয়েন্ট ---
 app.get('/api/telemetry', (req, res) => {
     try {
         const telemetryStats = getTelemetryData();
@@ -29,7 +33,6 @@ app.get('/api/telemetry', (req, res) => {
     }
 });
 
-// --- চ্যাট রিসিভার এন্ডপয়েন্ট ---
 app.post('/api/chat', async (req, res) => {
     try {
         const userPrompt = req.body.prompt;

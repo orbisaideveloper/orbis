@@ -1,4 +1,4 @@
-const os = require('os');
+import os from 'os';
 
 const systemState = {
     workflowState: 'IDLE',
@@ -11,7 +11,6 @@ const getTelemetryData = () => {
     const freeMemory = os.freemem();
     const usedMemory = totalMemory - freeMemory;
 
-    // আপনার ড্যাশবোর্ড ঠিক যেভাবে ডেটা খুঁজছে, সেই স্ট্রাকচারে ডেটা পাঠানো হচ্ছে
     return {
         brainHub: {
             status: 'ONLINE',
@@ -32,7 +31,8 @@ const updateWorkflowState = (newState) => { systemState.workflowState = newState
 const logSystemError = () => { systemState.errorCount += 1; };
 const logRequest = () => { systemState.requestCount += 1; };
 
-module.exports = {
+// মডার্ন ES Module Export
+export {
     getTelemetryData,
     updateWorkflowState,
     logSystemError,
