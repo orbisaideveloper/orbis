@@ -4,74 +4,98 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ORBIS Developer Console</title>
-    <!-- আইকনের জন্য FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
         :root {
-            --bg-color: #0b0f19;
-            --panel-bg: #111827;
-            --saffron: #FF9933;
-            --white: #FFFFFF;
-            --green: #138808;
-            --border-color: #374151;
+            --bg-color: #f3f4f6; /* লাইট গ্রে ব্যাকগ্রাউন্ড */
+            --panel-bg: #ffffff; /* হোয়াইট প্যানেল */
+            --text-main: #1f2937; /* ডার্ক টেক্সট */
+            --saffron: #d97706; /* রিডেবল গেরুয়া */
+            --green: #15803d; /* রিডেবল সবুজ */
+            --border-color: #e5e7eb;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Courier New', Courier, monospace;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Courier New', Courier, monospace; }
 
         body {
             background-color: var(--bg-color);
-            color: var(--white);
+            color: var(--text-main);
             display: flex;
-            justify-content: center;
-            align-items: center;
             height: 100vh;
             padding: 10px;
+            gap: 10px;
         }
 
-        .console-container {
+        /* লেআউট: ডেক্সটপে ২ কলাম, মোবাইলে ১ কলাম */
+        .dashboard-wrapper {
+            display: flex;
             width: 100%;
-            max-width: 900px;
-            height: 90vh;
+            max-width: 1200px;
+            margin: 0 auto;
+            gap: 15px;
+            flex-direction: row;
+        }
+
+        /* বাম দিকের প্যানেল (টেলিমেট্রি ও লগস) */
+        .telemetry-panel {
+            flex: 1;
             background-color: var(--panel-bg);
-            border-radius: 12px;
+            border-radius: 8px;
+            border-top: 4px solid var(--saffron);
             display: flex;
             flex-direction: column;
-            position: relative;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            min-width: 300px;
         }
 
-        /* ইন্ডিয়ান ফ্ল্যাগের গ্রেডিয়েন্ট বর্ডার ইফেক্ট */
-        .console-container::before {
-            content: "";
-            position: absolute;
-            top: -2px; left: -2px; right: -2px; bottom: -2px;
-            background: linear-gradient(135deg, var(--saffron), var(--white), var(--green));
-            z-index: -1;
-            border-radius: 14px;
-            animation: borderGlow 5s linear infinite;
-        }
-
-        @keyframes borderGlow {
-            0%, 100% { opacity: 0.8; }
-            50% { opacity: 1; box-shadow: 0 0 15px var(--saffron), 0 0 15px var(--green); }
-        }
-
-        .header {
-            padding: 15px 20px;
+        .panel-header {
+            padding: 12px;
+            background-color: #f8fafc;
             border-bottom: 1px solid var(--border-color);
-            text-align: center;
-            font-size: 1.2rem;
             font-weight: bold;
-            letter-spacing: 2px;
-            background: linear-gradient(to right, var(--saffron), var(--white), var(--green));
-            -webkit-background-clip: text;
-            color: transparent;
+            text-align: center;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            padding: 15px;
+        }
+
+        .status-box {
+            background-color: #f8fafc;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            font-size: 0.85rem;
+        }
+
+        .status-box span { font-weight: bold; display: block; margin-top: 5px; }
+        .text-green { color: var(--green); }
+        .text-saffron { color: var(--saffron); }
+
+        .logs-container {
+            flex: 1;
+            background-color: #1e293b; /* লগের জায়গাটা ডার্ক রাখলাম ডেভেলপার ফিল আসার জন্য */
+            color: #10b981;
+            padding: 15px;
+            font-size: 0.85rem;
+            overflow-y: auto;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* ডান দিকের প্যানেল (চ্যাট/ব্রেইনহাব) */
+        .chat-panel {
+            flex: 2;
+            background-color: var(--panel-bg);
+            border-radius: 8px;
+            border-top: 4px solid var(--green);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
 
         .chat-area {
@@ -85,121 +109,126 @@
 
         .message {
             max-width: 85%;
-            padding: 10px 15px;
+            padding: 12px 15px;
             border-radius: 8px;
             line-height: 1.5;
             word-wrap: break-word;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
 
         .msg-dev {
             align-self: flex-end;
-            background-color: rgba(255, 153, 51, 0.1);
-            border-left: 4px solid var(--saffron);
-            color: var(--white);
+            background-color: #fffbeb;
+            border-right: 4px solid var(--saffron);
+            color: var(--text-main);
         }
 
         .msg-orbis {
             align-self: flex-start;
-            background-color: rgba(19, 136, 8, 0.1);
+            background-color: #f0fdf4;
             border-left: 4px solid var(--green);
-            color: var(--green);
+            color: var(--text-main);
         }
 
+        /* ইনপুট এরিয়া ফিক্স করা হয়েছে (আর বাইরে যাবে না) */
         .input-area {
-            padding: 15px;
+            padding: 10px;
             border-top: 1px solid var(--border-color);
             display: flex;
             align-items: center;
-            gap: 10px;
-            background-color: #1f2937;
-            border-bottom-left-radius: 12px;
-            border-bottom-right-radius: 12px;
+            gap: 8px;
+            background-color: #f8fafc;
         }
 
         .icon-btn {
-            background: none;
-            border: none;
-            color: var(--white);
-            font-size: 1.2rem;
-            cursor: pointer;
-            padding: 10px;
-            border-radius: 50%;
-            transition: 0.3s;
+            background: none; border: none; font-size: 1.2rem;
+            cursor: pointer; padding: 10px; border-radius: 5px;
         }
-
-        .icon-btn:hover { background-color: var(--border-color); }
         #file-btn { color: var(--saffron); }
-        #mic-btn { color: var(--white); }
+        #mic-btn { color: var(--text-main); }
         
-        .recording { color: var(--green) !important; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        .recording { color: red !important; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
         input[type="text"] {
             flex: 1;
-            background-color: transparent;
-            border: none;
-            color: var(--white);
+            min-width: 0; /* ওভারফ্লো ফিক্স */
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
             font-size: 1rem;
             outline: none;
-            padding: 10px;
+            padding: 12px;
+            border-radius: 6px;
         }
 
         #send-btn {
-            background-color: var(--green);
-            color: var(--white);
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
+            background-color: var(--green); color: white;
+            border: none; padding: 12px 18px; border-radius: 6px;
+            font-weight: bold; cursor: pointer; white-space: nowrap;
         }
-
-        #send-btn:hover { background-color: #0f6c06; }
+        #send-btn:disabled { background-color: gray; cursor: not-allowed; }
         #file-input { display: none; }
+
+        /* মোবাইল রেসপন্সিভ */
+        @media (max-width: 768px) {
+            .dashboard-wrapper { flex-direction: column; }
+            .telemetry-panel { min-height: 250px; flex: none; }
+            .chat-panel { flex: 1; }
+        }
     </style>
 </head>
 <body>
 
-    <div class="console-container">
-        <div class="header">🚀 ORBIS Developer Preview Console</div>
-        
-        <div class="chat-area" id="chat-box">
-            <div class="message msg-orbis">
-                <strong>ORBIS:</strong> System Online. Secure Developer Channel active. How can I assist you today?
+    <div class="dashboard-wrapper">
+        <div class="telemetry-panel">
+            <div class="panel-header">⚙️ System Telemetry</div>
+            <div class="status-grid">
+                <div class="status-box">BrainHub <span class="text-green">ONLINE</span></div>
+                <div class="status-box">Provider <span class="text-saffron">Gemini-3.5</span></div>
+                <div class="status-box">Memory <span class="text-saffron">STANDBY</span></div>
+                <div class="status-box">Ping <span id="ping-status" class="text-green">-- ms</span></div>
+            </div>
+            <div class="logs-container" id="log-box">
+                > System Boot Sequence Initiated...<br>
+                > UI Module Loaded Successfully.<br>
             </div>
         </div>
 
-        <div class="input-area">
-            <input type="file" id="file-input" accept="image/*,.pdf,.txt">
-            <button class="icon-btn" id="file-btn" onclick="document.getElementById('file-input').click()">
-                <i class="fa-solid fa-plus"></i>
-            </button>
+        <div class="chat-panel">
+            <div class="panel-header">🚀 ORBIS Dev Bridge</div>
+            <div class="chat-area" id="chat-box"></div>
 
-            <input type="text" id="prompt-input" placeholder="Type a message or use the mic..." autocomplete="off">
-            
-            <button class="icon-btn" id="mic-btn" onclick="startVoice()">
-                <i class="fa-solid fa-microphone"></i>
-            </button>
-
-            <button id="send-btn" onclick="sendMessage()">Send</button>
+            <div class="input-area">
+                <input type="file" id="file-input">
+                <button class="icon-btn" id="file-btn" onclick="document.getElementById('file-input').click()">
+                    <i class="fa-solid fa-paperclip"></i>
+                </button>
+                <input type="text" id="prompt-input" placeholder="Enter prompt..." autocomplete="off">
+                <button class="icon-btn" id="mic-btn" onclick="startVoice()">
+                    <i class="fa-solid fa-microphone"></i>
+                </button>
+                <button id="send-btn" onclick="sendMessage()">Send</button>
+            </div>
         </div>
     </div>
 
     <script>
         const chatBox = document.getElementById('chat-box');
         const promptInput = document.getElementById('prompt-input');
-        const micBtn = document.getElementById('mic-btn');
+        const sendBtn = document.getElementById('send-btn');
+        const logBox = document.getElementById('log-box');
+        const pingStatus = document.getElementById('ping-status');
 
-        function appendUserMessage(text) {
-            chatBox.innerHTML += `<div class="message msg-dev"><strong>Dev:</strong> ${text}</div>`;
-            chatBox.scrollTop = chatBox.scrollHeight;
+        function addLog(message) {
+            const time = new Date().toLocaleTimeString();
+            logBox.innerHTML += `> [${time}] ${message}<br>`;
+            logBox.scrollTop = logBox.scrollHeight;
         }
 
-        function appendOrbisMessage(text) {
-            // বোল্ড (**) টেক্সটগুলোকে HTML এর <strong> ট্যাগে কনভার্ট করার জন্য ছোট্ট লজিক
+        function appendMessage(sender, text, className) {
             const formattedText = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-            chatBox.innerHTML += `<div class="message msg-orbis"><strong>ORBIS:</strong> ${formattedText}</div>`;
+            chatBox.innerHTML += `<div class="message ${className}"><strong>${sender}:</strong> ${formattedText}</div>`;
             chatBox.scrollTop = chatBox.scrollHeight;
         }
 
@@ -207,11 +236,17 @@
             const text = promptInput.value.trim();
             if (!text) return;
 
-            appendUserMessage(text);
+            appendMessage('Dev', text, 'msg-dev');
             promptInput.value = '';
+            
+            // UI State change during process
+            sendBtn.disabled = true;
+            sendBtn.innerText = 'Wait...';
+            addLog(`Requesting BrainHub processing...`);
+            
+            const startTime = Date.now();
 
             try {
-                // সার্ভারের /api/chat এন্ডপয়েন্টে রিকোয়েস্ট পাঠানো হচ্ছে
                 const response = await fetch('/api/chat', { 
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -219,46 +254,46 @@
                 });
                 
                 const data = await response.json();
+                const timeTaken = Date.now() - startTime;
                 
-                if (data.success && data.response) {
-                    appendOrbisMessage(data.response);
+                pingStatus.innerText = `${timeTaken} ms`;
+                addLog(`Response received in ${timeTaken}ms.`);
+
+                if (data.success) {
+                    appendMessage('ORBIS', data.response, 'msg-orbis');
                 } else {
-                    appendOrbisMessage("Error processing response from BrainHub.");
+                    appendMessage('System', 'Error processing response.', 'msg-orbis');
+                    addLog(`ERROR: API request failed.`);
                 }
             } catch (error) {
-                appendOrbisMessage("System Error: Could not connect to the server.");
+                appendMessage('System', 'Connection Error.', 'msg-orbis');
+                addLog(`CRITICAL: Server unreachable.`);
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.innerText = 'Send';
             }
         }
 
-        promptInput.addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') sendMessage();
-        });
+        promptInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
 
-        // ভয়েস ইনপুট
         function startVoice() {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SpeechRecognition) {
-                alert("Your browser does not support voice input.");
-                return;
-            }
-
-            const recognition = new SpeechRecognition();
-            recognition.lang = 'en-US'; 
-            recognition.interimResults = false;
-
-            recognition.onstart = function() { micBtn.classList.add('recording'); };
+            if (!SpeechRecognition) return alert("Voice not supported here.");
             
-            recognition.onresult = function(event) {
-                const transcript = event.results[0][0].transcript;
-                promptInput.value = transcript;
-                micBtn.classList.remove('recording');
-            };
-
-            recognition.onerror = function() { micBtn.classList.remove('recording'); };
-            recognition.onend = function() { micBtn.classList.remove('recording'); };
-
+            const recognition = new SpeechRecognition();
+            const micBtn = document.getElementById('mic-btn');
+            
+            recognition.onstart = () => micBtn.classList.add('recording');
+            recognition.onresult = (e) => promptInput.value = e.results[0][0].transcript;
+            recognition.onend = () => micBtn.classList.remove('recording');
             recognition.start();
         }
+
+        // Initial Boot Message
+        setTimeout(() => {
+            appendMessage('ORBIS', 'System Ready. Awaiting developer input...', 'msg-orbis');
+            addLog(`Ready for connections.`);
+        }, 500);
     </script>
 </body>
 </html>
