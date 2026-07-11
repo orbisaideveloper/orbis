@@ -12,32 +12,27 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # SonarCloud/SonarQube-এর নিখুঁত অ্যানালাইসিসের জন্য এটি বাধ্যতামূলক
 
     - name: Setup Node.js
-      uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a
+      uses: actions/setup-node@v4
       with:
-        node-version: '24'
+        node-version: '20'
         cache: 'npm'
 
     - name: Install dependencies
       run: npm ci
 
-    - name: Run ESLint
+    - name: Run ESLint Check
       run: npm run lint --if-present
 
     - name: Run Jest Tests
       run: npm test
-      env:
-        NODE_OPTIONS: --experimental-vm-modules
 
-    - name: SonarQube Scan
-      if: github.actor != 'dependabot[bot]'
-      uses: SonarSource/sonarcloud-github-action@master
+    - name: SonarCloud Analysis Scan
+      uses: sonarsource/sonarcloud-github-action@master
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      with:
-        args: >
-          -Dsonar.projectKey=orbis
-          -Dsonar.organization=orbis
