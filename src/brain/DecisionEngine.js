@@ -6,6 +6,8 @@ export class DecisionEngine {
   }
 
   async processRequest(input) {
-    return await this.provider.generateResponse(input);
+    // Updated to use the modern execute() method instead of legacy generateResponse()
+    const response = await this.provider.execute(input);
+    return response.data;
   }
 }
