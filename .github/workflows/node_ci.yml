@@ -14,7 +14,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
-        fetch-depth: 0 # SonarCloud/SonarQube-এর নিখুঁত অ্যানালাইসিসের জন্য এটি বাধ্যতামূলক
+        fetch-depth: 0
 
     - name: Setup Node.js
       uses: actions/setup-node@v4
@@ -30,6 +30,8 @@ jobs:
 
     - name: Run Jest Tests
       run: npm test
+      env:
+        NODE_OPTIONS: --experimental-vm-modules
 
     - name: SonarCloud Analysis Scan
       uses: sonarsource/sonarcloud-github-action@master
