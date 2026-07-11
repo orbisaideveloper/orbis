@@ -35,6 +35,13 @@ export class ToolEngine {
     if (!tool) {
       throw new Error(`Tool [${name}] is not registered or active in the system.`);
     }
-    return await tool.execute(params);
+    
+    // Safety Net: Catch tool execution errors so the AI system doesn't crash
+    try {
+      return await tool.execute(params);
+    } catch (error) {
+      // Backward compatibility: Return structured error instead of crashing
+      return { success: false, error: error.message };
+    }
   }
 }
