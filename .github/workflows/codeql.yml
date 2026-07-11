@@ -24,12 +24,15 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4 # লেটেস্ট সিকিউরিটির জন্য v4 করা হলো
 
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v3
       with:
         languages: ${{ matrix.language }}
+
+    - name: Autobuild
+      uses: github/codeql-action/autobuild@v3 # কোড বিল্ড করার জন্য এই লাইনটা জরুরি
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
