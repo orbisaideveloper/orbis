@@ -1,55 +1,57 @@
 /**
- * MemoryEngine: The core manager for ORBIS Long-Term Memory.
- * Strictly separates User Memory (personal data/diary) from Project Memory.
+ * MemoryEngine: Core intelligence memory manager.
+ * Uses a fast local cache (RAM) and persists data via MemoryRepository.
  */
 export class MemoryEngine {
-  constructor() {
-    // Modular memory stores (Simulating Vector/DB storage for architecture readiness)
-    this.userMemory = new Map();
-    this.projectMemory = new Map();
-    this.conversationMemory = [];
+  constructor(repository = null) {
+    this.repository = repository;
+    this.cache = new Map();
+    
+    // Backward compatibility for Phase 5 Governance tests
+    this.userMemory = this.cache; 
   }
 
   /**
-   * 1. User Memory: Stores personal preferences, context, and "diary" entries.
+   * Universal async method to save any type of memory (User, Project, Session, etc.)
    */
+  async saveMemory(category, key, value) {
+    const cacheKey = `${category}_${key}`;
+    this.cache.set(cacheKey, value);
+
+    if (this.repository) {
+      await this.repository.save(category, key, value);
+    }
+    return { success: true, category, key };
+  }
+
+  /**
+   * Universal async method to retrieve memory
+   */
+  async getMemory(category, key) {
+    const cacheKey = `${category}_${key}`;
+    
+    // 1. Check fast local RAM cache first
+    if (this.cache.has(cacheKey)) {
+      return this.cache.get(cacheKey);
+    }
+
+    // 2. Fallback to Persistent Database
+    if (this.repository) {
+      const dbValue = await this.repository.get(category, key);
+      if (dbValue !== null) {
+        this.cache.set(cacheKey, dbValue); // Restore to fast cache
+        return dbValue;
+      }
+    }
+    return null;
+  }
+
+  // --- Backward Compatibility Methods for existing System Tests ---
   saveUserDetail(key, value) {
-    if (!key || !value) throw new Error('Key and Value required for User Memory.');
-    this.userMemory.set(key, value);
-    return true;
+    this.saveMemory('user', key, value).catch(() => {}); // Fire and forget async
   }
 
   getUserDetail(key) {
-    return this.userMemory.get(key) || null;
-  }
-
-  /**
-   * 2. Project Memory: Strictly isolated from user's personal data.
-   */
-  saveProjectData(projectId, data) {
-    if (!projectId) throw new Error('Project ID required.');
-    if (!this.projectMemory.has(projectId)) {
-      this.projectMemory.set(projectId, []);
-    }
-    this.projectMemory.get(projectId).push(data);
-    return true;
-  }
-
-  getProjectData(projectId) {
-    return this.projectMemory.get(projectId) || [];
-  }
-
-  /**
-   * 3. Conversation Memory: Remembers the flow of chat so the AI doesn't forget.
-   */
-  saveConversation(role, message) {
-    if (!role || !message) throw new Error('Role and message required.');
-    const entry = { timestamp: Date.now(), role, message };
-    this.conversationMemory.push(entry);
-    return entry;
-  }
-
-  getRecentConversations(limit = 10) {
-    return this.conversationMemory.slice(-limit);
+    return this.cache.get(`user_${key}`) || null;
   }
 }
