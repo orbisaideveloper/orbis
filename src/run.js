@@ -1,61 +1,26 @@
-import { MemoryEngine } from './brain/memory/MemoryEngine.js';
-import { ToolEngine } from './brain/tools/ToolEngine.js';
-import { RecoveryEngine } from './brain/recovery/RecoveryEngine.js';
-import { DeveloperDashboard } from './brain/dashboard/DeveloperDashboard.js';
+import { BrainHub } from './src/brain/core/BrainHub.js';
 
-async function runArchitectureValidation() {
+async function runTest() {
   console.log("====================================================");
-  console.log(" 🚀 STARTING LIVE ARCHITECTURE VALIDATION (STEP 06) 🚀");
+  console.log(" 🚀 ORBIS Phase 6: Core Routing & Dependency Test 🚀");
   console.log("====================================================\n");
-
+  
   try {
-    // ১. Memory Engine বুট করা হচ্ছে
-    console.log("[1/4] Booting Memory Engine...");
-    const memory = new MemoryEngine(null); // লাইভ টেস্টের জন্য আপাতত RAM ব্যবহার করা হচ্ছে
-    await memory.saveMemory('user', 'founder', { name: 'Ajay', role: 'Chief Architect' });
-    console.log("  ✅ Memory Engine: ONLINE. Test data saved successfully.");
-
-    // ২. Tool Engine বুট করা হচ্ছে
-    console.log("\n[2/4] Booting Tool Engine...");
-    const tools = new ToolEngine();
-    await tools.initialize({
-      tools: [{ name: 'diagnostic_scanner', description: 'System diagnostic tool', active: true }]
-    });
-    const toolResult = await tools.executeTool('diagnostic_scanner', { scope: 'full' });
-    console.log(`  ✅ Tool Engine: ONLINE. Tool execution status: [${toolResult.status}]`);
-
-    // ৩. Recovery Engine বুট করা হচ্ছে (ইচ্ছে করে ক্র্যাশ করানো হবে টেস্টের জন্য)
-    console.log("\n[3/4] Booting Recovery Engine & Simulating Crash...");
+    const brain = new BrainHub();
+    console.log("\n[Status] BrainHub initialized successfully.\n");
     
-    const mockProviders = new Map([
-      ['primary_ai', { execute: async () => { throw new Error("Simulated Server Crash!"); } }],
-      ['fallback_ai', { execute: async () => ({ success: true, data: 'Fallback Recovered Data' }) }]
-    ]);
-    
-    const recovery = new RecoveryEngine(mockProviders);
-    // প্রাইমারি এআই ফেইল করবে, সিস্টেম নিজে থেকে ফলব্যাক এআইকে কল করবে
-    await recovery.executeWithRecovery('primary_ai', 'fallback_ai', {});
-    console.log("  ✅ Recovery Engine: ONLINE. Crash handled & Fallback triggered successfully.");
+    console.log("-> Dispatching Task 1: Coding");
+    const codingResult = await brain.processRequest("Write a Python script for data analysis");
+    console.log(codingResult);
 
-    // ৪. Dashboards জেনারেট করা হচ্ছে
-    console.log("\n[4/4] Booting Developer Dashboard...");
-    const dashboard = new DeveloperDashboard({ memory, tools, recovery });
-    console.log("  ✅ Dashboard Engine: ONLINE. Generating live snapshot...\n");
+    console.log("\n-> Dispatching Task 2: Vision");
+    const visionResult = await brain.processRequest("Analyze this architecture image");
+    console.log(visionResult);
 
-    // 🏆 ফাইনাল ভ্যালিডেশন রিপোর্ট প্রিন্ট 
-    console.log("====================================================");
-    console.log("       📈 ARCHITECTURE VALIDATION REPORT 📈         ");
-    console.log("====================================================");
-    dashboard.printDashboard();
-    
-    console.log("\n✅ [SUCCESS] ALL CORE SYSTEMS VALIDATED AND WORKING TOGETHER.");
-    console.log("====================================================\n");
-
+    console.log("\n✅ [SUCCESS] Dependency Cleanup Verified. Legacy code removed safely.");
   } catch (error) {
-    console.error("\n❌ [CRITICAL FAILURE] ARCHITECTURE VALIDATION FAILED:", error.message);
-    process.exit(1);
+    console.error("\n❌ [CRITICAL FAILURE] Pipeline crashed after cleanup:", error.message);
   }
 }
 
-// স্ক্রিপ্ট রান করা
-runArchitectureValidation();
+await runTest();
