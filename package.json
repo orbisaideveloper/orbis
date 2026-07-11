@@ -7,6 +7,6 @@
     "test": "npx jest"
   },
   "dependencies": {
-    "@google/genai": "^0.1.2"
+    "@google/generative-ai": "^0.14.0"
   }
 }
