@@ -7,6 +7,6 @@
     "test": "echo 'No tests defined' && exit 0"
   },
   "dependencies": {
-    "@google/generative-ai": "^0.2.1"
+    "@google/genai": "latest"
   }
 }
