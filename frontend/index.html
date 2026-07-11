@@ -3,19 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ORBIS Engineering Control Center</title>
+    <title>ORBIS Advanced Engineering Control Center</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
         :root {
-            --bg-color: #f1f5f9;
+            --bg-color: #f8fafc;
             --panel-bg: #ffffff;
             --text-main: #0f172a;
             --text-muted: #64748b;
-            --saffron: #d97706;
+            --saffron: #ea580c;
             --green: #16a34a;
+            --red: #dc2626;
+            --blue: #2563eb;
             --border-color: #e2e8f0;
             --dark-log: #0f172a;
+            --box-bg: #f8fafc;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Courier New', Courier, monospace; }
@@ -26,24 +29,27 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
-            padding: 10px;
+            padding: 12px;
+            overflow: hidden;
         }
 
-        /* Top Meta Bar (Step 9) */
+        /* STEP 9: UI Improvements & Meta Bar */
         .meta-bar {
             background-color: var(--panel-bg);
-            padding: 8px 15px;
-            border-radius: 6px;
-            margin-bottom: 10px;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 12px;
             display: flex;
             justify-content: space-between;
+            align-items: center;
             font-size: 0.75rem;
             border: 1px solid var(--border-color);
             color: var(--text-muted);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
         }
         .meta-bar span strong { color: var(--text-main); }
+        .meta-indicators { display: flex; gap: 15px; }
 
-        /* Main Dashboard Grid */
         .dashboard-wrapper {
             display: flex;
             flex: 1;
@@ -51,86 +57,134 @@
             overflow: hidden;
         }
 
-        /* Left Column: Controls & Telemetry */
+        /* Columns Grid Layout */
         .left-column {
-            flex: 1;
+            flex: 1.1;
             display: flex;
             flex-direction: column;
             gap: 12px;
-            min-width: 360px;
+            min-width: 380px;
             overflow-y: auto;
+            padding-right: 4px;
         }
 
-        /* Right Column: Chat Bridge */
         .right-column {
-            flex: 1.5;
+            flex: 1.4;
             display: flex;
             flex-direction: column;
-            background-color: var(--panel-bg);
-            border-radius: 8px;
-            border-top: 4px solid var(--green);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            gap: 12px;
             overflow: hidden;
         }
 
+        /* Master Panel Design */
         .panel {
             background-color: var(--panel-bg);
             border-radius: 8px;
             border-top: 4px solid var(--saffron);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-            display: flex;
-            flex-direction: column;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            border-left: 1px solid var(--border-color);
+            border-right: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
         }
 
+        .panel.panel-green { border-top-color: var(--green); }
+        .panel.panel-blue { border-top-color: var(--blue); }
+
         .panel-header {
-            padding: 10px 15px;
+            padding: 10px 14px;
             background-color: #f8fafc;
             border-bottom: 1px solid var(--border-color);
             font-weight: bold;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             letter-spacing: 1px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        /* Telemetry Status Grid (Step 1, 3, 4, 8) */
+        /* STEP 1: System Telemetry Grid Layout */
         .status-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(2, 1fr);
             gap: 8px;
             padding: 12px;
         }
 
         .status-box {
-            background-color: #f8fafc;
-            padding: 8px;
+            background-color: var(--box-bg);
+            padding: 10px;
             border-radius: 6px;
             border: 1px solid var(--border-color);
             font-size: 0.75rem;
         }
-        .status-box span { font-weight: bold; display: block; margin-top: 4px; font-size: 0.85rem; }
+        .status-box span { font-weight: bold; display: block; margin-top: 4px; font-size: 0.85rem; word-break: break-all; }
         
-        /* Workflow Visualizer (Step 2) */
-        .wf-container {
-            padding: 12px;
-            font-size: 0.7rem;
-            line-height: 1.4;
-            background-color: #f8fafc;
-        }
+        /* STEP 2: Live Workflow Visualizer */
+        .wf-container { padding: 12px; font-size: 0.75rem; background-color: var(--box-bg); }
         .wf-flow {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-            align-items: center;
-            margin-top: 5px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            margin-top: 10px;
+            text-align: center;
         }
-        .wf-node { padding: 3px 6px; background: #e2e8f0; border-radius: 4px; color: var(--text-muted); }
-        .wf-node.active { background: #dbeafe; color: #1e40af; font-weight: bold; border: 1px solid #93c5fd; }
-        .wf-arrow { color: var(--text-muted); }
+        .wf-node {
+            padding: 6px 4px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            color: var(--text-muted);
+            font-weight: bold;
+            font-size: 0.7rem;
+            border: 1px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .wf-node.active {
+            background: #dbeafe;
+            color: #1e40af;
+            border-color: #93c5fd;
+            box-shadow: 0 0 8px rgba(59, 130, 246, 0.2);
+        }
 
-        /* Developer Log Panel (Step 5) */
-        .logs-panel { flex: 1; min-height: 180px; display: flex; flex-direction: column; }
+        /* STEP 6: System Health Indicators */
+        .health-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            padding: 12px;
+        }
+        .health-box {
+            padding: 8px 4px;
+            text-align: center;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            border: 1px solid var(--border-color);
+            background: #f8fafc;
+        }
+        .health-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 4px;
+        }
+        .bg-green { background-color: var(--green); }
+        .bg-red { background-color: var(--red); }
+
+        /* STEP 5: Developer Log Panel */
+        .logs-panel { flex: 1; min-height: 160px; display: flex; flex-direction: column; }
+        .log-filters {
+            display: flex;
+            gap: 4px;
+            padding: 6px 12px;
+            background: #f1f5f9;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .filter-btn {
+            background: none; border: none; font-size: 0.65rem; font-weight: bold;
+            cursor: pointer; padding: 2px 6px; border-radius: 3px; color: var(--text-muted);
+        }
+        .filter-btn.active { background: var(--text-main); color: #fff; }
         .logs-container {
             flex: 1;
             background-color: var(--dark-log);
@@ -138,64 +192,77 @@
             padding: 12px;
             font-size: 0.75rem;
             overflow-y: auto;
-            border-bottom-left-radius: 8px;
-            border-bottom-right-radius: 8px;
+            border-radius: 0 0 8px 8px;
         }
-        .log-line { margin-bottom: 4px; line-height: 1.3; }
-        .log-info { color: #38bdf8; }
-        .log-success { color: #34d399; }
-        .log-warning { color: #fbbf24; }
-        .log-error { color: #f87171; }
+        .log-line { margin-bottom: 4px; line-height: 1.4; }
 
-        /* Developer Utilities Buttons (Step 7) */
-        .tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 10px; }
+        /* STEP 7: Developer Utilities Tools */
+        .tools-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; padding: 12px; }
         .btn-tool {
             background-color: #f1f5f9; border: 1px solid var(--border-color);
-            padding: 6px; font-size: 0.75rem; font-weight: bold; cursor: pointer;
-            border-radius: 4px; transition: 0.2s; text-align: center;
+            padding: 8px; font-size: 0.75rem; font-weight: bold; cursor: pointer;
+            border-radius: 4px; transition: all 0.2s ease; text-align: center;
         }
-        .btn-tool:hover { background-color: #e2e8f0; }
+        .btn-tool:hover { background-color: #e2e8f0; color: var(--saffron); }
 
-        /* Chat Area Box */
+        /* Right Column Panels */
+        .chat-panel {
+            flex: 1.3;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--panel-bg);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
         .chat-area { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background: #fafafa; }
-        .message { max-width: 85%; padding: 10px 14px; border-radius: 8px; font-size: 0.9rem; line-height: 1.4; word-wrap: break-word; }
-        .msg-dev { align-self: flex-end; background-color: #fffbeb; border-right: 4px solid var(--saffron); }
-        .msg-orbis { align-self: flex-start; background-color: #f0fdf4; border-left: 4px solid var(--green); }
+        .message { max-width: 85%; padding: 10px 14px; border-radius: 8px; font-size: 0.9rem; line-height: 1.4; word-wrap: break-word; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
+        .msg-dev { align-self: flex-end; background-color: #fffbeb; border-right: 4px solid var(--saffron); color: var(--text-main); }
+        .msg-orbis { align-self: flex-start; background-color: #f0fdf4; border-left: 4px solid var(--green); color: var(--text-main); }
 
-        /* Input Bar Fix */
-        .input-area { padding: 10px; border-top: 1px solid var(--border-color); display: flex; align-items: center; gap: 8px; background-color: #f8fafc; }
-        .icon-btn { background: none; border: none; font-size: 1.1rem; cursor: pointer; padding: 8px; border-radius: 4px; }
+        /* Input Area Footer Styling */
+        .input-area { padding: 12px; border-top: 1px solid var(--border-color); display: flex; align-items: center; gap: 8px; background-color: #f8fafc; }
+        .icon-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 8px; border-radius: 4px; color: var(--text-main); transition: 0.2s;}
+        .icon-btn:hover { background-color: #e2e8f0; }
         .recording { color: red !important; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         
-        select.lang-select { background-color: #fff; border: 1px solid var(--border-color); padding: 8px 4px; border-radius: 4px; font-weight: bold; font-size: 0.8rem; }
-        input[type="text"] { flex: 1; min-width: 0; background-color: #fff; border: 1px solid var(--border-color); font-size: 0.95rem; outline: none; padding: 10px; border-radius: 6px; }
-        
-        #send-btn { background-color: var(--green); color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        select.lang-select { background-color: #fff; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; font-weight: bold; outline: none; cursor: pointer;}
+        input[type="text"] { flex: 1; min-width: 0; background-color: #fff; border: 1px solid var(--border-color); padding: 12px; border-radius: 6px; font-size: 1rem; outline: none; color: var(--text-main); }
+        input[type="text"]:focus { border-color: var(--saffron); }
+        #send-btn { background-color: var(--green); color: white; border: none; padding: 12px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; }
         #send-btn:disabled { background-color: #94a3b8; cursor: not-allowed; }
         #file-input { display: none; }
 
         .text-green { color: var(--green) !important; }
         .text-saffron { color: var(--saffron) !important; }
-        .text-red { color: #dc2626 !important; }
+        .text-red { color: var(--red) !important; }
+        .text-blue { color: var(--blue) !important; }
 
-        /* Responsive Layout Switch */
-        @media (max-width: 800px) {
-            body { overflow-y: auto; height: auto; }
-            .dashboard-wrapper { flex-direction: column; overflow: visible; }
-            .left-column { min-width: 100%; overflow: visible; }
-            .right-column { height: 500px; }
-            .logs-container { height: 200px; }
+        /* 🔥 EXPERT RESPONSIVE MATRIX FOR SCROLL HANDLING */
+        @media (max-width: 900px) {
+            body { overflow-y: auto; height: auto; display: block; }
+            .dashboard-wrapper { flex-direction: column; display: block; overflow: visible; }
+            .left-column { width: 100%; display: block; overflow: visible; }
+            .panel { margin-bottom: 12px; }
+            .right-column { width: 100%; display: flex; flex-direction: column; overflow: hidden; }
+            .chat-panel { min-height: 500px; height: 75vh; }
+            .chat-area { flex: 1; min-height: 350px; }
+            .logs-container { min-height: 180px; }
         }
     </style>
 </head>
 <body>
 
     <div class="meta-bar">
-        <span>PHASE: <strong>Phase 6</strong></span>
-        <span>BUILD: <strong>Developer Preview v1.2.0</strong></span>
-        <span>ENV: <strong>Production (Render)</strong></span>
-        <span>BRANCH: <strong>main</strong></span>
+        <div class="meta-indicators">
+            <span>PHASE: <strong>Phase 6 (Step 1)</strong></span>
+            <span>BUILD: <strong>v1.3.5-Prod</strong></span>
+            <span>ENVIRONMENT: <strong>Render Cloud Engine</strong></span>
+        </div>
+        <div>
+            <span>BRANCH: <strong class="text-blue">main</strong></span>
+        </div>
     </div>
 
     <div class="dashboard-wrapper">
@@ -203,90 +270,110 @@
         <div class="left-column">
             
             <div class="panel">
-                <div class="panel-header">⚙️ ORBIS ENGINE TELEMETRY</div>
+                <div class="panel-header">⚙️ SYSTEM TELEMETRY DYNAMIC MATRIX</div>
                 <div class="status-grid">
-                    <div class="status-box">BrainHub <span id="tel-brainhub" style="color:#64748b">FETCHING...</span></div>
-                    <div class="status-box">Active Build <span class="text-green">STABLE</span></div>
-                    <div class="status-box">Uptime <span id="tel-uptime" class="text-green">--</span></div>
-                    <div class="status-box">RAM Usage <span id="tel-ram" class="text-green">-- MB</span></div>
-                    <div class="status-box">Session Status <span class="text-green">SECURE</span></div>
-                    <div class="status-box">Request ID <span id="tel-req-id" style="color:#64748b">NONE</span></div>
+                    <div class="status-box">BrainHub Status <span id="tel-brainhub" class="text-red">OFFLINE</span></div>
+                    <div class="status-box">Active Build Config <span class="text-green">PRODUCTION</span></div>
+                    <div class="status-box">System Runtime Uptime <span id="tel-uptime" class="text-gray">--</span></div>
+                    <div class="status-box">Workflow Engine <span id="tel-wf-status" class="text-blue">IDLE</span></div>
+                    <div class="status-box">Request Identifier <span id="tel-req-id" class="text-muted">NONE</span></div>
+                    <div class="status-box">Session Data Channel <span class="text-green">SECURE ENCRYPTED</span></div>
                 </div>
             </div>
 
-            <div class="panel">
-                <div class="panel-header">🔄 LIVE WORKFLOW VISUALIZER</div>
+            <div class="panel panel-green">
+                <div class="panel-header">🔄 LIVE WORKFLOW PIPELINE TRACKER</div>
                 <div class="wf-container">
-                    <div>Current Execution Track:</div>
                     <div class="wf-flow">
-                        <span class="wf-node" id="wf-input">Input</span> <span class="wf-arrow">→</span>
-                        <span class="wf-node" id="wf-brain">BrainHub</span> <span class="wf-arrow">→</span>
-                        <span class="wf-node" id="wf-registry">Registry</span> <span class="wf-arrow">→</span>
-                        <span class="wf-node" id="wf-provider">Gemini</span> <span class="wf-arrow">→</span>
-                        <span class="wf-node" id="wf-response">Response</span>
+                        <div class="wf-node" id="wf-input">Input</div>
+                        <div class="wf-node" id="wf-brain">BrainHub</div>
+                        <div class="wf-node" id="wf-decision">Decision Mgr</div>
+                        <div class="wf-node" id="wf-planner">Planner</div>
+                        <div class="wf-node" id="wf-registry">Registry</div>
+                        <div class="wf-node" id="wf-provider">Provider</div>
+                        <div class="wf-node" id="wf-review">Review</div>
+                        <div class="wf-node" id="wf-response">Response</div>
                     </div>
                 </div>
             </div>
 
-            <div class="panel">
-                <div class="panel-header">🧠 ENGINE COMPONENTS STATUS</div>
+            <div class="panel panel-blue">
+                <div class="panel-header">🧠 COMPONENT REGISTRY & MEMORY ENGINE</div>
                 <div class="status-grid">
-                    <div class="status-box">Memory Status <span id="tel-mem-status" class="text-saffron">STANDBY</span></div>
-                    <div class="status-box">Memory Count <span class="text-green">0 Live Nodes</span></div>
-                    <div class="status-box">Current Model <span id="tel-model" class="text-saffron">gemini-3.5-flash</span></div>
-                    <div class="status-box">Available Systems <span style="color:#64748b">Gemini Core</span></div>
+                    <div class="status-box">Memory Engine State <span id="tel-mem-status" class="text-saffron">STANDBY</span></div>
+                    <div class="status-box">User / Session Core <span class="text-muted">0 Nodes / 0 Active</span></div>
+                    <div class="status-box">Active Registry Target <span id="tel-provider-name" class="text-saffron">Gemini Registry</span></div>
+                    <div class="status-box">Model Parameter Target <span id="tel-model" class="text-saffron">gemini-3.5-flash</span></div>
                 </div>
             </div>
 
             <div class="panel">
-                <div class="panel-header">📊 PERFORMANCE & TELEMETRY LIVE</div>
+                <div class="panel-header">📊 REAL runtime ANALYTICS GRAPH</div>
                 <div class="status-grid">
-                    <div class="status-box">Total Requests <span id="tel-total-req" class="text-green">0</span></div>
+                    <div class="status-box">Total Load Requests <span id="tel-total-req" class="text-green">0</span></div>
+                    <div class="status-box">Runtime Errors Logged <span id="tel-errors" class="text-green">0</span></div>
                     <div class="status-box">API Latency (Ping) <span id="ping-status" class="text-green">-- ms</span></div>
-                    <div class="status-box">Runtime Errors <span id="tel-errors" class="text-green">0</span></div>
-                    <div class="status-box">System Health <span id="tel-health" class="text-green">HEALTHY</span></div>
+                    <div class="status-box">Process Memory Usage <span id="tel-ram" class="text-green">-- MB</span></div>
                 </div>
             </div>
 
             <div class="panel">
-                <div class="panel-header">🛠️ DEVELOPER UTILITIES TOOLS</div>
+                <div class="panel-header">🛡️ ARCHITECTURE REPOSITORY HEALTH LIGHTS</div>
+                <div class="health-grid">
+                    <div class="health-box"><span class="health-indicator bg-green" id="h-actions"></span>Actions</div>
+                    <div class="health-box"><span class="health-indicator bg-green" id="h-jest"></span>Jest Tests</div>
+                    <div class="health-box"><span class="health-indicator bg-green" id="h-eslint"></span>ESLint</div>
+                    <div class="health-box"><span class="health-indicator bg-green" id="h-sonar"></span>SonarQube</div>
+                    <div class="health-box"><span class="health-indicator bg-green" id="h-codeql"></span>CodeQL</div>
+                    <div class="health-box"><span class="health-indicator bg-green" id="h-dependabot"></span>Dependabot</div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">🛠️ CLIENT DEV UTILITY ENGINE COMMANDS</div>
                 <div class="tools-grid">
-                    <button class="btn-tool" onclick="triggerTool('Health Check')">Run Health Check</button>
-                    <button class="btn-tool" onclick="triggerTool('Reload Brain')">Reload Brain</button>
-                    <button class="btn-tool" onclick="triggerTool('Reset Session')">Reset Session</button>
+                    <button class="btn-tool" onclick="triggerDevAction('Health Check')">Run Health Check</button>
+                    <button class="btn-tool" onclick="triggerDevAction('Reload Brain')">Reload Brain</button>
+                    <button class="btn-tool" onclick="triggerDevAction('Reset Session')">Reset Session</button>
                     <button class="btn-tool" onclick="clearLogWindow()">Clear Logs</button>
                 </div>
             </div>
 
             <div class="panel logs-panel">
-                <div class="panel-header">📜 LIVE RUNTIME LOG PANEL</div>
+                <div class="panel-header">📜 LIVE RUNTIME LOG TERMINAL INTERFACE</div>
+                <div class="log-filters">
+                    <button class="filter-btn active" onclick="filterLogs('ALL')">ALL</button>
+                    <button class="filter-btn" onclick="filterLogs('INFO')">INFO</button>
+                    <button class="filter-btn" onclick="filterLogs('SUCCESS')">SUCCESS</button>
+                    <button class="filter-btn" onclick="filterLogs('ERROR')">ERROR</button>
+                </div>
                 <div class="logs-container" id="log-box"></div>
             </div>
 
         </div>
 
         <div class="right-column">
-            <div class="panel-header">🚀 ORBIS CORE ADVANCED DEV BRIDGE</div>
-            <div class="chat-area" id="chat-box"></div>
-
-            <div class="input-area">
-                <input type="file" id="file-input">
-                <button class="icon-btn" id="file-btn" onclick="document.getElementById('file-input').click()" style="color: var(--saffron);">
-                    <i class="fa-solid fa-paperclip"></i>
-                </button>
+            <div class="chat-panel panel panel-green">
+                <div class="panel-header">🚀 ORBIS CORE LIVE ENGINEERING CONNECT BRIDGE</div>
+                <div class="chat-area" id="chat-box"></div>
                 
-                <input type="text" id="prompt-input" placeholder="Enter engineering prompt..." autocomplete="off">
-                
-                <select id="lang-select" class="lang-select">
-                    <option value="en-US">EN</option>
-                    <option value="bn-IN">BN</option>
-                    <option value="hi-IN">HI</option>
-                </select>
-
-                <button class="icon-btn" id="mic-btn" onclick="startVoice()">
-                    <i class="fa-solid fa-microphone"></i>
-                </button>
-                <button id="send-btn" onclick="sendMessage()">Send</button>
+                <div class="input-area">
+                    <input type="file" id="file-input">
+                    <button class="icon-btn" onclick="document.getElementById('file-input').click()" style="color: var(--saffron);">
+                        <i class="fa-solid fa-paperclip"></i>
+                    </button>
+                    
+                    <input type="text" id="prompt-input" placeholder="Enter secure operational framework prompt..." autocomplete="off">
+                    
+                    <select id="lang-select" class="lang-select">
+                        <option value="bn-IN">BN (বাংলা)</option>
+                        <option value="en-US">EN (English)</option>
+                        <option value="hi-IN">HI (হিন্দি)</option>
+                    </select>
+                    
+                    <button class="icon-btn" id="mic-btn" onclick="startVoiceEngine()"><i class="fa-solid fa-microphone"></i></button>
+                    <button id="send-btn" onclick="executeSecureDispatch()">Send</button>
+                </div>
             </div>
         </div>
 
@@ -299,123 +386,58 @@
         const logBox = document.getElementById('log-box');
         const pingStatus = document.getElementById('ping-status');
         const langSelect = document.getElementById('lang-select');
+        
+        let localLogMemory = [];
+        let activeLogFilter = 'ALL';
 
         // ==========================================
-        // 📜 DEVELOPER LOG SYSTEM (Step 5)
+        // 📜 STEP 5: COMPREHENSIVE RUNTIME SYSTEM LOGGER
         // ==========================================
-        function printLog(level, module, event) {
-            const time = new Date().toLocaleTimeString();
-            let cssClass = 'log-info';
-            if (level === 'SUCCESS') cssClass = 'log-success';
-            if (level === 'WARNING') cssClass = 'log-warning';
-            if (level === 'ERROR') cssClass = 'log-error';
+        function commitLog(level, module, text) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = { timestamp, level, module, text };
+            localLogMemory.push(logEntry);
+            renderLogLine(logEntry);
+        }
 
-            logBox.innerHTML += `<div class="log-line">[${time}] <span class="${cssClass}">${level}</span> [${module}] ${event}</div>`;
+        function renderLogLine(log) {
+            if (activeLogFilter !== 'ALL' && log.level !== activeLogFilter) return;
+            let color = '#38bdf8'; // Default INFO
+            if (log.level === 'SUCCESS') color = '#34d399';
+            if (log.level === 'ERROR') color = '#f87171';
+            if (log.level === 'WARNING') color = '#fbbf24';
+
+            logBox.innerHTML += `<div class="log-line">[${log.timestamp}] <span style="color:${color};font-weight:bold;">${log.level}</span> [${log.module}] ${log.text}</div>`;
             logBox.scrollTop = logBox.scrollHeight;
         }
 
-        function clearLogWindow() {
+        function filterLogs(filterType) {
+            activeLogFilter = filterType;
+            document.querySelectorAll('.filter-btn').forEach(b => {
+                b.classList.toggle('active', b.innerText === filterType);
+            });
             logBox.innerHTML = '';
-            printLog('INFO', 'SYS', 'Log display cleared by developer.');
+            localLogMemory.forEach(renderLogLine);
+        }
+
+        function clearLogWindow() {
+            localLogMemory = [];
+            logBox.innerHTML = '';
+            commitLog('INFO', 'SYS', 'Active structural telemetry log terminal cleared.');
         }
 
         // ==========================================
-        // 🔄 REAL-TIME TELEMETRY ENGINE FETCH (Step 1)
+        // 🔄 STEP 1 & 2: TELEMETRY & PIPELINE SYNC
         // ==========================================
         async function runTelemetryStream() {
             try {
                 const res = await fetch('/api/telemetry');
                 const json = await res.json();
-                if (json.success) {
+                
+                if (json.success && json.data) {
                     const data = json.data;
                     
-                    document.getElementById('tel-brainhub').innerText = data.brainHub.status;
+                    document.getElementById('tel-brainhub').innerText = data.brainHub?.status || "ONLINE";
                     document.getElementById('tel-brainhub').className = "text-green";
                     
-                    document.getElementById('tel-model').innerText = data.provider.model;
-                    document.getElementById('tel-ram').innerText = data.memoryEngine.ramUsageMB + ' MB';
-                    document.getElementById('tel-uptime').innerText = data.brainHub.uptime + 's';
-                    document.getElementById('tel-total-req').innerText = data.performance.totalRequests;
-                    document.getElementById('tel-errors').innerText = data.performance.errorCount;
-
-                    // Workflow updates (Step 2)
-                    resetWorkflowHighlights();
-                    if (data.brainHub.activeWorkflow.includes("BrainHub")) {
-                        document.getElementById('wf-input').classList.add('active');
-                        document.getElementById('wf-brain').classList.add('active');
-                        document.getElementById('wf-registry').classList.add('active');
-                        document.getElementById('wf-provider').classList.add('active');
-                    } else {
-                        document.getElementById('wf-response').classList.add('active');
-                    }
-
-                    if (data.performance.errorCount > 0) {
-                        document.getElementById('tel-health').innerText = "DEGRADED";
-                        document.getElementById('tel-health').className = "text-saffron";
-                    }
-                }
-            } catch (e) {
-                document.getElementById('tel-brainhub').innerText = "OFFLINE";
-                document.getElementById('tel-brainhub').className = "text-red";
-            }
-        }
-
-        function resetWorkflowHighlights() {
-            document.querySelectorAll('.wf-node').forEach(n => n.classList.remove('active'));
-        }
-
-        setInterval(runTelemetryStream, 4000);
-        runTelemetryStream();
-
-        // ==========================================
-        // 💬 ADVANCED PROCESS CHAT CHANNELS
-        // ==========================================
-        function appendMessage(sender, text, cssClass) {
-            const formatted = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-            chatBox.innerHTML += `<div class="message ${cssClass}"><strong>${sender}:</strong> ${formatted}</div>`;
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
-
-        async function sendMessage() {
-            const text = promptInput.value.trim();
-            if (!text) return;
-
-            appendMessage('Dev', text, 'msg-dev');
-            promptInput.value = '';
-            
-            sendBtn.disabled = true;
-            sendBtn.innerText = 'Wait...';
-            printLog('INFO', 'BRAIN', `Initiating dispatch matrix sequence.`);
-            
-            const start = Date.now();
-
-            try {
-                const response = await fetch('/api/chat', { 
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt: text })
-                });
-                
-                const data = await response.json();
-                const diff = Date.now() - start;
-                
-                pingStatus.innerText = `${diff} ms`;
-                document.getElementById('tel-req-id').innerText = data.requestId || 'NONE';
-                
-                printLog('SUCCESS', 'PROVIDER', `Execution complete in ${diff}ms.`);
-
-                if (data.success) {
-                    appendMessage('ORBIS', data.response, 'msg-orbis');
-                } else {
-                    appendMessage('System', 'Error executing pipeline.', 'msg-orbis');
-                    printLog('ERROR', 'CORE', 'API payload process anomaly detected.');
-                }
-            } catch (error) {
-                appendMessage('System', 'Fatal communication failure.', 'msg-orbis');
-                printLog('CRITICAL', 'NET', 'Server target network dropped.');
-            } finally {
-                sendBtn.disabled = false;
-                sendBtn.innerText = 'Send';
-                runTelemetryStream();
-            }
-        }
+                    document.getElementById('t
