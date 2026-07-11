@@ -1,4 +1,4 @@
-import { BrainHub } from './src/brain/core/BrainHub.js';
+import { BrainHub } from './brain/core/BrainHub.js';
 
 async function runTest() {
   console.log("====================================================");
