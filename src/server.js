@@ -1,92 +1,31 @@
-import express from 'express';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { GeminiProvider } from './brain/providers/GeminiProvider.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const express = require('express');
+// নতুন টেলিমেট্রি মডিউল ইমপোর্ট করা হলো
+const { getTelemetryData } = require('./brain/telemetry'); 
 
 const app = express();
-const port = process.env.PORT || 3000;
-
-// ==========================================
-// ⚙️ ORBIS CORE TELEMETRY TRACKERS
-// ==========================================
-const serverStartTime = Date.now();
-let totalRequests = 0;
-let errorCount = 0;
-let activeWorkflowStep = "IDLE"; // রিয়েল-টাইম ওয়ার্কফ্লো ট্র্যাকিং
+const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '../frontend')));
 
-const gemini = new GeminiProvider(process.env.GEMINI_API_KEY);
+// --- আপনার অন্যান্য কোড (Gemini API, CORS ইত্যাদি) এখানে থাকবে ---
 
-// ==========================================
-// 📊 MASTER TELEMETRY ENDPOINT (PHASE 6)
-// ==========================================
+// পরিচ্ছন্ন /api/telemetry এন্ডপয়েন্ট
 app.get('/api/telemetry', (req, res) => {
-    const uptimeSeconds = Math.floor((Date.now() - serverStartTime) / 1000);
-    const memoryUsage = process.memoryUsage();
-
-    res.json({
-        success: true,
-        data: {
-            system: {
-                phase: "Phase 6",
-                buildType: "Developer Preview",
-                environment: process.env.NODE_ENV || "development"
-            },
-            brainHub: {
-                status: "ONLINE",
-                uptime: uptimeSeconds,
-                activeWorkflow: activeWorkflowStep
-            },
-            provider: {
-                active: "GeminiProvider",
-                model: "gemini-3.5-flash",
-                status: process.env.GEMINI_API_KEY ? "CONNECTED" : "MISSING_KEY",
-                available: ["Gemini"]
-            },
-            memoryEngine: {
-                status: "STANDBY",
-                ramUsageMB: Math.round(memoryUsage.heapUsed / 1024 / 1024),
-                userMemory: 0,
-                sessionMemory: 0
-            },
-            performance: {
-                totalRequests: totalRequests,
-                errorCount: errorCount
-            },
-            timestamp: new Date().toISOString()
-        }
-    });
-});
-
-// ==========================================
-// 💬 CHAT ENDPOINT WITH WORKFLOW TRACKING
-// ==========================================
-app.post('/api/chat', async (req, res) => {
-    totalRequests++; // রিকোয়েস্ট কাউন্ট আপডেট
-    const requestId = `REQ-${Date.now()}`;
-    
-    // ওয়ার্কফ্লো মনিটরের জন্য স্ট্যাটাস চেঞ্জ
-    activeWorkflowStep = "BrainHub -> Provider Registry -> Gemini";
-
     try {
-        const { prompt } = req.body;
-        const responseText = await gemini.process(prompt);
-        
-        activeWorkflowStep = "IDLE"; // প্রসেসিং শেষে আবার আইডিয়াল
-        res.json({ success: true, requestId, response: responseText });
+        const telemetryStats = getTelemetryData();
+        res.status(200).json({
+            success: true,
+            data: telemetryStats
+        });
     } catch (error) {
-        errorCount++; // এরর কাউন্ট আপডেট
-        activeWorkflowStep = "ERROR: Provider Failure";
-        console.error(`[${requestId}] Chat API Error:`, error);
-        res.status(500).json({ success: false, requestId, response: "Internal System Error" });
+        console.error("Telemetry Endpoint Error:", error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Failed to fetch telemetry data' 
+        });
     }
 });
 
-app.listen(port, () => {
-    console.log(`ORBIS Server is online on port ${port}`);
+app.listen(PORT, () => {
+    console.log(`ORBIS Engine Live on Port: ${PORT}`);
 });
