@@ -1,13 +1,18 @@
 /**
  * MemoryEngine: Core intelligence memory manager.
- * Uses a fast local cache (RAM) and persists data via MemoryRepository.
+ * Uses fast local caches (RAM) and persists data via MemoryRepository.
  */
 export class MemoryEngine {
   constructor(repository = null) {
     this.repository = repository;
+    
+    // ⚠️ Separate Maps to perfectly match Phase 1-4 tests and Governance
+    this.userMemory = new Map(); 
+    this.projectMemory = new Map();
+    this.history = [];
+    
+    // Universal Cache for other categories
     this.cache = new Map();
-    this.userMemory = this.cache; // Backward compatibility for old governance tests
-    this.history = []; // Backward compatibility for conversation history
   }
 
   // ==============================================================
@@ -15,8 +20,12 @@ export class MemoryEngine {
   // ==============================================================
   async saveMemory(category, key, value) {
     if (!key) throw new Error("Key cannot be null or undefined");
-    const cacheKey = `${category}_${key}`;
-    this.cache.set(cacheKey, value);
+    
+    // Route to specific maps for backward compatibility
+    if (category === 'user') this.userMemory.set(key, value);
+    else if (category === 'project') this.projectMemory.set(key, value);
+    else this.cache.set(`${category}_${key}`, value);
+
     if (this.repository) {
       await this.repository.save(category, key, value).catch(() => {});
     }
@@ -25,13 +34,20 @@ export class MemoryEngine {
 
   async getMemory(category, key) {
     if (!key) throw new Error("Key cannot be null or undefined");
-    const cacheKey = `${category}_${key}`;
-    if (this.cache.has(cacheKey)) return this.cache.get(cacheKey);
     
+    let val = null;
+    if (category === 'user') val = this.userMemory.get(key);
+    else if (category === 'project') val = this.projectMemory.get(key);
+    else val = this.cache.get(`${category}_${key}`);
+
+    if (val !== undefined && val !== null) return val;
+
     if (this.repository) {
       const dbValue = await this.repository.get(category, key);
       if (dbValue !== null) {
-        this.cache.set(cacheKey, dbValue);
+        if (category === 'user') this.userMemory.set(key, dbValue);
+        else if (category === 'project') this.projectMemory.set(key, dbValue);
+        else this.cache.set(`${category}_${key}`, dbValue);
         return dbValue;
       }
     }
@@ -44,28 +60,34 @@ export class MemoryEngine {
   
   saveProjectData(key, value) {
     if (!key) throw new Error("Key is required");
-    this.cache.set(`project_${key}`, value);
+    this.projectMemory.set(key, value);
   }
 
   getProjectData(key) {
-    return this.cache.get(`project_${key}`) || null;
+    if (!key) throw new Error("Key is required");
+    return this.projectMemory.get(key) || null;
   }
 
   saveUserDetail(key, value) {
     if (!key) throw new Error("Key is required");
-    this.cache.set(`user_${key}`, value);
+    this.userMemory.set(key, value);
   }
 
   getUserDetail(key) {
-    return this.cache.get(`user_${key}`) || null;
+    if (!key) throw new Error("Key is required");
+    return this.userMemory.get(key) || null;
   }
   
-  // Exact function names required by the failing test
   saveConversation(role, message) {
-    this.history.push({ role, message });
+    if (!role || !message) throw new Error("Role and message are required");
+    this.history.push({ role, message, content: message });
   }
 
   getRecentConversations() {
-     return this.history;
+    return this.history;
+  }
+  
+  clearHistory() {
+    this.history = [];
   }
 }
