@@ -6,52 +6,66 @@ export class MemoryEngine {
   constructor(repository = null) {
     this.repository = repository;
     this.cache = new Map();
-    
-    // Backward compatibility for Phase 5 Governance tests
-    this.userMemory = this.cache; 
+    this.userMemory = this.cache; // Backward compatibility for old governance tests
   }
 
-  /**
-   * Universal async method to save any type of memory (User, Project, Session, etc.)
-   */
+  // --- NEW UNIVERSAL METHODS (STEP 01) ---
   async saveMemory(category, key, value) {
+    if (!key) throw new Error("Key cannot be null or undefined");
     const cacheKey = `${category}_${key}`;
     this.cache.set(cacheKey, value);
-
     if (this.repository) {
       await this.repository.save(category, key, value);
     }
     return { success: true, category, key };
   }
 
-  /**
-   * Universal async method to retrieve memory
-   */
   async getMemory(category, key) {
+    if (!key) throw new Error("Key cannot be null or undefined");
     const cacheKey = `${category}_${key}`;
+    if (this.cache.has(cacheKey)) return this.cache.get(cacheKey);
     
-    // 1. Check fast local RAM cache first
-    if (this.cache.has(cacheKey)) {
-      return this.cache.get(cacheKey);
-    }
-
-    // 2. Fallback to Persistent Database
     if (this.repository) {
       const dbValue = await this.repository.get(category, key);
       if (dbValue !== null) {
-        this.cache.set(cacheKey, dbValue); // Restore to fast cache
+        this.cache.set(cacheKey, dbValue);
         return dbValue;
       }
     }
     return null;
   }
 
-  // --- Backward Compatibility Methods for existing System Tests ---
+  // ==============================================================
+  // ⚠️ BACKWARD COMPATIBILITY (Restored for Phase 1-4 Tests)
+  // ==============================================================
+  
+  saveProjectData(key, value) {
+    if (!key) throw new Error("Key is required");
+    this.cache.set(`project_${key}`, value);
+    if (this.repository) this.repository.save('project', key, value).catch(() => {});
+  }
+
+  getProjectData(key) {
+    return this.cache.get(`project_${key}`) || null;
+  }
+
   saveUserDetail(key, value) {
-    this.saveMemory('user', key, value).catch(() => {}); // Fire and forget async
+    if (!key) throw new Error("Key is required");
+    this.cache.set(`user_${key}`, value);
+    if (this.repository) this.repository.save('user', key, value).catch(() => {});
   }
 
   getUserDetail(key) {
     return this.cache.get(`user_${key}`) || null;
+  }
+  
+  saveConversationData(key, value) {
+    if (!key) throw new Error("Key is required");
+    this.cache.set(`conversation_${key}`, value);
+    if (this.repository) this.repository.save('conversation', key, value).catch(() => {});
+  }
+
+  getConversationData(key) {
+     return this.cache.get(`conversation_${key}`) || null;
   }
 }
