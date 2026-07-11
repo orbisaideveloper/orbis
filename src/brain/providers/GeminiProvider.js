@@ -2,9 +2,10 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export class GeminiProvider {
   constructor(apiKey) {
-    // এখানে আমরা সরাসরি আপনার API Key ব্যবহার করছি
+    this.name = 'GeminiProvider';
+    // নতুন জেনারেশনের এপিআই কী-এর জন্য flash-latest মডেলটি সবচেয়ে স্টেবল
     this.genAI = new GoogleGenerativeAI(apiKey);
-    this.model = this.genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    this.model = this.genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
   }
 
   async process(prompt) {
@@ -12,9 +13,8 @@ export class GeminiProvider {
       const result = await this.model.generateContent(prompt);
       return result.response.text();
     } catch (error) {
-      // এই এররটিই আমাদের বলে দেবে কী সমস্যা
-      console.error("Gemini Error:", error.message);
-      return "Error: Could not connect to Gemini.";
+      console.error("Gemini Provider Error:", error);
+      throw new Error("Failed to process request");
     }
   }
 }

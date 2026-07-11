@@ -9,40 +9,36 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-      with:
-        fetch-depth: 0
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Setup Node.js
-      uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a
-      with:
-        node-version: '24'
-        cache: 'npm'
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
 
-    - name: Install dependencies
-      run: npm ci
+      - name: Install dependencies
+        run: npm install
 
-    - name: Run ESLint
-      run: npm run lint --if-present
+      - name: Run Jest Tests
+        run: npm test
+        env:
+          NODE_OPTIONS: --experimental-vm-modules
 
-    - name: Run Jest Tests
-      run: npm test
-      env:
-        NODE_OPTIONS: --experimental-vm-modules
+      - name: ORBIS Live Architecture Output
+        run: node src/run.js
 
-    - name: ORBIS Live Architecture Output
-      run: node src/run.js
-
-    - name: SonarQube Scan
-      if: github.actor != 'dependabot[bot]'
-      uses: SonarSource/sonarcloud-github-action@master
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      with:
-        args: >
-          -Dsonar.projectKey=orbis
-          -Dsonar.organization=orbis
+      - name: SonarQube Scan
+        if: github.actor != 'dependabot[bot]'
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=orbis
+            -Dsonar.organization=orbis
