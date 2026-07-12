@@ -7,71 +7,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const langSelect = document.getElementById('lang-select');
     const micBtn = document.getElementById('mic-btn');
     
-    let localLogMemory = [];
-    
-    // গ্লোবাল ফাংশনগুলো উইন্ডো অবজেক্টে যোগ করা হচ্ছে যাতে HTML থেকে কল করা যায়
-    window.filterLogs = function(filterType) {
-        document.querySelectorAll('.filter-btn').forEach(b => {
-            b.classList.toggle('active', b.innerText === filterType);
-        });
-        logBox.innerHTML = '';
-        localLogMemory.forEach(log => {
-            if (filterType === 'ALL' || log.level === filterType) {
-                let color = log.level === 'SUCCESS' ? '#34d399' : log.level === 'ERROR' ? '#f87171' : '#38bdf8'; 
-                logBox.innerHTML += `<div class="log-line">[${log.timestamp}] <span style="color:${color};font-weight:bold;">${log.level}</span> [${log.module}] ${log.text}</div>`;
-            }
-        });
-        logBox.scrollTop = logBox.scrollHeight;
-    };
-
     function commitLog(level, module, text) {
-        const timestamp = new Date().toLocaleTimeString();
-        localLogMemory.push({ timestamp, level, module, text });
-        window.filterLogs('ALL');
+        const time = new Date().toLocaleTimeString();
+        let color = level === 'SUCCESS' ? '#34d399' : level === 'ERROR' ? '#f87171' : '#38bdf8'; 
+        logBox.innerHTML += `<div class="log-line">[${time}] <span style="color:${color};font-weight:bold;">${level}</span> [${module}] ${text}</div>`;
+        logBox.scrollTop = logBox.scrollHeight;
     }
 
-    // Voice Engine
-    let recognition;
-    try {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (SpeechRecognition) {
-            recognition = new SpeechRecognition();
-            recognition.continuous = false; 
-            recognition.interimResults = false;
-
-            recognition.onstart = () => {
-                micBtn.classList.add('recording');
-                promptInput.placeholder = "Listening...";
-                commitLog('INFO', 'MIC', 'Listening...');
-            };
-            recognition.onresult = (event) => {
-                promptInput.value = event.results[0][0].transcript;
-                commitLog('SUCCESS', 'MIC', `Captured voice`);
-            };
-            recognition.onerror = (e) => {
-                commitLog('ERROR', 'MIC', `Mic Error: ${e.error}`);
-                micBtn.classList.remove('recording');
-                promptInput.placeholder = "Message ORBIS...";
-            };
-            recognition.onend = () => {
-                micBtn.classList.remove('recording');
-                promptInput.placeholder = "Message ORBIS...";
-            };
-        }
-    } catch (err) {
-        commitLog('ERROR', 'MIC', 'Voice API not supported.');
-    }
-
-    window.startVoiceEngine = function() {
-        if (recognition) {
-            recognition.lang = langSelect.value;
-            recognition.start();
-        } else {
-            alert("Voice not supported in this browser.");
-        }
-    };
-
-    // Backend Connection
+    // Telemetry Engine Fetch
     async function runTelemetryStream() {
         try {
             const res = await fetch('/api/telemetry');
@@ -106,7 +49,8 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(runTelemetryStream, 500);
 
     function appendMessageFrame(sender, messageText, cssClass) {
-        chatBox.innerHTML += `<div class="message ${cssClass}"><strong>${sender}</strong><br>${messageText}</div>`;
+        const formatted = messageText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        chatBox.innerHTML += `<div class="message ${cssClass}"><strong>${sender}</strong><br>${formatted}</div>`;
         chatBox.scrollTop = chatBox.scrollHeight;
     }
 
@@ -114,6 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Enter') window.executeSecureDispatch();
     });
 
+    // Chat API Execution
     window.executeSecureDispatch = async function() {
         const input = promptInput.value.trim();
         if (!input) return;
@@ -121,10 +66,9 @@ document.addEventListener('DOMContentLoaded', () => {
         appendMessageFrame('You', input, 'msg-dev');
         promptInput.value = ''; 
         sendBtn.disabled = true; 
-        // লোডিং স্পিনার
         sendBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; 
         
-        commitLog('INFO', 'API', `Sending message...`);
+        commitLog('INFO', 'API', `Dispatching message to BrainHub...`);
         const startTime = Date.now();
 
         try {
@@ -149,11 +93,44 @@ document.addEventListener('DOMContentLoaded', () => {
             appendMessageFrame('System Error', 'Network unreachable.', 'text-red');
         } finally {
             sendBtn.disabled = false; 
-            // আগের সিম্পল পেপার-প্লেন / অ্যারো আইকনটি ফিরিয়ে দেওয়া
-            sendBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
+            sendBtn.innerHTML = '<i class="fa-solid fa-arrow-up"></i>';
             promptInput.focus();
         }
     };
     
-    commitLog('SUCCESS', 'SYS', 'ORBIS Interface Initialized successfully.');
+    // Voice API
+    let recognition;
+    try {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.continuous = false; 
+            
+            recognition.onstart = () => {
+                micBtn.classList.add('recording');
+                promptInput.placeholder = "Listening...";
+            };
+            recognition.onresult = (e) => promptInput.value = e.results[0][0].transcript;
+            recognition.onerror = (e) => {
+                micBtn.classList.remove('recording');
+                promptInput.placeholder = "Message ORBIS...";
+            };
+            recognition.onend = () => {
+                micBtn.classList.remove('recording');
+                promptInput.placeholder = "Message ORBIS...";
+            };
+        }
+    } catch (err) {}
+
+    window.startVoiceEngine = function() {
+        if (recognition) {
+            recognition.lang = langSelect.value;
+            recognition.start();
+        } else {
+            alert("Voice not supported.");
+        }
+    };
+
+    commitLog('SUCCESS', 'SYS', 'ORBIS Interface Initialized securely.');
 });
+
