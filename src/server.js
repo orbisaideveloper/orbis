@@ -1,11 +1,19 @@
 import express from 'express';
 import { BrainController } from './brain/BrainController.js';
+import path from 'path';
 
 const app = express();
 const brain = new BrainController();
 
 app.use(express.json());
-app.use(express.static('public'));
+
+// তোমার প্রজেক্টের রুট ফোল্ডার (যেখানে index.html আছে) থেকে ফাইলগুলো লোড করবে
+app.use(express.static(process.cwd()));
+
+// যদি কেউ ডিরেক্ট লিংকে ঢোকে, তাকে index.html পেজটি দেখাবে
+app.get('/', (req, res) => {
+    res.sendFile(path.join(process.cwd(), 'index.html'));
+});
 
 app.post('/api/chat', async (req, res) => {
     try {
