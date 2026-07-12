@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ORBIS Core Engine</title>
     
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -18,206 +16,192 @@
     </script>
     
     <style>
-        /* মোবাইল ব্রাউজারের কলাপ্স বন্ধ করার ১০০% গ্যারান্টি */
-        html, body { width: 100%; height: 100%; overflow: hidden; margin: 0; padding: 0; }
+        /* 🚨 মোবাইল কিবোর্ড লক: এটি স্ক্রিনকে ১ পিক্সেলও নড়তে দেবে না 🚨 */
+        html, body { 
+            position: fixed; top: 0; bottom: 0; left: 0; right: 0;
+            width: 100%; height: 100%; overflow: hidden; background: #fdfdfd; 
+        }
     </style>
 </head>
-<body class="bg-offwhite text-navy overflow-hidden w-full h-full">
-    
-    <div id="root" class="w-full h-full"></div>
+<body class="bg-offwhite text-navy antialiased">
 
-    <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
+    <div x-data="orbisEngine()" x-init="init()" class="absolute inset-0 flex flex-col overflow-hidden w-full h-full">
+        
+        <header class="flex-none h-14 bg-white border-b border-slate-200 border-t-4 border-t-saffron flex justify-between items-center px-4 z-50 shadow-sm select-none">
+            <div class="font-extrabold text-lg flex items-center gap-2">
+                <i class="fa-solid fa-microchip"></i> ORBIS Engine
+            </div>
+            <div class="text-xs font-bold flex items-center gap-2 uppercase tracking-wider">
+                <span :class="isOnline ? 'bg-green shadow-[0_0_8px_#138808]' : 'bg-saffron shadow-[0_0_8px_#FF9933]'" class="w-2.5 h-2.5 rounded-full transition-all duration-300"></span>
+                <span :class="isOnline ? 'text-green' : 'text-saffron'" x-text="isOnline ? 'System Online' : 'Connecting...'"></span>
+            </div>
+        </header>
 
-        function App() {
-            const [telemetry, setTelemetry] = useState({ ping: '--', uptime: '--', ram: '--', reqs: 0, wf: 'IDLE' });
-            const [logs, setLogs] = useState([{ type: 'OK', msg: 'ORBIS React Architecture Locked.', time: new Date().toLocaleTimeString() }]);
-            const [messages, setMessages] = useState([]);
-            const [input, setInput] = useState('');
-            const [isOnline, setIsOnline] = useState(false);
-            const [loading, setLoading] = useState(false);
+        <div class="flex flex-1 overflow-hidden relative w-full">
             
-            const chatEndRef = useRef(null);
-            const logEndRef = useRef(null);
+            <aside class="hidden md:flex w-[340px] h-full bg-slate-50 border-r border-slate-200 flex-col p-4 gap-4 overflow-y-auto shrink-0 z-20">
+                <div class="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm shrink-0">
+                    <div class="bg-slate-100 px-3 py-2 text-[0.7rem] font-bold border-b border-slate-200">⚙️ CORE TELEMETRY MATRIX</div>
+                    <div class="grid grid-cols-2 gap-[1px] bg-slate-200">
+                        <div class="bg-white p-3 flex flex-col gap-1"><span class="text-[0.65rem] font-bold uppercase opacity-70">API Ping</span><span class="font-mono font-bold" x-text="telemetry.ping"></span></div>
+                        <div class="bg-white p-3 flex flex-col gap-1"><span class="text-[0.65rem] font-bold uppercase opacity-70">Uptime</span><span class="font-mono font-bold" x-text="telemetry.uptime"></span></div>
+                        <div class="bg-white p-3 flex flex-col gap-1"><span class="text-[0.65rem] font-bold uppercase opacity-70">Memory</span><span class="font-mono font-bold" x-text="telemetry.ram"></span></div>
+                        <div class="bg-white p-3 flex flex-col gap-1"><span class="text-[0.65rem] font-bold uppercase opacity-70">Requests</span><span class="font-mono font-bold" x-text="telemetry.reqs"></span></div>
+                        <div class="bg-white p-3 flex flex-col gap-1 col-span-2"><span class="text-[0.65rem] font-bold uppercase opacity-70">Active Workflow</span><span class="font-mono font-bold" x-text="telemetry.wf"></span></div>
+                    </div>
+                </div>
+                <div class="flex-1 bg-white border border-slate-200 rounded-lg overflow-hidden flex flex-col shadow-sm min-h-[180px]">
+                    <div class="bg-slate-100 px-3 py-2 text-[0.7rem] font-bold border-b border-slate-200">📜 RUNTIME TERMINAL</div>
+                    <div class="flex-1 bg-navy text-green font-mono text-xs p-3 overflow-y-auto" id="term-box">
+                        <template x-for="log in logs">
+                            <div class="mb-1">
+                                <span class="text-gray-400" x-text="'['+log.time+']'"></span> 
+                                <strong :class="log.type === 'OK' ? 'text-green' : log.type === 'ERR' ? 'text-saffron' : 'text-white'" x-text="' '+log.type"></strong>: <span x-text="log.msg"></span>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </aside>
 
-            // অটো স্ক্রলিং ম্যাজিক
-            useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, loading]);
-            useEffect(() => { logEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [logs]);
+            <main class="absolute inset-0 md:left-[340px] bg-white flex flex-col overflow-hidden h-full">
+                
+                <div class="absolute top-0 left-0 right-0 bottom-[75px] overflow-y-auto p-4 md:p-6 flex flex-col gap-4 bg-white" id="chat-box">
+                    <template x-if="messages.length === 0">
+                        <div class="m-auto text-center opacity-50 flex flex-col items-center select-none">
+                            <i class="fa-solid fa-satellite-dish text-4xl mb-3 text-navy"></i>
+                            <p class="font-bold">ORBIS Core Engine Active.</p>
+                        </div>
+                    </template>
+                    
+                    <template x-for="m in messages">
+                        <div :class="m.role === 'user' ? 'self-end bg-[#fff5ed] border border-saffron rounded-br-sm' : 'self-start bg-[#f0fdf4] border border-green rounded-bl-sm'" class="max-w-[85%] p-3 rounded-2xl text-[0.95rem] leading-relaxed shadow-sm">
+                            <strong class="block mb-1 text-xs uppercase opacity-70" x-text="m.role === 'user' ? 'You' : 'ORBIS ✨'"></strong>
+                            <div x-html="m.text.replace(/\n/g, '<br/>')"></div>
+                        </div>
+                    </template>
 
-            const addLog = (type, msg) => {
-                setLogs(prev => [...prev, { type, msg, time: new Date().toLocaleTimeString() }]);
-            };
+                    <template x-if="loading">
+                        <div class="self-start max-w-[85%] p-3 rounded-2xl bg-[#f0fdf4] border border-green rounded-bl-sm flex items-center gap-2">
+                            <span class="w-2 h-2 bg-green rounded-full animate-ping"></span> Synthesizing...
+                        </div>
+                    </template>
+                </div>
 
-            // রেন্ডার সার্ভার থেকে ডেটা ফেচ
-            useEffect(() => {
-                const fetchTel = async () => {
+                <div class="absolute bottom-0 left-0 right-0 h-[75px] bg-white border-t border-slate-200 flex items-center justify-center px-4">
+                    <div class="flex items-center w-full max-w-4xl bg-slate-50 border border-slate-200 rounded-full px-2 py-1.5 focus-within:bg-white focus-within:border-green focus-within:shadow-[0_4px_12px_rgba(19,136,8,0.1)] transition-all">
+                        <button class="w-10 h-10 rounded-full flex justify-center items-center opacity-60 hover:opacity-100"><i class="fa-solid fa-plus"></i></button>
+                        <input 
+                            type="text" 
+                            className="flex-1 bg-transparent border-none outline-none px-2 text-[0.95rem]" 
+                            placeholder="Message ORBIS..." 
+                            x-model="input"
+                            @keydown.enter="handleSend()"
+                        />
+                        <select class="bg-transparent font-bold text-xs outline-none cursor-pointer mx-2 hidden sm:block">
+                            <option>BN</option>
+                            <option>EN</option>
+                        </select>
+                        <button class="w-10 h-10 rounded-full flex justify-center items-center opacity-60 hover:opacity-100 mr-1"><i class="fa-solid fa-microphone"></i></button>
+                        <button 
+                            @click="handleSend()"
+                            :disabled="loading || !input.trim()"
+                            class="w-10 h-10 rounded-full bg-green text-white flex justify-center items-center hover:bg-[#0f6e06] disabled:bg-slate-300 disabled:opacity-50 transition-colors"
+                        >
+                            <i className="fa-solid fa-arrow-up"></i>
+                        </button>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <script>
+        function orbisEngine() {
+            return {
+                telemetry: { ping: '--', uptime: '--', ram: '--', reqs: 0, wf: 'IDLE' },
+                logs: [{ type: 'OK', msg: 'Alpine Core Framework Initialized.', time: new Date().toLocaleTimeString() }],
+                messages: [],
+                input: '',
+                isOnline: false,
+                loading: false,
+
+                init() {
+                    this.fetchTelemetry();
+                    setInterval(() => this.fetchTelemetry(), 4000);
+                },
+
+                addLog(type, msg) {
+                    this.logs.push({ type, msg, time: new Date().toLocaleTimeString() });
+                    this.$nextTick(() => {
+                        const tBox = document.getElementById('term-box');
+                        if (tBox) tBox.scrollTop = tBox.scrollHeight;
+                    });
+                },
+
+                async fetchTelemetry() {
                     try {
                         const res = await fetch('/api/telemetry');
                         const json = await res.json();
                         if (json.success) {
-                            setTelemetry({
-                                ping: Math.floor(Math.random() * 50 + 20) + ' ms',
+                            this.telemetry = {
+                                ping: Math.floor(Math.random() * 40 + 20) + ' ms',
                                 uptime: json.data.brainHub?.uptime + 's',
                                 ram: json.data.memoryEngine?.ramUsageMB + ' MB',
                                 reqs: json.data.performance?.totalRequests,
                                 wf: json.data.brainHub?.activeWorkflow || 'IDLE'
-                            });
-                            setIsOnline(true);
+                            };
+                            this.isOnline = true;
                         }
                     } catch (e) {
-                        setIsOnline(false);
+                        this.isOnline = false;
                     }
-                };
-                fetchTel();
-                const int = setInterval(fetchTel, 3000);
-                return () => clearInterval(int);
-            }, []);
+                },
 
-            // এআই চ্যাট হ্যান্ডলার
-            const handleSend = async () => {
-                if (!input.trim() || loading) return;
-                
-                const userMsg = input.trim();
-                setInput('');
-                setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
-                setLoading(true);
-                addLog('INFO', 'Forwarding request to Gemini Flash...');
-
-                try {
-                    const start = Date.now();
-                    const res = await fetch('/api/chat', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ prompt: userMsg })
-                    });
-                    const data = await res.json();
-                    const diff = Date.now() - start;
-
-                    if (data.success) {
-                        setMessages(prev => [...prev, { role: 'ai', text: data.response }]);
-                        addLog('OK', `AI synthesis complete in ${diff}ms`);
-                        setTelemetry(prev => ({ ...prev, ping: diff + ' ms' }));
-                    } else {
-                        addLog('ERR', 'API Error: ' + data.error);
-                    }
-                } catch (err) {
-                    addLog('ERR', 'Transmission failed.');
-                } finally {
-                    setLoading(false);
-                }
-            };
-
-            return (
-                <div className="w-full h-full overflow-hidden relative">
+                async handleSend() {
+                    if (!this.input.trim() || this.loading) return;
                     
-                    {/* Top Navigation - ABSOLUTE TOP */}
-                    <div className="fixed top-0 left-0 right-0 h-[60px] bg-white border-b border-slate-200 border-t-4 border-t-saffron flex justify-between items-center px-4 md:px-6 z-50 shadow-sm">
-                        <div className="font-extrabold text-lg flex items-center gap-2">
-                            <i className="fa-solid fa-microchip text-navy"></i> ORBIS Engine
-                        </div>
-                        <div className="text-xs font-bold flex items-center gap-2 uppercase tracking-wider">
-                            <span className={`w-2.5 h-2.5 rounded-full ${isOnline ? 'bg-green shadow-[0_0_8px_#138808]' : 'bg-saffron shadow-[0_0_8px_#FF9933]'}`}></span>
-                            <span className={isOnline ? 'text-green' : 'text-saffron'}>{isOnline ? 'System Online' : 'Connecting...'}</span>
-                        </div>
-                    </div>
+                    const userMsg = this.input.trim();
+                    this.input = '';
+                    this.messages.push({ role: 'user', text: userMsg });
+                    this.loading = true;
+                    this.addLog('INFO', 'Forwarding packet payload to Gemini...');
+                    
+                    this.scrollToBottom();
 
-                    {/* Main Layout Area - ABSOLUTE BOUNDS */}
-                    <div className="fixed top-[60px] bottom-0 left-0 right-0 flex overflow-hidden">
-                        
-                        {/* Sidebar (Desktop Only) */}
-                        <div className="hidden md:flex w-[330px] h-full bg-slate-50 border-r border-slate-200 flex-col p-4 gap-4 overflow-y-auto shrink-0 relative z-20">
-                            <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm shrink-0">
-                                <div className="bg-slate-100 px-3 py-2 text-[0.7rem] font-bold text-navy border-b border-slate-200">
-                                    ⚙️ CORE TELEMETRY MATRIX
-                                </div>
-                                <div className="grid grid-cols-2 gap-[1px] bg-slate-200">
-                                    <div className="bg-white p-3 flex flex-col gap-1"><span className="text-[0.65rem] font-bold uppercase opacity-70">API Ping</span><span className="font-mono font-bold">{telemetry.ping}</span></div>
-                                    <div className="bg-white p-3 flex flex-col gap-1"><span className="text-[0.65rem] font-bold uppercase opacity-70">Uptime</span><span className="font-mono font-bold">{telemetry.uptime}</span></div>
-                                    <div className="bg-white p-3 flex flex-col gap-1"><span className="text-[0.65rem] font-bold uppercase opacity-70">Memory</span><span className="font-mono font-bold">{telemetry.ram}</span></div>
-                                    <div className="bg-white p-3 flex flex-col gap-1"><span className="text-[0.65rem] font-bold uppercase opacity-70">Requests</span><span className="font-mono font-bold">{telemetry.reqs}</span></div>
-                                    <div className="bg-white p-3 flex flex-col gap-1 col-span-2"><span className="text-[0.65rem] font-bold uppercase opacity-70">Active Workflow</span><span className="font-mono font-bold">{telemetry.wf}</span></div>
-                                </div>
-                            </div>
-                            <div className="flex-1 bg-white border border-slate-200 rounded-lg overflow-hidden flex flex-col shadow-sm min-h-[200px]">
-                                <div className="bg-slate-100 px-3 py-2 text-[0.7rem] font-bold text-navy border-b border-slate-200">
-                                    📜 RUNTIME TERMINAL
-                                </div>
-                                <div className="flex-1 bg-navy text-green font-mono text-xs p-3 overflow-y-auto">
-                                    {logs.map((log, i) => (
-                                        <div key={i} className="mb-1">
-                                            <span className="text-gray-400">[{log.time}]</span> 
-                                            <strong className={log.type === 'OK' ? 'text-green' : log.type === 'ERR' ? 'text-saffron' : 'text-white'}> {log.type}</strong>: {log.msg}
-                                        </div>
-                                    ))}
-                                    <div ref={logEndRef} />
-                                </div>
-                            </div>
-                        </div>
+                    try {
+                        const start = Date.now();
+                        const res = await fetch('/api/chat', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ prompt: userMsg })
+                        });
+                        const data = await res.json();
+                        const diff = Date.now() - start;
 
-                        {/* Chat Section */}
-                        <div className="flex-1 relative h-full w-full bg-white z-10">
-                            
-                            {/* Chat Display - ABSOLUTE BOUNDS */}
-                            <div className="absolute top-0 left-0 right-0 bottom-[75px] overflow-y-auto p-4 md:p-6 flex flex-col gap-4 bg-white">
-                                {messages.length === 0 && (
-                                    <div className="m-auto text-center opacity-50 flex flex-col items-center">
-                                        <i className="fa-solid fa-satellite-dish text-4xl mb-3 text-navy"></i>
-                                        <p className="font-bold">ORBIS React Engine Ready.</p>
-                                    </div>
-                                )}
-                                {messages.map((m, i) => (
-                                    <div key={i} className={`max-w-[85%] p-3 rounded-2xl text-[0.95rem] leading-relaxed ${m.role === 'user' ? 'self-end bg-[#fff5ed] border border-saffron rounded-br-sm' : 'self-start bg-[#f0fdf4] border border-green rounded-bl-sm'}`}>
-                                        <strong className="block mb-1 text-xs uppercase opacity-70">{m.role === 'user' ? 'You' : 'ORBIS ✨'}</strong>
-                                        <div dangerouslySetInnerHTML={{ __html: m.text.replace(/\n/g, '<br/>') }} />
-                                    </div>
-                                ))}
-                                {loading && (
-                                    <div className="self-start max-w-[85%] p-3 rounded-2xl bg-[#f0fdf4] border border-green rounded-bl-sm flex items-center gap-2">
-                                        <span className="w-2 h-2 bg-green rounded-full animate-ping"></span> Synthesizing...
-                                    </div>
-                                )}
-                                <div ref={chatEndRef} />
-                            </div>
+                        if (data.success) {
+                            this.messages.push({ role: 'ai', text: data.response });
+                            this.addLog('OK', `AI Synthesis successful in ${diff}ms`);
+                            this.telemetry.ping = diff + ' ms';
+                        } else {
+                            this.addLog('ERR', 'Engine Fault: ' + data.error);
+                        }
+                    } catch (err) {
+                        this.addLog('ERR', 'Transmission timeout.');
+                    } finally {
+                        this.loading = false;
+                        this.scrollToBottom();
+                    }
+                },
 
-                            {/* Input Dock - ABSOLUTE BOTTOM */}
-                            <div className="absolute bottom-0 left-0 right-0 h-[75px] bg-white border-t border-slate-200 flex items-center justify-center px-4">
-                                <div className="flex items-center w-full max-w-4xl bg-slate-50 border border-slate-200 rounded-full px-2 py-1.5 focus-within:bg-white focus-within:border-green focus-within:shadow-[0_4px_12px_rgba(19,136,8,0.1)] transition-all">
-                                    <button className="w-10 h-10 rounded-full flex justify-center items-center opacity-60 hover:opacity-100 transition-opacity">
-                                        <i className="fa-solid fa-plus"></i>
-                                    </button>
-                                    <input 
-                                        type="text" 
-                                        className="flex-1 bg-transparent border-none outline-none px-2 text-[0.95rem]" 
-                                        placeholder="Message ORBIS..." 
-                                        value={input}
-                                        onChange={(e) => setInput(e.target.value)}
-                                        onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                                    />
-                                    <select className="bg-transparent font-bold text-xs outline-none cursor-pointer mx-2 hidden sm:block">
-                                        <option value="bn-IN">BN</option>
-                                        <option value="en-US">EN</option>
-                                    </select>
-                                    <button className="w-10 h-10 rounded-full flex justify-center items-center opacity-60 hover:opacity-100 transition-opacity mr-1">
-                                        <i className="fa-solid fa-microphone"></i>
-                                    </button>
-                                    <button 
-                                        onClick={handleSend}
-                                        disabled={loading || !input.trim()}
-                                        className="w-10 h-10 rounded-full bg-green text-white flex justify-center items-center hover:bg-[#0f6e06] disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors"
-                                    >
-                                        <i className="fa-solid fa-arrow-up"></i>
-                                    </button>
-                                </div>
-                            </div>
-
-                        </div>
-                    </div>
-                </div>
-            );
+                scrollToBottom() {
+                    this.$nextTick(() => {
+                        const cBox = document.getElementById('chat-box');
+                        if (cBox) cBox.scrollTop = cBox.scrollHeight;
+                    });
+                }
+            }
         }
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
     </script>
 </body>
 </html>
