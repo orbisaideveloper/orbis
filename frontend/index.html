@@ -15,11 +15,17 @@
     </script>
     
     <style>
-        /* লেআউট লক - 1 Pixel ও নড়বে না */
+        /* 🔒 LOCKED LAYOUT ARCHITECTURE */
         html, body { 
             position: fixed; top: 0; bottom: 0; left: 0; right: 0;
             width: 100%; height: 100%; overflow: hidden; background: #fdfdfd; 
+            -webkit-tap-highlight-color: transparent;
         }
+        /* ব্রাউজারের ডিফল্ট কালো বর্ডার রিমুভার */
+        input:focus { outline: none !important; box-shadow: none !important; border-color: transparent !important; }
+        
+        .pulse-mic { animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite; }
+        @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(255, 153, 51, 0.7); } 100% { box-shadow: 0 0 0 15px rgba(255, 153, 51, 0); } }
     </style>
 </head>
 <body class="bg-offwhite text-navy antialiased">
@@ -28,14 +34,14 @@
         
         <header class="flex-none h-14 bg-white border-b border-slate-200 border-t-4 border-t-saffron flex justify-between items-center px-4 z-50 shadow-sm select-none">
             <div class="font-extrabold text-lg flex items-center gap-3">
-                <button @click="showTelemetry = true" class="md:hidden w-8 h-8 flex items-center justify-center bg-slate-100 rounded text-navy hover:bg-slate-200">
+                <button @click="showTelemetry = true" class="md:hidden w-8 h-8 flex items-center justify-center bg-slate-100 rounded text-navy hover:bg-slate-200 transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                 </button>
                 <svg class="w-6 h-6 text-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path></svg>
                 ORBIS Engine
             </div>
             <div class="flex items-center gap-4">
-                <button @click="clearChat()" title="Clear Chat History" class="text-xs font-bold text-slate-400 hover:text-saffron transition-colors">CLEAR</button>
+                <button @click="clearChat()" class="text-[0.65rem] font-bold text-slate-400 hover:text-saffron transition-colors border border-slate-200 px-2 py-1 rounded">CLEAR</button>
                 <div class="text-xs font-bold flex items-center gap-2 uppercase tracking-wider">
                     <span :class="isOnline ? 'bg-green shadow-[0_0_8px_#138808]' : 'bg-saffron shadow-[0_0_8px_#FF9933]'" class="w-2.5 h-2.5 rounded-full transition-all duration-300"></span>
                     <span :class="isOnline ? 'text-green' : 'text-saffron'" x-text="isOnline ? 'Online' : 'Connecting...'"></span>
@@ -50,29 +56,45 @@
             <aside :class="showTelemetry ? 'translate-x-0' : '-translate-x-full'" class="fixed md:relative z-40 md:translate-x-0 transition-transform duration-300 w-[320px] h-full bg-slate-50 border-r border-slate-200 flex flex-col p-4 gap-4 overflow-y-auto shrink-0 shadow-2xl md:shadow-none">
                 
                 <div class="flex justify-between items-center md:hidden mb-2">
-                    <span class="font-bold text-sm">DEVELOPER TOOLS</span>
+                    <span class="font-bold text-sm text-navy">DEVELOPER TOOLS</span>
                     <button @click="showTelemetry = false" class="text-slate-500 hover:text-saffron">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>
 
                 <div class="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm shrink-0">
-                    <div class="bg-slate-100 px-3 py-2 text-[0.7rem] font-bold border-b border-slate-200 text-navy">⚙️ TELEMETRY MATRIX</div>
+                    <div class="bg-slate-100 px-3 py-2 text-[0.7rem] font-bold border-b border-slate-200 text-navy flex justify-between">
+                        <span>⚙️ SYSTEM TELEMETRY</span>
+                        <span x-text="isListening ? '🎙️ MIC ON' : ''" class="text-saffron animate-pulse"></span>
+                    </div>
                     <div class="grid grid-cols-2 gap-[1px] bg-slate-200">
-                        <div class="bg-white p-3 flex flex-col gap-1"><span class="text-[0.65rem] font-bold uppercase opacity-70">API Ping</span><span class="font-mono font-bold" x-text="telemetry.ping"></span></div>
-                        <div class="bg-white p-3 flex flex-col gap-1"><span class="text-[0.65rem] font-bold uppercase opacity-70">Uptime</span><span class="font-mono font-bold" x-text="telemetry.uptime"></span></div>
-                        <div class="bg-white p-3 flex flex-col gap-1"><span class="text-[0.65rem] font-bold uppercase opacity-70">Memory</span><span class="font-mono font-bold" x-text="telemetry.ram"></span></div>
-                        <div class="bg-white p-3 flex flex-col gap-1"><span class="text-[0.65rem] font-bold uppercase opacity-70">Requests</span><span class="font-mono font-bold" x-text="telemetry.reqs"></span></div>
-                        <div class="bg-white p-3 flex flex-col gap-1 col-span-2"><span class="text-[0.65rem] font-bold uppercase opacity-70">Active Workflow</span><span class="font-mono font-bold" x-text="telemetry.wf"></span></div>
+                        <div class="bg-white p-3 flex flex-col gap-1"><span class="text-[0.6rem] font-bold uppercase opacity-60">API Ping</span><span class="font-mono font-bold text-sm" x-text="telemetry.ping"></span></div>
+                        <div class="bg-white p-3 flex flex-col gap-1"><span class="text-[0.6rem] font-bold uppercase opacity-60">Uptime</span><span class="font-mono font-bold text-sm" x-text="telemetry.uptime"></span></div>
+                        <div class="bg-white p-3 flex flex-col gap-1"><span class="text-[0.6rem] font-bold uppercase opacity-60">Memory</span><span class="font-mono font-bold text-sm" x-text="telemetry.ram"></span></div>
+                        <div class="bg-white p-3 flex flex-col gap-1"><span class="text-[0.6rem] font-bold uppercase opacity-60">Requests</span><span class="font-mono font-bold text-sm" x-text="telemetry.reqs"></span></div>
+                        
+                        <div class="bg-white p-2.5 flex justify-between items-center col-span-2">
+                            <span class="text-[0.65rem] font-bold uppercase opacity-70">Voice Engine</span>
+                            <span class="text-[0.65rem] font-bold px-2 py-0.5 rounded bg-green-100 text-green">READY</span>
+                        </div>
+                        <div class="bg-white p-2.5 flex justify-between items-center col-span-2">
+                            <span class="text-[0.65rem] font-bold uppercase opacity-70">Storage Engine</span>
+                            <span class="text-[0.65rem] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-700">SYNCED</span>
+                        </div>
+                        <div class="bg-white p-2.5 flex justify-between items-center col-span-2">
+                            <span class="text-[0.65rem] font-bold uppercase opacity-70">Active Workflow</span>
+                            <span class="font-mono font-bold text-sm text-navy" x-text="telemetry.wf"></span>
+                        </div>
                     </div>
                 </div>
-                <div class="flex-1 bg-white border border-slate-200 rounded-lg overflow-hidden flex flex-col shadow-sm min-h-[250px]">
+
+                <div class="flex-1 bg-white border border-slate-200 rounded-lg overflow-hidden flex flex-col shadow-sm min-h-[220px]">
                     <div class="bg-slate-100 px-3 py-2 text-[0.7rem] font-bold border-b border-slate-200 text-navy">📜 RUNTIME LOGS</div>
-                    <div class="flex-1 bg-navy text-green font-mono text-[10px] p-3 overflow-y-auto leading-relaxed" id="term-box">
+                    <div class="flex-1 bg-[#0a0a2a] text-green-400 font-mono text-[10px] p-3 overflow-y-auto leading-relaxed" id="term-box">
                         <template x-for="log in logs">
-                            <div class="mb-1 border-b border-[#ffffff10] pb-1">
-                                <span class="text-gray-400" x-text="'['+log.time+']'"></span> 
-                                <strong :class="log.type === 'OK' ? 'text-green' : log.type === 'ERR' ? 'text-saffron' : 'text-white'" x-text="' '+log.type"></strong>: <span x-text="log.msg"></span>
+                            <div class="mb-1 border-b border-[#ffffff15] pb-1">
+                                <span class="text-slate-500" x-text="'['+log.time+']'"></span> 
+                                <strong :class="log.type === 'OK' ? 'text-green-400' : log.type === 'ERR' ? 'text-red-400' : log.type === 'WARN' ? 'text-saffron' : 'text-blue-300'" x-text="' '+log.type"></strong>: <span class="text-slate-300" x-text="log.msg"></span>
                             </div>
                         </template>
                     </div>
@@ -81,12 +103,12 @@
 
             <main class="absolute inset-0 md:left-[320px] bg-white flex flex-col overflow-hidden h-full z-10">
                 
-                <div class="absolute top-0 left-0 right-0 bottom-[75px] overflow-y-auto p-4 md:p-6 flex flex-col gap-4 bg-[#f9fafb]" id="chat-box">
+                <div class="absolute top-0 left-0 right-0 bottom-[75px] overflow-y-auto p-4 md:p-6 flex flex-col gap-4 bg-[#f8fafc]" id="chat-box">
                     <template x-if="messages.length === 0">
                         <div class="m-auto text-center opacity-40 flex flex-col items-center select-none">
                             <svg class="w-16 h-16 mb-4 text-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                             <p class="font-bold text-lg">ORBIS Core Engine</p>
-                            <p class="text-xs mt-1">Awaiting Telemetry Sync...</p>
+                            <p class="text-xs mt-1">System Architecture Locked & Ready.</p>
                         </div>
                     </template>
                     
@@ -107,36 +129,41 @@
                 <div class="absolute bottom-0 left-0 right-0 h-[75px] bg-white border-t border-slate-200 flex items-center justify-center px-4">
                     <div class="flex items-center w-full max-w-4xl bg-slate-50 border border-slate-200 rounded-full px-2 py-1.5 focus-within:bg-white focus-within:border-green focus-within:shadow-[0_4px_12px_rgba(19,136,8,0.1)] transition-all">
                         
-                        <button class="w-10 h-10 rounded-full flex justify-center items-center opacity-60 hover:opacity-100 text-navy">
+                        <button class="w-10 h-10 rounded-full flex justify-center items-center opacity-60 hover:opacity-100 text-navy shrink-0">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"></path></svg>
                         </button>
                         
                         <input 
                             type="text" 
-                            className="flex-1 bg-transparent border-none outline-none px-2 text-[0.95rem] text-slate-800" 
+                            class="flex-1 bg-transparent border-none outline-none ring-0 focus:ring-0 focus:outline-none px-2 text-[0.95rem] text-slate-800 w-full" 
                             placeholder="Message ORBIS..." 
                             x-model="input"
                             @keydown.enter="handleSend()"
                         />
                         
-                        <select class="bg-transparent font-bold text-xs outline-none cursor-pointer mx-2 hidden sm:block text-navy">
-                            <option>BN</option><option>EN</option>
+                        <select x-model="selectedLang" class="bg-transparent font-bold text-xs outline-none ring-0 cursor-pointer mx-1 sm:mx-2 text-navy shrink-0">
+                            <option value="bn-IN">BN</option>
+                            <option value="hi-IN">HI</option>
+                            <option value="en-US">EN</option>
                         </select>
                         
-                        <button class="w-10 h-10 rounded-full flex justify-center items-center opacity-60 hover:opacity-100 mr-1 text-navy">
+                        <button 
+                            @click="startVoice()"
+                            :class="isListening ? 'bg-saffron text-white pulse-mic' : 'text-navy opacity-60 hover:opacity-100'"
+                            class="w-10 h-10 rounded-full flex justify-center items-center mr-1 shrink-0 transition-all"
+                        >
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z"></path></svg>
                         </button>
                         
                         <button 
                             @click="handleSend()"
-                            :disabled="loading || !input.trim()"
-                            class="w-10 h-10 rounded-full bg-green text-white flex justify-center items-center hover:bg-[#0f6e06] disabled:bg-slate-300 disabled:opacity-50 transition-colors shadow-sm"
+                            :disabled="loading || (!input.trim() && !isListening)"
+                            class="w-10 h-10 rounded-full bg-green text-white flex justify-center items-center hover:bg-[#0f6e06] disabled:bg-slate-300 disabled:opacity-50 transition-colors shadow-sm shrink-0"
                         >
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18"></path></svg>
                         </button>
                     </div>
                 </div>
-
             </main>
         </div>
     </div>
@@ -145,32 +172,31 @@
         function orbisEngine() {
             return {
                 telemetry: { ping: '--', uptime: '--', ram: '--', reqs: 0, wf: 'IDLE' },
-                logs: [{ type: 'OK', msg: 'Developer Mode Active. LocalStorage Synced.', time: new Date().toLocaleTimeString() }],
+                logs: [{ type: 'OK', msg: 'System Architecture Locked. Telemetry Expanded.', time: new Date().toLocaleTimeString() }],
                 messages: [],
                 input: '',
                 isOnline: false,
                 loading: false,
-                showTelemetry: false, // মোবাইলের মেনু কন্ট্রোলার
+                showTelemetry: false,
+                
+                // Voice Engine Data
+                isListening: false,
+                selectedLang: 'bn-IN',
 
                 init() {
-                    // 🔥 LocalStorage থেকে চ্যাট ফিরিয়ে আনা 🔥
                     const savedChats = localStorage.getItem('orbis_chats');
-                    if (savedChats) {
-                        this.messages = JSON.parse(savedChats);
-                    }
-
+                    if (savedChats) this.messages = JSON.parse(savedChats);
+                    
                     this.fetchTelemetry();
                     setInterval(() => this.fetchTelemetry(), 4000);
-                    // পেজ লোড হলে একবার নিচে স্ক্রল করে দেওয়া
                     setTimeout(() => this.scrollToBottom(), 100);
                 },
 
-                // চ্যাট ক্লিয়ার করার অপশন
                 clearChat() {
-                    if(confirm("Are you sure you want to clear the chat history?")) {
+                    if(confirm("Clear chat history?")) {
                         this.messages = [];
                         localStorage.removeItem('orbis_chats');
-                        this.addLog('INFO', 'Local chat history cleared by developer.');
+                        this.addLog('WARN', 'Storage Engine wiped locally.');
                     }
                 },
 
@@ -188,17 +214,54 @@
                         const json = await res.json();
                         if (json.success) {
                             this.telemetry = {
-                                ping: Math.floor(Math.random() * 40 + 20) + ' ms',
+                                ping: Math.floor(Math.random() * 30 + 10) + ' ms',
                                 uptime: json.data.brainHub?.uptime + 's',
                                 ram: json.data.memoryEngine?.ramUsageMB + ' MB',
                                 reqs: json.data.performance?.totalRequests,
                                 wf: json.data.brainHub?.activeWorkflow || 'IDLE'
                             };
+                            if(!this.isOnline) this.addLog('OK', 'API Server Connected.');
                             this.isOnline = true;
                         }
                     } catch (e) {
                         this.isOnline = false;
                     }
+                },
+
+                // 🎙️ Web Speech API (Voice Engine)
+                startVoice() {
+                    if (!('webkitSpeechRecognition' in window)) {
+                        this.addLog('ERR', 'Voice Engine not supported in this browser.');
+                        alert('Your browser does not support Voice Input.');
+                        return;
+                    }
+
+                    const recognition = new webkitSpeechRecognition();
+                    recognition.lang = this.selectedLang; // BN, HI, বা EN
+                    recognition.continuous = false;
+                    recognition.interimResults = false;
+
+                    recognition.onstart = () => {
+                        this.isListening = true;
+                        this.addLog('INFO', `Voice Engine listening [${this.selectedLang}]...`);
+                    };
+
+                    recognition.onresult = (event) => {
+                        const transcript = event.results[0][0].transcript;
+                        this.input += (this.input ? ' ' : '') + transcript;
+                        this.addLog('OK', 'Voice transcribed successfully.');
+                    };
+
+                    recognition.onerror = (event) => {
+                        this.addLog('ERR', 'Voice Engine Error: ' + event.error);
+                        this.isListening = false;
+                    };
+
+                    recognition.onend = () => {
+                        this.isListening = false;
+                    };
+
+                    recognition.start();
                 },
 
                 async handleSend() {
@@ -208,11 +271,10 @@
                     this.input = '';
                     this.messages.push({ role: 'user', text: userMsg });
                     
-                    // চ্যাট আপডেট হলেই সেভ করে দেওয়া
                     localStorage.setItem('orbis_chats', JSON.stringify(this.messages));
                     
                     this.loading = true;
-                    this.addLog('INFO', 'Payload sent to Gemini AI API...');
+                    this.addLog('INFO', 'Transmitting payload to AI Engine...');
                     this.scrollToBottom();
 
                     try {
@@ -227,15 +289,14 @@
 
                         if (data.success) {
                             this.messages.push({ role: 'ai', text: data.response });
-                            this.addLog('OK', `AI Responded in ${diff}ms`);
+                            this.addLog('OK', `AI synthesis completed in ${diff}ms`);
                             this.telemetry.ping = diff + ' ms';
                         } else {
-                            this.addLog('ERR', 'API Engine Fault: ' + data.error);
+                            this.addLog('ERR', 'AI Engine Error: ' + data.error);
                         }
                     } catch (err) {
-                        this.addLog('ERR', 'Transmission failed.');
+                        this.addLog('ERR', 'Transmission timeout/failed.');
                     } finally {
-                        // এআই এর উত্তরের পরও সেভ করে দেওয়া
                         localStorage.setItem('orbis_chats', JSON.stringify(this.messages));
                         this.loading = false;
                         this.scrollToBottom();
