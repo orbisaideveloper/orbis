@@ -1,9 +1,15 @@
 // ui-core.js - Shared UI utilities
-const getEl = (id) => document.getElementById(id);
+
+// FIXED: 'var' makes this function global across all split JS files
+var getEl = function(id) {
+    return document.getElementById(id);
+};
 
 window.toggleSidebar = function() {
     const sidebar = getEl('dev-sidebar');
     if (!sidebar) return;
+    
+    // FIXED: Accurately checks if it's hidden or active
     if (sidebar.style.display === 'none' || sidebar.style.display === '') {
         sidebar.style.display = 'flex';
         sidebar.style.position = 'absolute';
@@ -27,5 +33,5 @@ window.printLog = function(type, msg) {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    window.printLog('OK', 'UI Core Initialized.');
+    window.printLog('OK', 'UI Core Initialized & Linked.');
 });
