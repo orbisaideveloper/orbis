@@ -1,4 +1,4 @@
-// js/ui-router.js - Workflow Router (Final Optimized Version)
+// js/ui-router.js - Workflow Router (Final Synchronization)
 
 window.WorkflowRouter = {
     internalCommands: ['health', 'telemetry', 'workflow', 'memory', 'status', 'logs', 'verify', 'update'],
@@ -18,19 +18,15 @@ window.WorkflowRouter = {
             } else {
                 window.updateChatUI('ORBIS', `Gemini-এর সাথে যোগাযোগ করা হচ্ছে...`);
                 
-                // জেমিনির জন্য সঠিক JSON স্ট্রাকচার
-                const apiData = {
-                    contents: [{ parts: [{ text: payload.content }] }]
-                };
-                
                 try {
-                    const response = await window.APIGateway.call('gemini', apiData);
+                    // তোমার API Gateway কল করছে
+                    const response = await window.APIGateway.call('gemini', { prompt: payload.content });
                     
-                    if (response.status === 'success') {
-                        const aiText = response.data.candidates[0].content.parts[0].text;
-                        window.updateChatUI('ORBIS (Gemini)', aiText);
+                    if (response && response.status === 'success') {
+                        // জেমিনি থেকে আসা রেসপন্স ডিসপ্লে করা
+                        window.updateChatUI('ORBIS', response.data.text || "রেসপন্স পাওয়া গেছে।");
                     } else {
-                        window.updateChatUI('ORBIS', `ত্রুটি: ${response.message}`);
+                        window.updateChatUI('ORBIS', `ত্রুটি: ${response.message || 'API কানেকশনে সমস্যা হচ্ছে।'}`);
                     }
                 } catch (err) {
                     window.updateChatUI('ORBIS', `সিস্টেম এরর: ${err.message}`);
@@ -41,5 +37,5 @@ window.WorkflowRouter = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    window.printLog('OK', 'Workflow Router Ready.');
+    window.printLog('OK', 'Workflow Router Connected to API.');
 });
