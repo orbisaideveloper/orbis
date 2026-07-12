@@ -3,114 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ORBIS Advanced Engineering Control Center</title>
+    <title>ORBIS Advanced AI</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/style.css"> 
 </head>
 <body>
 
-    <div class="meta-bar">
-        <div class="meta-indicators">
-            <span>PHASE: <strong>Phase 6 (Step 1)</strong></span>
-            <span>BUILD: <strong>v1.3.5-Prod</strong></span>
-            <span>ENVIRONMENT: <strong>Render Cloud Engine</strong></span>
+    <div class="top-nav">
+        <div class="nav-brand">✨ ORBIS AI</div>
+        <div class="nav-status">
+            <span id="tel-brainhub" class="status-dot offline"></span>
+            <span id="tel-status-text">Connecting...</span>
         </div>
-        <div><span>BRANCH: <strong class="text-blue">main</strong></span></div>
     </div>
 
     <div class="dashboard-wrapper">
-        <div class="left-column">
+        <div class="sidebar">
             <div class="panel">
-                <div class="panel-header">⚙️ SYSTEM TELEMETRY DYNAMIC MATRIX</div>
-                <div class="status-grid">
-                    <div class="status-box">BrainHub Status <span id="tel-brainhub" class="text-red">OFFLINE</span></div>
-                    <div class="status-box">Active Build Config <span class="text-green">PRODUCTION</span></div>
-                    <div class="status-box">System Runtime Uptime <span id="tel-uptime" class="text-gray">--</span></div>
-                    <div class="status-box">Workflow Engine <span id="tel-wf-status" class="text-blue">IDLE</span></div>
-                    <div class="status-box">Request Identifier <span id="tel-req-id" class="text-muted">NONE</span></div>
-                    <div class="status-box">Session Data Channel <span class="text-green">SECURE ENCRYPTED</span></div>
-                </div>
+                <div class="panel-header">⚙️ TELEMETRY MATRIX</div>
+                <div class="status-box">Uptime: <span id="tel-uptime">--</span></div>
+                <div class="status-box">Memory: <span id="tel-ram">-- MB</span></div>
+                <div class="status-box">Ping: <span id="ping-status">-- ms</span></div>
+                <div class="status-box">Workflow: <span id="tel-wf-status" class="text-blue">IDLE</span></div>
             </div>
-
-            <div class="panel panel-green">
-                <div class="panel-header">🔄 LIVE WORKFLOW PIPELINE TRACKER</div>
-                <div class="wf-container">
-                    <div class="wf-flow">
-                        <div class="wf-node" id="wf-input">Input</div>
-                        <div class="wf-node" id="wf-brain">BrainHub</div>
-                        <div class="wf-node" id="wf-decision">Decision Mgr</div>
-                        <div class="wf-node" id="wf-planner">Planner</div>
-                        <div class="wf-node" id="wf-registry">Registry</div>
-                        <div class="wf-node" id="wf-provider">Provider</div>
-                        <div class="wf-node" id="wf-review">Review</div>
-                        <div class="wf-node" id="wf-response">Response</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="panel panel-blue">
-                <div class="panel-header">🧠 COMPONENT REGISTRY & MEMORY ENGINE</div>
-                <div class="status-grid">
-                    <div class="status-box">Memory Engine State <span id="tel-mem-status" class="text-saffron">STANDBY</span></div>
-                    <div class="status-box">User / Session Core <span class="text-muted">0 Nodes / 0 Active</span></div>
-                    <div class="status-box">Active Registry Target <span id="tel-provider-name" class="text-saffron">Gemini Registry</span></div>
-                    <div class="status-box">Model Parameter Target <span id="tel-model" class="text-saffron">gemini-3.5-flash</span></div>
-                </div>
-            </div>
-
-            <div class="panel">
-                <div class="panel-header">📊 REAL runtime ANALYTICS GRAPH</div>
-                <div class="status-grid">
-                    <div class="status-box">Total Load Requests <span id="tel-total-req" class="text-green">0</span></div>
-                    <div class="status-box">Runtime Errors Logged <span id="tel-errors" class="text-green">0</span></div>
-                    <div class="status-box">API Latency (Ping) <span id="ping-status" class="text-green">-- ms</span></div>
-                    <div class="status-box">Process Memory Usage <span id="tel-ram" class="text-green">-- MB</span></div>
-                </div>
-            </div>
-
             <div class="panel logs-panel">
-                <div class="panel-header">📜 LIVE RUNTIME LOG TERMINAL INTERFACE</div>
-                <div class="log-filters">
-                    <button class="filter-btn active" onclick="filterLogs('ALL')">ALL</button>
-                    <button class="filter-btn" onclick="filterLogs('INFO')">INFO</button>
-                    <button class="filter-btn" onclick="filterLogs('SUCCESS')">SUCCESS</button>
-                    <button class="filter-btn" onclick="filterLogs('ERROR')">ERROR</button>
-                </div>
+                <div class="panel-header">📜 RUNTIME LOGS</div>
                 <div class="logs-container" id="log-box"></div>
             </div>
         </div>
 
-        <div class="right-column">
-            <div class="chat-panel">
-                <div class="panel-header" style="background-color: #ffffff; border-bottom: 1px solid #e2e8f0; justify-content: center; font-family: 'Segoe UI', sans-serif;">
-                    ✨ ORBIS AI ENGINE
+        <div class="main-chat-area">
+            <div class="chat-container" id="chat-box">
                 </div>
-                <div class="chat-area" id="chat-box"></div>
-                
-                <div class="input-container">
-                    <div class="chat-input-wrapper">
-                        <input type="file" id="file-input" style="display: none;">
-                        <button class="icon-btn" onclick="document.getElementById('file-input').click()">
-                            <i class="fa-solid fa-plus"></i>
-                        </button>
-                        
-                        <input type="text" id="prompt-input" placeholder="Message ORBIS..." autocomplete="off">
-                        
-                        <select id="lang-select" class="lang-select-minimal">
-                            <option value="bn-IN">BN</option>
-                            <option value="en-US">EN</option>
-                            <option value="hi-IN">HI</option>
-                        </select>
-                        
-                        <button class="icon-btn" id="mic-btn" onclick="startVoiceEngine()">
-                            <i class="fa-solid fa-microphone"></i>
-                        </button>
-                        
-                        <button class="icon-btn send-btn-arrow" id="send-btn" onclick="executeSecureDispatch()">
-                            <i class="fa-solid fa-paper-plane"></i>
-                        </button>
-                    </div>
+            
+            <div class="input-section">
+                <div class="gemini-input-wrapper">
+                    <input type="file" id="file-input" style="display: none;">
+                    <button class="icon-btn" onclick="document.getElementById('file-input').click()" title="Attach File">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                    
+                    <input type="text" id="prompt-input" placeholder="Ask ORBIS anything..." autocomplete="off">
+                    
+                    <select id="lang-select" class="minimal-lang" title="Voice Language">
+                        <option value="bn-IN">BN</option>
+                        <option value="en-US">EN</option>
+                    </select>
+                    
+                    <button class="icon-btn" id="mic-btn" onclick="startVoiceEngine()" title="Voice Input">
+                        <i class="fa-solid fa-microphone"></i>
+                    </button>
+                    
+                    <button class="gemini-send-btn" id="send-btn" onclick="executeSecureDispatch()">
+                        <i class="fa-solid fa-arrow-up"></i>
+                    </button>
                 </div>
+                <div class="input-footer">ORBIS Engine v1.3.5 | Advanced AI Model</div>
             </div>
         </div>
     </div>
