@@ -15,7 +15,7 @@
     </script>
     
     <style>
-        /* 🔒 LOCKED ARCHITECTURE - DO NOT TOUCH */
+        /* 🔒 LOCKED ARCHITECTURE - ABSOLUTELY NO CHANGES HERE */
         html, body { 
             position: fixed; top: 0; bottom: 0; left: 0; right: 0;
             width: 100%; height: 100%; overflow: hidden; background: #fdfdfd; 
@@ -25,7 +25,6 @@
         .pulse-mic { animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite; }
         @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(255, 153, 51, 0.7); } 100% { box-shadow: 0 0 0 15px rgba(255, 153, 51, 0); } }
         
-        /* কাস্টম স্ক্রলবার ডেভেলপার প্যানেলের জন্য */
         .dev-scroll::-webkit-scrollbar { width: 4px; }
         .dev-scroll::-webkit-scrollbar-track { background: transparent; }
         .dev-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
@@ -60,7 +59,7 @@
                 
                 <div class="flex justify-between items-center md:hidden mb-1">
                     <span class="font-bold text-sm text-navy">ADVANCED TELEMETRY</span>
-                    <button @click="showTelemetry = false" class="text-slate-500 hover:text-saffron">
+                    <button @click="showTelemetry = false" class="text-slate-500 hover:text-saffron cursor-pointer p-1">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>
@@ -84,7 +83,7 @@
                         <div class="bg-white p-2 flex flex-col"><span class="text-[0.6rem] font-bold uppercase opacity-60">Network</span><span class="font-mono font-bold text-xs" x-text="clientStats.network"></span></div>
                         <div class="bg-white p-2 flex flex-col"><span class="text-[0.6rem] font-bold uppercase opacity-60">Platform</span><span class="font-mono font-bold text-xs truncate" x-text="clientStats.platform"></span></div>
                         <div class="bg-white p-2 flex flex-col"><span class="text-[0.6rem] font-bold uppercase opacity-60">Viewport</span><span class="font-mono font-bold text-xs" x-text="clientStats.viewport"></span></div>
-                        <div class="bg-white p-2 flex flex-col"><span class="text-[0.6rem] font-bold uppercase opacity-60">Local Storage</span><span class="font-mono font-bold text-xs" x-text="clientStats.storageUsed + ' B'"></span></div>
+                        <div class="bg-white p-2 flex flex-col"><span class="text-[0.6rem] font-bold uppercase opacity-60">Memory Sync</span><span class="font-mono font-bold text-xs text-blue-600">Active</span></div>
                     </div>
                 </div>
 
@@ -107,7 +106,7 @@
                 <div class="flex-1 bg-white border border-slate-200 rounded-lg overflow-hidden flex flex-col shadow-sm min-h-[180px]">
                     <div class="bg-slate-100 px-3 py-1.5 text-[0.65rem] font-bold border-b border-slate-200 text-navy flex justify-between">
                         <span>📜 SYSTEM LOGS</span>
-                        <span class="text-slate-400 cursor-pointer hover:text-saffron" @click="logs = []">Clear</span>
+                        <span class="text-slate-400 cursor-pointer hover:text-saffron" @click="logs = [{type: 'INFO', msg: 'Logs cleared.', time: new Date().toLocaleTimeString()}]">Clear</span>
                     </div>
                     <div class="flex-1 bg-[#0a0a2a] text-green-400 font-mono text-[10px] p-2.5 overflow-y-auto leading-relaxed dev-scroll" id="term-box">
                         <template x-for="log in logs">
@@ -121,7 +120,6 @@
             </aside>
 
             <main class="absolute inset-0 md:left-[340px] bg-white flex flex-col overflow-hidden h-full z-10">
-                
                 <div class="absolute top-0 left-0 right-0 bottom-[75px] overflow-y-auto p-4 md:p-6 flex flex-col gap-4 bg-[#f8fafc]" id="chat-box">
                     <template x-if="messages.length === 0">
                         <div class="m-auto text-center opacity-40 flex flex-col items-center select-none">
@@ -147,11 +145,9 @@
 
                 <div class="absolute bottom-0 left-0 right-0 h-[75px] bg-white border-t border-slate-200 flex items-center justify-center px-4">
                     <div class="flex items-center w-full max-w-4xl bg-slate-50 border border-slate-200 rounded-full px-2 py-1.5 focus-within:bg-white focus-within:border-green focus-within:shadow-[0_4px_12px_rgba(19,136,8,0.1)] transition-all">
-                        
                         <button class="w-10 h-10 rounded-full flex justify-center items-center opacity-60 hover:opacity-100 text-navy shrink-0">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"></path></svg>
                         </button>
-                        
                         <input 
                             type="text" 
                             class="flex-1 bg-transparent border-none outline-none ring-0 focus:ring-0 focus:outline-none px-2 text-[0.95rem] text-slate-800 w-full" 
@@ -159,13 +155,11 @@
                             x-model="input"
                             @keydown.enter="handleSend()"
                         />
-                        
                         <select x-model="selectedLang" class="bg-transparent font-bold text-xs outline-none ring-0 cursor-pointer mx-1 sm:mx-2 text-navy shrink-0">
                             <option value="bn-IN">BN</option>
                             <option value="hi-IN">HI</option>
                             <option value="en-US">EN</option>
                         </select>
-                        
                         <button 
                             @click="startVoice()"
                             :class="isListening ? 'bg-saffron text-white pulse-mic' : 'text-navy opacity-60 hover:opacity-100'"
@@ -173,7 +167,6 @@
                         >
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z"></path></svg>
                         </button>
-                        
                         <button 
                             @click="handleSend()"
                             :disabled="loading || (!input.trim() && !isListening)"
@@ -191,8 +184,8 @@
         function orbisEngine() {
             return {
                 telemetry: { ping: '--', uptime: '--', ram: '--', reqs: 0, wf: 'IDLE' },
-                clientStats: { network: 'Checking...', platform: 'Detecting...', viewport: '0x0', storageUsed: 0 },
-                logs: [{ type: 'OK', msg: 'System Architecture Locked. Full Telemetry Active.', time: new Date().toLocaleTimeString() }],
+                clientStats: { network: 'Checking...', platform: 'Detecting...', viewport: '0x0' },
+                logs: [{ type: 'OK', msg: 'System Re-Locked. Safe Mode Active.', time: new Date().toLocaleTimeString() }],
                 messages: [],
                 input: '',
                 isOnline: false,
@@ -202,39 +195,37 @@
                 selectedLang: 'bn-IN',
 
                 init() {
-                    const savedChats = localStorage.getItem('orbis_chats');
-                    if (savedChats) this.messages = JSON.parse(savedChats);
+                    try {
+                        const savedChats = localStorage.getItem('orbis_chats');
+                        if (savedChats) this.messages = JSON.parse(savedChats);
+                    } catch(e) { console.log("Storage read error ignored"); }
                     
-                    this.updateClientStats();
+                    this.safeUpdateClientStats();
                     this.fetchTelemetry();
                     
-                    window.addEventListener('resize', () => this.updateClientStats());
+                    window.addEventListener('resize', () => this.safeUpdateClientStats());
                     setInterval(() => this.fetchTelemetry(), 4000);
-                    setInterval(() => this.updateClientStats(), 10000);
                     
                     setTimeout(() => this.scrollToBottom(), 100);
                 },
 
-                updateClientStats() {
-                    const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-                    this.clientStats.network = conn ? conn.effectiveType.toUpperCase() : 'WIFI/LAN';
-                    this.clientStats.platform = navigator.platform || 'Unknown';
-                    this.clientStats.viewport = window.innerWidth + 'x' + window.innerHeight;
-                    
-                    let _lsTotal = 0, _xLen, _x;
-                    for (_x in localStorage) {
-                        if (!localStorage.hasOwnProperty(_x)) continue;
-                        _xLen = ((localStorage[_x].length + _x.length) * 2);
-                        _lsTotal += _xLen;
+                // 🚨 সেফ মোড ডায়াগনস্টিক্স (কোনো ক্র্যাশ হবে না) 🚨
+                safeUpdateClientStats() {
+                    try {
+                        const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+                        this.clientStats.network = conn && conn.effectiveType ? conn.effectiveType.toUpperCase() : 'WIFI/LAN';
+                        this.clientStats.platform = navigator.platform || 'Unknown';
+                        this.clientStats.viewport = window.innerWidth + 'x' + window.innerHeight;
+                    } catch(e) {
+                        this.clientStats.network = 'Unknown';
+                        this.clientStats.platform = 'Mobile Web';
                     }
-                    this.clientStats.storageUsed = _lsTotal;
                 },
 
                 clearChat() {
                     if(confirm("Clear chat history and memory context?")) {
                         this.messages = [];
-                        localStorage.removeItem('orbis_chats');
-                        this.updateClientStats();
+                        try { localStorage.removeItem('orbis_chats'); } catch(e){}
                         this.addLog('WARN', 'Storage Engine wiped. Context Memory reset.');
                     }
                 },
@@ -285,4 +276,6 @@
                     };
 
                     recognition.onresult = (event) => {
-                
+                        const transcript = event.results[0][0].transcript;
+                        this.input += (this.input ? ' ' : '') + transcript;
+                        this.addLog('OK', 'Voice transcribed s
