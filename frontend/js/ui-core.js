@@ -1,37 +1,17 @@
-// ui-core.js - Shared UI utilities
-
-// FIXED: 'var' makes this function global across all split JS files
-var getEl = function(id) {
-    return document.getElementById(id);
+// js/ui-core.js - Global System Bridge
+window.printLog = function(level, msg) {
+    const logBox = document.getElementById('log-box');
+    const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+    const logEntry = document.createElement('div');
+    logEntry.innerHTML = `<span style="opacity:0.6">[${time}]</span> <strong style="color:${level === 'ERR' ? 'red' : 'green'}">${level}:</strong> ${msg}`;
+    logBox.appendChild(logEntry);
+    logBox.scrollTop = logBox.scrollHeight;
 };
 
 window.toggleSidebar = function() {
-    const sidebar = getEl('dev-sidebar');
-    if (!sidebar) return;
-    
-    // FIXED: Accurately checks if it's hidden or active
-    if (sidebar.style.display === 'none' || sidebar.style.display === '') {
-        sidebar.style.display = 'flex';
-        sidebar.style.position = 'absolute';
-        sidebar.style.zIndex = '100';
-        sidebar.style.height = '100%';
-        sidebar.style.boxShadow = '5px 0 15px rgba(0,0,0,0.1)';
-    } else {
-        sidebar.style.display = 'none';
-    }
-};
-
-window.printLog = function(type, msg) {
-    try {
-        const logBox = getEl('log-box');
-        if (!logBox) return;
-        const time = new Date().toLocaleTimeString();
-        let color = type === 'OK' ? '#138808' : type === 'ERR' ? '#FF9933' : type === 'INFO' ? '#3b82f6' : '#ffffff';
-        logBox.innerHTML += `<div><span style="color:#aaa;">[${time}]</span> <strong style="color:${color};">${type}</strong>: ${msg}</div>`;
-        logBox.scrollTop = logBox.scrollHeight;
-    } catch(e) {}
+    document.getElementById('dev-sidebar').classList.toggle('active');
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    window.printLog('OK', 'UI Core Initialized & Linked.');
+    window.printLog('OK', 'System Core Initialized.');
 });

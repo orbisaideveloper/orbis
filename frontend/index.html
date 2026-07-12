@@ -14,8 +14,8 @@
         </div>
         <div class="sys-badges">
             <button onclick="clearContext()" style="background:none; border:1px solid var(--border); font-size:0.6rem; padding:2px 6px; cursor:pointer; color:var(--navy-blue); font-weight:bold; margin-right:10px;">CLEAR</button>
-            <span id="glow-dot" class="status-glow offline"></span>
-            <span id="status-text" style="color:var(--saffron);">Connecting...</span>
+            <span id="glow-dot" class="status-glow online"></span>
+            <span id="status-text" style="color:var(--saffron);">Online</span>
         </div>
     </header>
 
@@ -30,47 +30,36 @@
                     <div class="data-cell"><span class="data-label">API Ping</span><span class="data-value" id="tel-ping">-- ms</span></div>
                     <div class="data-cell"><span class="data-label">Uptime</span><span class="data-value" id="tel-uptime">-- s</span></div>
                     <div class="data-cell"><span class="data-label">RAM Usage</span><span class="data-value" id="tel-ram">-- MB</span></div>
-                    <div class="data-cell"><span class="data-label">Requests</span><span class="data-value" id="tel-req">0</span></div>
                     <div class="data-cell" style="grid-column: span 2;"><span class="data-label">Active Workflow</span><span class="data-value" id="tel-wf" style="font-size:0.7rem; background:#f3e8ff; padding:2px 6px; border-radius:4px; color:#7e22ce;">IDLE</span></div>
-                    <div class="data-cell" style="grid-column: span 2;"><span class="data-label">Brain State</span><span class="data-value" id="tel-brain" style="font-size:0.7rem; padding:2px 6px; border-radius:4px; background:var(--border);">IDLE</span></div>
-                    <div class="data-cell" style="grid-column: span 2;"><span class="data-label">Context Memory</span><span class="data-value" id="tel-nodes" style="font-size:0.7rem; background:#e0f2fe; padding:2px 6px; border-radius:4px; color:#0369a1;">0 Nodes</span></div>
                 </div>
             </div>
             <div class="panel" style="flex:1;">
-                <div class="panel-header" style="display:flex; justify-content:space-between;">
-                    <span>📜 RUNTIME LOGS</span>
-                    <span style="cursor:pointer; opacity:0.6;" onclick="document.getElementById('log-box').innerHTML=''">Clear</span>
-                </div>
+                <div class="panel-header">📜 RUNTIME LOGS</div>
                 <div class="terminal" id="log-box"></div>
             </div>
         </aside>
 
         <main class="chat-section">
-            <div class="chat-display" id="chat-box">
-                <div style="margin:auto; text-align:center; opacity:0.5;" id="welcome-msg">
-                    <p style="font-weight:bold; font-size:1.2rem;">ORBIS Ready.</p>
-                    <p style="font-size:0.8rem;">System Architecture Locked.</p>
-                </div>
-            </div>
+            <div class="chat-display" id="chat-box"></div>
             <div class="input-dock">
                 <div class="smart-input-box">
-                    <select id="lang-select" class="lang-selector"><option value="bn-IN">BN</option><option value="hi-IN">HI</option><option value="en-US">EN</option></select>
-                    <input type="text" id="prompt-box" placeholder="Message ORBIS..." onkeydown="if(event.key === 'Enter') dispatchToAI()" />
-                    <button id="mic-btn" class="btn-icon" onclick="startVoiceEngine()">🎙️</button>
-                    <button id="send-btn" class="btn-send" onclick="dispatchToAI()">➤</button>
+                    <select id="lang-select" class="lang-selector"><option value="bn-IN">BN</option></select>
+                    <input type="text" id="prompt-box" placeholder="Message ORBIS..." onkeydown="if(event.key === 'Enter') window.dispatchToAI()" />
+                    <button id="mic-btn" class="btn-icon" onclick="window.startVoiceEngine()">🎙️</button>
+                    <button id="send-btn" class="btn-send" onclick="window.dispatchToAI()">➤</button>
                 </div>
             </div>
         </main>
     </div>
 
-    <script type="module" src="js/ui-core.js"></script>
-    <script type="module" src="js/ui-events.js"></script>
-    <script type="module" src="js/ui-api.js"></script>
-    <script type="module" src="js/ui-router.js"></script>
-    <script type="module" src="js/ui-storage.js"></script>
-    <script type="module" src="js/ui-dashboard.js"></script>
-    <script type="module" src="js/ui-telemetry.js"></script>
-    <script type="module" src="js/ui-chat.js"></script>
-    <script type="module" src="js/ui-voice.js"></script>
+    <script src="js/ui-core.js"></script>
+    <script src="js/ui-events.js"></script>
+    <script src="js/ui-api.js"></script>
+    <script src="js/ui-router.js"></script>
+    <script src="js/ui-storage.js"></script>
+    <script src="js/ui-dashboard.js"></script>
+    <script src="js/ui-telemetry.js"></script>
+    <script src="js/ui-chat.js"></script>
+    <script src="js/ui-voice.js"></script>
 </body>
 </html>
