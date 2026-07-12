@@ -3,58 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ORBIS Engine Cockpit</title>
+    <title>ORBIS Core Engine</title>
+    
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    
     <style>
         html, body { position: fixed; top: 0; bottom: 0; left: 0; right: 0; width: 100%; height: 100%; overflow: hidden; background: #fdfdfd; -webkit-tap-highlight-color: transparent; }
-        .dev-scroll::-webkit-scrollbar { width: 5px; }
+        .dev-scroll::-webkit-scrollbar { width: 4px; }
         .dev-scroll::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
         .pulse-mic { animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite; }
         @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(255, 153, 51, 0.7); } 100% { box-shadow: 0 0 0 15px rgba(255, 153, 51, 0); } }
     </style>
 </head>
 <body class="bg-offwhite text-navy antialiased">
-    <div x-data="orbisEngine()" x-init="init()" class="absolute inset-0 flex flex-col w-full h-full">
+
+    <div x-data="orbisEngine()" x-init="init()" class="absolute inset-0 flex flex-col overflow-hidden w-full h-full">
         
-        <header class="h-14 bg-white border-b border-slate-200 border-t-4 border-t-saffron flex justify-between items-center px-4 z-50">
+        <header class="h-14 bg-white border-b border-slate-200 border-t-4 border-t-saffron flex justify-between items-center px-4 shadow-sm z-50">
             <div class="font-bold flex items-center gap-3">
                 <button @click="showTelemetry = true" class="md:hidden p-2 bg-slate-100 rounded text-navy"><i class="fa-solid fa-bars"></i></button>
                 ORBIS Engine Cockpit
             </div>
             <div class="text-xs font-bold uppercase flex items-center gap-2">
                 <span class="w-2.5 h-2.5 rounded-full" :class="isOnline ? 'bg-green' : 'bg-saffron'"></span>
-                <span x-text="isOnline ? 'Active' : 'Offline'"></span>
+                <span x-text="isOnline ? 'System Online' : 'Connecting...'"></span>
             </div>
         </header>
 
         <div class="flex flex-1 overflow-hidden relative w-full">
-            <aside :class="showTelemetry ? 'translate-x-0' : '-translate-x-full'" class="fixed md:relative z-40 transition-transform w-[340px] h-full bg-slate-900 text-white flex flex-col p-4 gap-4 overflow-y-auto dev-scroll shadow-2xl md:shadow-none">
-                <div class="flex justify-between md:hidden"><span class="font-bold text-saffron">DIAGNOSTIC PANEL</span><button @click="showTelemetry = false"><i class="fa-solid fa-xmark"></i></button></div>
+            <aside :class="showTelemetry ? 'translate-x-0' : '-translate-x-full'" class="fixed md:relative z-40 transition-transform w-[320px] h-full bg-slate-50 border-r border-slate-200 flex flex-col p-4 gap-4 overflow-y-auto dev-scroll shadow-2xl md:shadow-none">
+                <div class="flex justify-between md:hidden"><span class="font-bold">DEVELOPER TOOLS</span><button @click="showTelemetry = false"><i class="fa-solid fa-xmark"></i></button></div>
                 
-                <div class="space-y-3">
-                    <p class="text-[0.6rem] uppercase tracking-widest text-slate-400">Core Health Scan</p>
-                    <div class="grid grid-cols-2 gap-2 text-xs">
-                        <div class="bg-slate-800 p-2 rounded">Ping: <span x-text="telemetry.ping"></span></div>
-                        <div class="bg-slate-800 p-2 rounded">Uptime: <span x-text="telemetry.uptime"></span></div>
-                        <div class="bg-slate-800 p-2 rounded">Memory: <span x-text="telemetry.ram"></span></div>
-                        <div class="bg-slate-800 p-2 rounded">Requests: <span x-text="telemetry.reqs"></span></div>
+                <div class="bg-white border rounded-lg p-3 text-xs">
+                    <p class="font-bold border-b pb-1 mb-2 text-navy">⚙️ SYSTEM TELEMETRY</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>Ping: <span class="font-mono font-bold" x-text="telemetry.ping"></span></div>
+                        <div>Uptime: <span class="font-mono font-bold" x-text="telemetry.uptime"></span></div>
+                        <div>RAM: <span class="font-mono font-bold" x-text="telemetry.ram"></span></div>
+                        <div>Requests: <span class="font-mono font-bold" x-text="telemetry.reqs"></span></div>
                     </div>
                 </div>
 
-                <div class="space-y-2 text-xs">
-                    <p class="text-[0.6rem] uppercase tracking-widest text-slate-400">Pillar Connectivity</p>
-                    <template x-for="pillar in pillars">
-                        <div class="flex justify-between items-center p-2 bg-slate-800 rounded">
-                            <span x-text="pillar.name"></span>
-                            <span class="w-2 h-2 rounded-full" :class="pillar.status === 'OK' ? 'bg-green-500' : 'bg-red-500'"></span>
-                        </div>
-                    </template>
-                </div>
-
-                <div class="flex-1 font-mono text-[10px] p-2 bg-black rounded overflow-y-auto dev-scroll" id="term-box">
+                <div class="flex-1 bg-navy text-green-400 font-mono text-[10px] p-3 rounded-lg overflow-y-auto dev-scroll">
                     <template x-for="log in logs">
-                        <div class="mb-1 border-b border-slate-800 pb-1 text-green-400"><span class="text-slate-500" x-text="log.time"></span> <span x-text="log.msg"></span></div>
+                        <div class="mb-1"><span class="text-gray-500" x-text="log.time"></span> <span x-text="log.msg"></span></div>
                     </template>
                 </div>
             </aside>
@@ -76,8 +69,7 @@
     <script>
         function orbisEngine() {
             return {
-                telemetry: { ping: '20ms', uptime: '300s', ram: '18GB', reqs: '4' },
-                pillars: [{name: 'Brain (LLM)', status: 'OK'}, {name: 'Memory', status: 'OK'}, {name: 'Voice Engine', status: 'OK'}],
+                telemetry: { ping: '20ms', uptime: '300s', ram: '18GB', reqs: '4', wf: 'IDLE' },
                 logs: [{time: '12:00', msg: 'System Re-Locked.'}],
                 messages: [], input: '', isOnline: true, showTelemetry: false,
                 init() { this.messages = JSON.parse(localStorage.getItem('orbis_chats') || '[]'); },
@@ -88,11 +80,8 @@
                     try {
                         const res = await fetch('/api/chat', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ prompt: q, history: this.messages }) });
                         const d = await res.json();
-                        if (d.success) {
-                            this.messages.push({role: 'ai', text: d.response});
-                            this.pillars[0].status = 'OK';
-                        }
-                    } catch(e) { this.pillars[0].status = 'FAIL'; this.logs.push({time: 'NOW', msg: 'API Connection Error'}); }
+                        if (d.success) this.messages.push({role: 'ai', text: d.response});
+                    } catch(e) { this.logs.push({time: 'NOW', msg: 'Error'}); }
                     localStorage.setItem('orbis_chats', JSON.stringify(this.messages));
                 }
             }
