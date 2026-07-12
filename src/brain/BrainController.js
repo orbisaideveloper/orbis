@@ -3,39 +3,28 @@
  * and passes requests to the DecisionEngine.
  */
 import { DecisionEngine } from './DecisionEngine.js';
+import { ExecutionTracer } from './core/ExecutionTracer.js'; // 🟢 নতুন: ট্রেসার ইমপোর্ট করা হলো
 
 export class BrainController {
   constructor(initialConfig = {}) {
-    // আপনার আগের অরিজিনাল কনফিগারেশন (ডিফল্ট প্রোভাইডার জেমিনি করা হলো)
     this.config = {
       provider: 'gemini',
       memoryEnabled: false,
       ...initialConfig
     };
     
-    // নতুন ডিসিশন ইঞ্জিন ইনিশিয়ালাইজ করা হলো
-    this.decisionEngine = new DecisionEngine();
+    // 🟢 নতুন: অরিজিনাল ইঞ্জিন তৈরি করে সেটিকে ট্রেসারের র‍্যাপারে মুড়িয়ে দেওয়া হলো
+    const baseEngine = new DecisionEngine();
+    this.decisionEngine = ExecutionTracer.wrap(baseEngine, 'DecisionEngine');
   }
 
-  // নতুন মেথড: server.js থেকে এই মেথডটি কল হবে এবং এটি কনফিগসহ ডিসিশন ইঞ্জিনে পাঠাবে
   async handleRequest(payload) {
+    // এখানে কোনো পরিবর্তন নেই, কিন্তু কলটি এখন অটোমেটিক ট্রেসারের ভেতর দিয়ে যাবে
     return await this.decisionEngine.processRequest(payload, this.config);
   }
 
-  // আপনার আগের অরিজিনাল মেথডগুলো হুবহু অক্ষত রাখা হলো
-  getActiveConfig() {
-    return { ...this.config };
-  }
-
-  updateConfig(newConfig) {
-    this.config = { ...this.config, ...newConfig };
-  }
-
-  setProvider(provider) {
-    this.config.provider = provider;
-  }
-
-  setMemoryStatus(status) {
-    this.config.memoryEnabled = !!status;
-  }
+  getActiveConfig() { return { ...this.config }; }
+  updateConfig(newConfig) { this.config = { ...this.config, ...newConfig }; }
+  setProvider(provider) { this.config.provider = provider; }
+  setMemoryStatus(status) { this.config.memoryEnabled = !!status; }
 }
