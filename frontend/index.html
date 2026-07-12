@@ -15,7 +15,7 @@
     </script>
     
     <style>
-        /* 🔒 LOCKED ARCHITECTURE - ABSOLUTELY NO CHANGES HERE */
+        /* 🔒 LOCKED ARCHITECTURE */
         html, body { 
             position: fixed; top: 0; bottom: 0; left: 0; right: 0;
             width: 100%; height: 100%; overflow: hidden; background: #fdfdfd; 
@@ -24,7 +24,6 @@
         input:focus { outline: none !important; box-shadow: none !important; border-color: transparent !important; }
         .pulse-mic { animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite; }
         @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(255, 153, 51, 0.7); } 100% { box-shadow: 0 0 0 15px rgba(255, 153, 51, 0); } }
-        
         .dev-scroll::-webkit-scrollbar { width: 4px; }
         .dev-scroll::-webkit-scrollbar-track { background: transparent; }
         .dev-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
@@ -55,60 +54,47 @@
             
             <div x-show="showTelemetry" @click="showTelemetry = false" style="display: none;" class="fixed inset-0 bg-black/50 z-30 md:hidden transition-opacity"></div>
 
-            <aside :class="showTelemetry ? 'translate-x-0' : '-translate-x-full'" class="fixed md:relative z-40 md:translate-x-0 transition-transform duration-300 w-[340px] h-full bg-slate-50 border-r border-slate-200 flex flex-col p-4 gap-3 overflow-y-auto dev-scroll shrink-0 shadow-2xl md:shadow-none">
+            <aside :class="showTelemetry ? 'translate-x-0' : '-translate-x-full'" class="fixed md:relative z-40 md:translate-x-0 transition-transform duration-300 w-[320px] h-full bg-slate-50 border-r border-slate-200 flex flex-col p-4 gap-4 overflow-y-auto shrink-0 shadow-2xl md:shadow-none dev-scroll">
                 
-                <div class="flex justify-between items-center md:hidden mb-1">
-                    <span class="font-bold text-sm text-navy">ADVANCED TELEMETRY</span>
-                    <button @click="showTelemetry = false" class="text-slate-500 hover:text-saffron cursor-pointer p-1">
+                <div class="flex justify-between items-center md:hidden mb-2">
+                    <span class="font-bold text-sm text-navy">DEVELOPER TOOLS</span>
+                    <button @click="showTelemetry = false" class="text-slate-500 hover:text-saffron">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>
 
                 <div class="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm shrink-0">
-                    <div class="bg-slate-100 px-3 py-1.5 text-[0.65rem] font-bold border-b border-slate-200 text-navy flex justify-between items-center">
-                        <span>🌐 SERVER METRICS</span>
+                    <div class="bg-slate-100 px-3 py-2 text-[0.7rem] font-bold border-b border-slate-200 text-navy flex justify-between items-center">
+                        <span>⚙️ SYSTEM TELEMETRY</span>
                         <span x-text="isListening ? '🎙️ MIC ON' : ''" class="text-saffron animate-pulse"></span>
                     </div>
                     <div class="grid grid-cols-2 gap-[1px] bg-slate-200">
-                        <div class="bg-white p-2 flex flex-col"><span class="text-[0.6rem] font-bold uppercase opacity-60">API Ping</span><span class="font-mono font-bold text-sm" x-text="telemetry.ping"></span></div>
-                        <div class="bg-white p-2 flex flex-col"><span class="text-[0.6rem] font-bold uppercase opacity-60">Uptime</span><span class="font-mono font-bold text-sm" x-text="telemetry.uptime"></span></div>
-                        <div class="bg-white p-2 flex flex-col"><span class="text-[0.6rem] font-bold uppercase opacity-60">Server RAM</span><span class="font-mono font-bold text-sm" x-text="telemetry.ram"></span></div>
-                        <div class="bg-white p-2 flex flex-col"><span class="text-[0.6rem] font-bold uppercase opacity-60">Requests</span><span class="font-mono font-bold text-sm" x-text="telemetry.reqs"></span></div>
+                        <div class="bg-white p-3 flex flex-col gap-1"><span class="text-[0.6rem] font-bold uppercase opacity-60">API Ping</span><span class="font-mono font-bold text-sm" x-text="telemetry.ping"></span></div>
+                        <div class="bg-white p-3 flex flex-col gap-1"><span class="text-[0.6rem] font-bold uppercase opacity-60">Uptime</span><span class="font-mono font-bold text-sm" x-text="telemetry.uptime"></span></div>
+                        <div class="bg-white p-3 flex flex-col gap-1"><span class="text-[0.6rem] font-bold uppercase opacity-60">Memory</span><span class="font-mono font-bold text-sm" x-text="telemetry.ram"></span></div>
+                        <div class="bg-white p-3 flex flex-col gap-1"><span class="text-[0.6rem] font-bold uppercase opacity-60">Requests</span><span class="font-mono font-bold text-sm" x-text="telemetry.reqs"></span></div>
+                        
+                        <div class="bg-white p-2.5 flex justify-between items-center col-span-2">
+                            <span class="text-[0.65rem] font-bold uppercase opacity-70">Voice Engine</span>
+                            <span class="text-[0.65rem] font-bold px-2 py-0.5 rounded bg-green-100 text-green">READY</span>
+                        </div>
+                        <div class="bg-white p-2.5 flex justify-between items-center col-span-2">
+                            <span class="text-[0.65rem] font-bold uppercase opacity-70">Context Memory</span>
+                            <span class="text-[0.65rem] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-700" x-text="messages.length + ' Nodes'"></span>
+                        </div>
+                        <div class="bg-white p-2.5 flex justify-between items-center col-span-2">
+                            <span class="text-[0.65rem] font-bold uppercase opacity-70">Active Workflow</span>
+                            <span class="font-mono font-bold text-sm text-navy" x-text="telemetry.wf"></span>
+                        </div>
                     </div>
                 </div>
 
-                <div class="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm shrink-0">
-                    <div class="bg-slate-100 px-3 py-1.5 text-[0.65rem] font-bold border-b border-slate-200 text-navy">📱 CLIENT DIAGNOSTICS</div>
-                    <div class="grid grid-cols-2 gap-[1px] bg-slate-200">
-                        <div class="bg-white p-2 flex flex-col"><span class="text-[0.6rem] font-bold uppercase opacity-60">Network</span><span class="font-mono font-bold text-xs" x-text="clientStats.network"></span></div>
-                        <div class="bg-white p-2 flex flex-col"><span class="text-[0.6rem] font-bold uppercase opacity-60">Platform</span><span class="font-mono font-bold text-xs truncate" x-text="clientStats.platform"></span></div>
-                        <div class="bg-white p-2 flex flex-col"><span class="text-[0.6rem] font-bold uppercase opacity-60">Viewport</span><span class="font-mono font-bold text-xs" x-text="clientStats.viewport"></span></div>
-                        <div class="bg-white p-2 flex flex-col"><span class="text-[0.6rem] font-bold uppercase opacity-60">Memory Sync</span><span class="font-mono font-bold text-xs text-blue-600">Active</span></div>
+                <div class="flex-1 bg-white border border-slate-200 rounded-lg overflow-hidden flex flex-col shadow-sm min-h-[220px]">
+                    <div class="bg-slate-100 px-3 py-2 text-[0.7rem] font-bold border-b border-slate-200 text-navy flex justify-between">
+                        <span>📜 RUNTIME LOGS</span>
+                        <span class="text-slate-400 cursor-pointer hover:text-saffron" @click="logs = []">Clear</span>
                     </div>
-                </div>
-
-                <div class="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm shrink-0">
-                    <div class="bg-slate-100 px-3 py-1.5 text-[0.65rem] font-bold border-b border-slate-200 text-navy">⚙️ ENGINE STATUS</div>
-                    <div class="bg-white p-2 flex justify-between items-center border-b border-slate-100">
-                        <span class="text-[0.65rem] font-bold uppercase opacity-70">Core LLM Engine</span>
-                        <span class="text-[0.65rem] font-bold px-2 py-0.5 rounded bg-purple-100 text-purple-700">Gemini 1.5</span>
-                    </div>
-                    <div class="bg-white p-2 flex justify-between items-center border-b border-slate-100">
-                        <span class="text-[0.65rem] font-bold uppercase opacity-70">Context Memory</span>
-                        <span class="text-[0.65rem] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-700" x-text="messages.length + ' Nodes'"></span>
-                    </div>
-                    <div class="bg-white p-2 flex justify-between items-center">
-                        <span class="text-[0.65rem] font-bold uppercase opacity-70">Voice Module</span>
-                        <span class="text-[0.65rem] font-bold px-2 py-0.5 rounded" :class="isListening ? 'bg-saffron text-white pulse-mic' : 'bg-green-100 text-green'" x-text="isListening ? 'LISTENING' : 'READY'"></span>
-                    </div>
-                </div>
-
-                <div class="flex-1 bg-white border border-slate-200 rounded-lg overflow-hidden flex flex-col shadow-sm min-h-[180px]">
-                    <div class="bg-slate-100 px-3 py-1.5 text-[0.65rem] font-bold border-b border-slate-200 text-navy flex justify-between">
-                        <span>📜 SYSTEM LOGS</span>
-                        <span class="text-slate-400 cursor-pointer hover:text-saffron" @click="logs = [{type: 'INFO', msg: 'Logs cleared.', time: new Date().toLocaleTimeString()}]">Clear</span>
-                    </div>
-                    <div class="flex-1 bg-[#0a0a2a] text-green-400 font-mono text-[10px] p-2.5 overflow-y-auto leading-relaxed dev-scroll" id="term-box">
+                    <div class="flex-1 bg-[#0a0a2a] text-green-400 font-mono text-[10px] p-3 overflow-y-auto leading-relaxed dev-scroll" id="term-box">
                         <template x-for="log in logs">
                             <div class="mb-1 border-b border-[#ffffff15] pb-1">
                                 <span class="text-slate-500" x-text="'['+log.time+']'"></span> 
@@ -119,7 +105,7 @@
                 </div>
             </aside>
 
-            <main class="absolute inset-0 md:left-[340px] bg-white flex flex-col overflow-hidden h-full z-10">
+            <main class="absolute inset-0 md:left-[320px] bg-white flex flex-col overflow-hidden h-full z-10">
                 <div class="absolute top-0 left-0 right-0 bottom-[75px] overflow-y-auto p-4 md:p-6 flex flex-col gap-4 bg-[#f8fafc]" id="chat-box">
                     <template x-if="messages.length === 0">
                         <div class="m-auto text-center opacity-40 flex flex-col items-center select-none">
@@ -184,8 +170,7 @@
         function orbisEngine() {
             return {
                 telemetry: { ping: '--', uptime: '--', ram: '--', reqs: 0, wf: 'IDLE' },
-                clientStats: { network: 'Checking...', platform: 'Detecting...', viewport: '0x0' },
-                logs: [{ type: 'OK', msg: 'System Re-Locked. Safe Mode Active.', time: new Date().toLocaleTimeString() }],
+                logs: [{ type: 'OK', msg: 'System Architecture Re-Locked to V5.', time: new Date().toLocaleTimeString() }],
                 messages: [],
                 input: '',
                 isOnline: false,
@@ -198,28 +183,11 @@
                     try {
                         const savedChats = localStorage.getItem('orbis_chats');
                         if (savedChats) this.messages = JSON.parse(savedChats);
-                    } catch(e) { console.log("Storage read error ignored"); }
+                    } catch(e) { console.log("Storage ignored"); }
                     
-                    this.safeUpdateClientStats();
                     this.fetchTelemetry();
-                    
-                    window.addEventListener('resize', () => this.safeUpdateClientStats());
                     setInterval(() => this.fetchTelemetry(), 4000);
-                    
                     setTimeout(() => this.scrollToBottom(), 100);
-                },
-
-                // 🚨 সেফ মোড ডায়াগনস্টিক্স (কোনো ক্র্যাশ হবে না) 🚨
-                safeUpdateClientStats() {
-                    try {
-                        const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-                        this.clientStats.network = conn && conn.effectiveType ? conn.effectiveType.toUpperCase() : 'WIFI/LAN';
-                        this.clientStats.platform = navigator.platform || 'Unknown';
-                        this.clientStats.viewport = window.innerWidth + 'x' + window.innerHeight;
-                    } catch(e) {
-                        this.clientStats.network = 'Unknown';
-                        this.clientStats.platform = 'Mobile Web';
-                    }
                 },
 
                 clearChat() {
@@ -260,11 +228,10 @@
 
                 startVoice() {
                     if (!('webkitSpeechRecognition' in window)) {
-                        this.addLog('ERR', 'Voice Engine not supported in this browser.');
+                        this.addLog('ERR', 'Voice Engine not supported.');
                         alert('Your browser does not support Voice Input.');
                         return;
                     }
-
                     const recognition = new webkitSpeechRecognition();
                     recognition.lang = this.selectedLang;
                     recognition.continuous = false;
@@ -274,8 +241,70 @@
                         this.isListening = true;
                         this.addLog('INFO', `Voice Engine listening [${this.selectedLang}]...`);
                     };
-
                     recognition.onresult = (event) => {
                         const transcript = event.results[0][0].transcript;
                         this.input += (this.input ? ' ' : '') + transcript;
-                        this.addLog('OK', 'Voice transcribed s
+                        this.addLog('OK', 'Voice transcribed successfully.');
+                    };
+                    recognition.onerror = (event) => {
+                        this.addLog('ERR', 'Voice Error: ' + event.error);
+                        this.isListening = false;
+                    };
+                    recognition.onend = () => {
+                        this.isListening = false;
+                    };
+                    recognition.start();
+                },
+
+                async handleSend() {
+                    if (!this.input.trim() || this.loading) return;
+                    
+                    const userMsg = this.input.trim();
+                    this.input = '';
+                    this.messages.push({ role: 'user', text: userMsg });
+                    
+                    try { localStorage.setItem('orbis_chats', JSON.stringify(this.messages)); } catch(e){}
+                    
+                    this.loading = true;
+                    // 🔥 CONTEXT FIX (Memory) 🔥
+                    this.addLog('INFO', `Transmitting payload with ${this.messages.length} context nodes...`);
+                    this.scrollToBottom();
+
+                    try {
+                        const start = Date.now();
+                        const res = await fetch('/api/chat', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ prompt: userMsg, history: this.messages })
+                        });
+                        
+                        const data = await res.json();
+                        const diff = Date.now() - start;
+
+                        if (data.success) {
+                            this.messages.push({ role: 'ai', text: data.response });
+                            this.addLog('OK', `AI synthesis completed in ${diff}ms`);
+                            this.telemetry.ping = diff + ' ms';
+                        } else {
+                            this.addLog('ERR', 'AI Engine Error: ' + data.error);
+                        }
+                    } catch (err) {
+                        this.addLog('ERR', 'Transmission timeout/failed.');
+                    } finally {
+                        try { localStorage.setItem('orbis_chats', JSON.stringify(this.messages)); } catch(e){}
+                        this.loading = false;
+                        this.scrollToBottom();
+                    }
+                },
+
+                scrollToBottom() {
+                    this.$nextTick(() => {
+                        const cBox = document.getElementById('chat-box');
+                        if (cBox) cBox.scrollTop = cBox.scrollHeight;
+                    });
+                }
+            }
+        }
+    </script>
+</body>
+</html>
