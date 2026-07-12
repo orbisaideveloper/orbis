@@ -1,14 +1,33 @@
 document.addEventListener('DOMContentLoaded', () => {
     const getEl = (id) => document.getElementById(id);
-    let contextMemory = []; // Added for Phase 6 Memory tracking
+    let contextMemory = []; 
+
+    // --- NEW: Sidebar Toggle Logic for Mobile ---
+    window.toggleSidebar = function() {
+        const sidebar = getEl('dev-sidebar');
+        if (!sidebar) return;
+        
+        // Check current display state and toggle
+        if (sidebar.style.display === 'none' || sidebar.style.display === '') {
+            sidebar.style.display = 'flex';
+            sidebar.style.position = 'absolute';
+            sidebar.style.zIndex = '100';
+            sidebar.style.height = '100%';
+            sidebar.style.boxShadow = '5px 0 15px rgba(0,0,0,0.1)';
+        } else {
+            sidebar.style.display = 'none';
+        }
+    };
 
     function printLog(type, msg) {
-        const logBox = getEl('log-box');
-        if (!logBox) return;
-        const time = new Date().toLocaleTimeString();
-        let color = type === 'OK' ? '#138808' : type === 'ERR' ? '#FF9933' : type === 'INFO' ? '#3b82f6' : '#ffffff';
-        logBox.innerHTML += `<div><span style="color:#aaa;">[${time}]</span> <strong style="color:${color};">${type}</strong>: ${msg}</div>`;
-        logBox.scrollTop = logBox.scrollHeight;
+        try {
+            const logBox = getEl('log-box');
+            if (!logBox) return;
+            const time = new Date().toLocaleTimeString();
+            let color = type === 'OK' ? '#138808' : type === 'ERR' ? '#FF9933' : type === 'INFO' ? '#3b82f6' : '#ffffff';
+            logBox.innerHTML += `<div><span style="color:#aaa;">[${time}]</span> <strong style="color:${color};">${type}</strong>: ${msg}</div>`;
+            logBox.scrollTop = logBox.scrollHeight;
+        } catch(e) {}
     }
 
     async function fetchTelemetry() {
@@ -37,8 +56,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     }
-    setInterval(fetchTelemetry, 3000);
-    fetchTelemetry();
+    
+    // Start telemetry safely
+    try {
+        setInterval(fetchTelemetry, 3000);
+        fetchTelemetry();
+    } catch(e) {}
 
     window.dispatchToAI = async function() {
         const promptBox = getEl('prompt-box');
@@ -53,7 +76,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if(welcomeMsg) welcomeMsg.style.display = 'none';
 
-        // 1. Update UI and Context
         chatBox.innerHTML += `<div class="msg-bubble msg-user"><span class="msg-label">You</span>${val.replace(/\n/g, '<br>')}</div>`;
         contextMemory.push({ role: 'user', text: val });
         if(getEl('tel-nodes')) getEl('tel-nodes').innerText = contextMemory.length + ' Nodes';
@@ -68,13 +90,12 @@ document.addEventListener('DOMContentLoaded', () => {
         printLog('INFO', 'Routing payload to Gemini Hub...');
         chatBox.scrollTop = chatBox.scrollHeight;
 
-        // 2. Fetch API
         try {
             const start = Date.now();
             const res = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: val, history: contextMemory }) // Sending history
+                body: JSON.stringify({ prompt: val, history: contextMemory })
             });
             const data = await res.json();
             
@@ -99,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 brainState.style.color = "var(--navy-blue)";
             }
             chatBox.scrollTop = chatBox.scrollHeight;
-            promptBox.focus();
+            if(window.innerWidth > 900) promptBox.focus(); // Prevent mobile keyboard popup auto-trigger
         }
     };
 
@@ -112,35 +133,5 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    let rec;
-    try {
-        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (SR) {
-            rec = new SR();
-            rec.onstart = () => { 
-                if(getEl('mic-btn')) getEl('mic-btn').classList.add('mic-active'); 
-                printLog('INFO', 'Voice Engine Active.');
-            };
-            rec.onresult = (e) => { 
-                if(getEl('prompt-box')) getEl('prompt-box').value += (getEl('prompt-box').value ? ' ' : '') + e.results[0][0].transcript; 
-            };
-            rec.onend = () => { 
-                if(getEl('mic-btn')) getEl('mic-btn').classList.remove('mic-active'); 
-            };
-            rec.onerror = () => {
-                printLog('ERR', 'Voice Mapping Failed.');
-            }
-        }
-    } catch(e) {}
-
-    window.startVoiceEngine = () => { 
-        if(rec) { 
-            rec.lang = getEl('lang-select')?.value || 'bn-IN'; 
-            rec.start(); 
-        } else {
-            alert('Voice not supported in this browser.');
-        }
-    };
-    
     printLog('OK', 'ORBIS Systems Architecture Locked.');
 });

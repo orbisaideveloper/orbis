@@ -5,165 +5,88 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ORBIS Core Engine</title>
     
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <script>
-        tailwind.config = {
-            theme: { extend: { colors: { saffron: '#FF9933', green: '#138808', navy: '#000080', offwhite: '#fdfdfd' } } }
-        }
-    </script>
-    
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-offwhite text-navy antialiased">
+<body>
 
-    <div x-data="orbisEngine()" x-init="init()" class="absolute inset-0 flex flex-col overflow-hidden w-full h-full">
-        
-        <header class="flex-none h-14 bg-white border-b border-slate-200 border-t-4 border-t-saffron flex justify-between items-center px-4 z-50 shadow-sm select-none">
-            <div class="font-extrabold text-lg flex items-center gap-3">
-                <button @click="showTelemetry = true" class="md:hidden w-8 h-8 flex items-center justify-center bg-slate-100 rounded text-navy hover:bg-slate-200 transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-                </button>
-                <svg class="w-6 h-6 text-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path></svg>
-                ORBIS Engine
-            </div>
-            <div class="flex items-center gap-4">
-                <button @click="clearChat()" class="text-[0.65rem] font-bold text-slate-400 hover:text-saffron transition-colors border border-slate-200 px-2 py-1 rounded">CLEAR</button>
-                <div class="text-xs font-bold flex items-center gap-2 uppercase tracking-wider">
-                    <span :class="isOnline ? 'bg-green shadow-[0_0_8px_#138808]' : 'bg-saffron shadow-[0_0_8px_#FF9933]'" class="w-2.5 h-2.5 rounded-full transition-all duration-300"></span>
-                    <span :class="isOnline ? 'text-green' : 'text-saffron'" x-text="isOnline ? 'Online' : 'Connecting...'"></span>
-                </div>
-            </div>
-        </header>
-
-        <div class="flex flex-1 overflow-hidden relative w-full">
-            
-            <div x-show="showTelemetry" @click="showTelemetry = false" style="display: none;" class="fixed inset-0 bg-black/50 z-30 md:hidden transition-opacity"></div>
-
-            <aside :class="showTelemetry ? 'translate-x-0' : '-translate-x-full'" class="fixed md:relative z-40 md:translate-x-0 transition-transform duration-300 w-[320px] h-full bg-slate-50 border-r border-slate-200 flex flex-col p-4 gap-4 overflow-y-auto shrink-0 shadow-2xl md:shadow-none dev-scroll">
-                
-                <div class="flex justify-between items-center md:hidden mb-2">
-                    <span class="font-bold text-sm text-navy">DEVELOPER TOOLS</span>
-                    <button @click="showTelemetry = false" class="text-slate-500 hover:text-saffron">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                    </button>
-                </div>
-
-                <template x-if="telemetry.systemHealth === 'ERR'">
-                    <div class="bg-red-600 text-white p-2 rounded flex items-center gap-2 text-[0.7rem] font-bold animate-pulse shadow-md">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                        CRITICAL FAULT DETECTED
-                    </div>
-                </template>
-
-                <div class="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm shrink-0">
-                    <div class="bg-slate-100 px-3 py-2 text-[0.7rem] font-bold border-b border-slate-200 text-navy flex justify-between items-center">
-                        <span>⚙️ SYSTEM TELEMETRY</span>
-                        <span x-text="isListening ? '🎙️ MIC ON' : ''" class="text-saffron animate-pulse"></span>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-[1px] bg-slate-200">
-                        <div class="bg-white p-3 flex flex-col gap-1"><span class="text-[0.6rem] font-bold uppercase opacity-60">API Ping</span><span class="font-mono font-bold text-sm" x-text="telemetry.ping"></span></div>
-                        <div class="bg-white p-3 flex flex-col gap-1"><span class="text-[0.6rem] font-bold uppercase opacity-60">Uptime</span><span class="font-mono font-bold text-sm" x-text="telemetry.uptime"></span></div>
-                        <div class="bg-white p-3 flex flex-col gap-1"><span class="text-[0.6rem] font-bold uppercase opacity-60">RAM Usage</span><span class="font-mono font-bold text-sm" x-text="telemetry.ram"></span></div>
-                        <div class="bg-white p-3 flex flex-col gap-1"><span class="text-[0.6rem] font-bold uppercase opacity-60">Requests</span><span class="font-mono font-bold text-sm" x-text="telemetry.reqs"></span></div>
-                        
-                        <div class="bg-white p-2.5 flex justify-between items-center col-span-2">
-                            <span class="text-[0.65rem] font-bold uppercase opacity-70">Active AI</span>
-                            <span class="text-[0.65rem] font-bold px-2 py-0.5 rounded bg-purple-100 text-purple-700">GEMINI 3.5</span>
-                        </div>
-                        
-                        <div class="bg-white p-2.5 flex justify-between items-center col-span-2">
-                            <span class="text-[0.65rem] font-bold uppercase opacity-70">Brain State</span>
-                            <span class="text-[0.65rem] font-bold px-2 py-0.5 rounded transition-colors" 
-                                  :class="telemetry.brainState === 'SYNTHESIZING' ? 'bg-saffron text-white animate-pulse' : 'bg-slate-100 text-slate-600'" 
-                                  x-text="telemetry.brainState">
-                            </span>
-                        </div>
-
-                        <div class="bg-white p-2.5 flex justify-between items-center col-span-2">
-                            <span class="text-[0.65rem] font-bold uppercase opacity-70">Context Memory</span>
-                            <span class="text-[0.65rem] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-700" x-text="messages.length + ' Nodes'"></span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex-1 bg-white border border-slate-200 rounded-lg overflow-hidden flex flex-col shadow-sm min-h-[220px]">
-                    <div class="bg-slate-100 px-3 py-2 text-[0.7rem] font-bold border-b border-slate-200 text-navy flex justify-between">
-                        <span>📜 RUNTIME LOGS</span>
-                        <span class="text-slate-400 cursor-pointer hover:text-saffron" @click="logs = []">Clear</span>
-                    </div>
-                    <div class="flex-1 bg-[#0a0a2a] text-green-400 font-mono text-[10px] p-3 overflow-y-auto leading-relaxed dev-scroll" id="term-box">
-                        <template x-for="log in logs">
-                            <div class="mb-1 border-b border-[#ffffff15] pb-1">
-                                <span class="text-slate-500" x-text="'['+log.time+']'"></span> 
-                                <strong :class="log.type === 'OK' ? 'text-green-400' : log.type === 'ERR' ? 'text-red-400' : log.type === 'WARN' ? 'text-saffron' : log.type === 'INFO' ? 'text-blue-300' : 'text-slate-300'" x-text="' '+log.type"></strong>: <span class="text-slate-300" x-text="log.msg"></span>
-                            </div>
-                        </template>
-                    </div>
-                </div>
-            </aside>
-
-            <main class="absolute inset-0 md:left-[320px] bg-white flex flex-col overflow-hidden h-full z-10">
-                <div class="absolute top-0 left-0 right-0 bottom-[75px] overflow-y-auto p-4 md:p-6 flex flex-col gap-4 bg-[#f8fafc]" id="chat-box">
-                    <template x-if="messages.length === 0">
-                        <div class="m-auto text-center opacity-40 flex flex-col items-center select-none">
-                            <svg class="w-16 h-16 mb-4 text-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                            <p class="font-bold text-lg">ORBIS Core Engine</p>
-                            <p class="text-xs mt-1">System Architecture Locked & Ready.</p>
-                        </div>
-                    </template>
-                    
-                    <template x-for="m in messages">
-                        <div :class="m.role === 'user' ? 'self-end bg-[#fff5ed] border border-saffron rounded-br-sm' : 'self-start bg-white border border-slate-200 shadow-sm rounded-bl-sm'" class="max-w-[85%] p-3.5 rounded-2xl text-[0.95rem] leading-relaxed">
-                            <strong class="block mb-1.5 text-[0.65rem] tracking-wider uppercase opacity-60" x-text="m.role === 'user' ? 'You' : 'ORBIS ✨'"></strong>
-                            <div class="text-slate-800" x-html="m.text.replace(/\n/g, '<br/>')"></div>
-                        </div>
-                    </template>
-
-                    <template x-if="loading">
-                        <div class="self-start max-w-[85%] p-3 rounded-2xl bg-white border border-slate-200 shadow-sm rounded-bl-sm flex items-center gap-3">
-                            <span class="w-2 h-2 bg-green rounded-full animate-ping"></span> <span class="text-xs font-bold text-slate-500">Synthesizing...</span>
-                        </div>
-                    </template>
-                </div>
-
-                <div class="absolute bottom-0 left-0 right-0 h-[75px] bg-white border-t border-slate-200 flex items-center justify-center px-4">
-                    <div class="flex items-center w-full max-w-4xl bg-slate-50 border border-slate-200 rounded-full px-2 py-1.5 focus-within:bg-white focus-within:border-green focus-within:shadow-[0_4px_12px_rgba(19,136,8,0.1)] transition-all">
-                        <button class="w-10 h-10 rounded-full flex justify-center items-center opacity-60 hover:opacity-100 text-navy shrink-0">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"></path></svg>
-                        </button>
-                        <input 
-                            type="text" 
-                            class="flex-1 bg-transparent border-none outline-none ring-0 focus:ring-0 focus:outline-none px-2 text-[0.95rem] text-slate-800 w-full" 
-                            placeholder="Message ORBIS..." 
-                            x-model="input"
-                            @keydown.enter="handleSend()"
-                        />
-                        <select x-model="selectedLang" class="bg-transparent font-bold text-xs outline-none ring-0 cursor-pointer mx-1 sm:mx-2 text-navy shrink-0">
-                            <option value="bn-IN">BN</option>
-                            <option value="hi-IN">HI</option>
-                            <option value="en-US">EN</option>
-                        </select>
-                        <button 
-                            @click="startVoice()"
-                            :class="isListening ? 'bg-saffron text-white pulse-mic' : 'text-navy opacity-60 hover:opacity-100'"
-                            class="w-10 h-10 rounded-full flex justify-center items-center mr-1 shrink-0 transition-all"
-                        >
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z"></path></svg>
-                        </button>
-                        <button 
-                            @click="handleSend()"
-                            :disabled="loading || (!input.trim() && !isListening)"
-                            class="w-10 h-10 rounded-full bg-green text-white flex justify-center items-center hover:bg-[#0f6e06] disabled:bg-slate-300 disabled:opacity-50 transition-colors shadow-sm shrink-0"
-                        >
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18"></path></svg>
-                        </button>
-                    </div>
-                </div>
-            </main>
+    <header class="top-nav">
+        <div class="brand">
+            <button onclick="toggleSidebar()" style="background:none; border:none; font-size:1.2rem; cursor:pointer; margin-right:10px; color:var(--navy-blue);" class="mobile-menu-btn">☰</button>
+            <span>ORBIS Engine</span>
         </div>
+        <div class="sys-badges">
+            <button onclick="clearContext()" style="background:none; border:1px solid var(--border); font-size:0.6rem; padding:2px 6px; cursor:pointer; color:var(--navy-blue); font-weight:bold; margin-right:10px;">CLEAR</button>
+            <span id="glow-dot" class="status-glow offline"></span>
+            <span id="status-text" style="color:var(--saffron);">Connecting...</span>
+        </div>
+    </header>
+
+    <div class="main-layout">
+        
+        <aside class="telemetry-sidebar" id="dev-sidebar">
+            
+            <div style="text-align: right; margin-bottom: -10px;">
+                <button onclick="toggleSidebar()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--saffron); font-weight:bold;">×</button>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">⚙️ System Telemetry</div>
+                <div class="data-grid">
+                    <div class="data-cell"><span class="data-label">API Ping</span><span class="data-value" id="tel-ping">-- ms</span></div>
+                    <div class="data-cell"><span class="data-label">Uptime</span><span class="data-value" id="tel-uptime">-- s</span></div>
+                    <div class="data-cell"><span class="data-label">RAM Usage</span><span class="data-value" id="tel-ram">-- MB</span></div>
+                    <div class="data-cell"><span class="data-label">Requests</span><span class="data-value" id="tel-req">0</span></div>
+                    
+                    <div class="data-cell" style="grid-column: span 2; display: flex; flex-direction: row; justify-content: space-between;">
+                        <span class="data-label">Active Workflow</span>
+                        <span class="data-value" id="tel-wf" style="font-size:0.7rem; background:#f3e8ff; padding:2px 6px; border-radius:4px; color:#7e22ce;">IDLE</span>
+                    </div>
+
+                    <div class="data-cell" style="grid-column: span 2; display: flex; flex-direction: row; justify-content: space-between;">
+                        <span class="data-label">Brain State</span>
+                        <span class="data-value" id="tel-brain" style="font-size:0.7rem; padding:2px 6px; border-radius:4px; background:var(--border);">IDLE</span>
+                    </div>
+
+                    <div class="data-cell" style="grid-column: span 2; display: flex; flex-direction: row; justify-content: space-between;">
+                        <span class="data-label">Context Memory</span>
+                        <span class="data-value" id="tel-nodes" style="font-size:0.7rem; background:#e0f2fe; padding:2px 6px; border-radius:4px; color:#0369a1;">0 Nodes</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel" style="flex:1;">
+                <div class="panel-header" style="display:flex; justify-content:space-between;">
+                    <span>📜 RUNTIME LOGS</span>
+                    <span style="cursor:pointer; opacity:0.6;" onclick="document.getElementById('log-box').innerHTML=''">Clear</span>
+                </div>
+                <div class="terminal" id="log-box"></div>
+            </div>
+        </aside>
+
+        <main class="chat-section">
+            
+            <div class="chat-display" id="chat-box">
+                <div style="margin:auto; text-align:center; opacity:0.5;" id="welcome-msg">
+                    <p style="font-weight:bold; font-size:1.2rem;">ORBIS Ready.</p>
+                    <p style="font-size:0.8rem;">System Architecture Locked.</p>
+                </div>
+            </div>
+
+            <div class="input-dock">
+                <div class="smart-input-box">
+                    <select id="lang-select" class="lang-selector">
+                        <option value="bn-IN">BN</option>
+                        <option value="hi-IN">HI</option>
+                        <option value="en-US">EN</option>
+                    </select>
+                    <input type="text" id="prompt-box" placeholder="Message ORBIS..." onkeydown="if(event.key === 'Enter') dispatchToAI()" />
+                    
+                    <button id="mic-btn" class="btn-icon" onclick="startVoiceEngine()">🎙️</button>
+                    
+                    <button id="send-btn" class="btn-send" onclick="dispatchToAI()">➤</button>
+                </div>
+            </div>
+        </main>
     </div>
 
     <script src="app.js"></script>
