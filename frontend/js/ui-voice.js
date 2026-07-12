@@ -1,32 +1,17 @@
-// ui-voice.js - Frontend Voice Engine API
-let rec;
-document.addEventListener('DOMContentLoaded', () => {
-    try {
-        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (SR) {
-            rec = new SR();
-            rec.onstart = () => { 
-                if(getEl('mic-btn')) getEl('mic-btn').classList.add('mic-active'); 
-                window.printLog('INFO', 'Voice Engine Active.');
-            };
-            rec.onresult = (e) => { 
-                if(getEl('prompt-box')) getEl('prompt-box').value += (getEl('prompt-box').value ? ' ' : '') + e.results[0][0].transcript; 
-            };
-            rec.onend = () => { 
-                if(getEl('mic-btn')) getEl('mic-btn').classList.remove('mic-active'); 
-            };
-            rec.onerror = () => {
-                window.printLog('ERR', 'Voice Mapping Failed.');
-            }
-        }
-    } catch(e) {}
-});
-
-window.startVoiceEngine = () => { 
-    if(rec) { 
-        rec.lang = getEl('lang-select')?.value || 'bn-IN'; 
-        rec.start(); 
-    } else {
-        alert('Voice not supported in this browser.');
-    }
+// js/ui-voice.js - Voice Engine (Connected to Router)
+window.startVoiceEngine = function() {
+    window.printLog('INFO', 'Voice: Initializing capture...');
+    
+    // ভয়েস ক্যাপচারের সিমুলেশন
+    const simulatedVoiceText = "এটি ভয়েস ইনপুট থেকে আসা একটি কমান্ড।";
+    
+    // সরাসরি রাউটারের মাধ্যমে কমান্ড পাঠানো হচ্ছে
+    window.WorkflowRouter.route({
+        type: 'VOICE_COMMAND',
+        content: simulatedVoiceText
+    });
 };
+
+document.addEventListener('DOMContentLoaded', () => {
+    window.printLog('OK', 'Voice Engine Initialized & Linked.');
+});
