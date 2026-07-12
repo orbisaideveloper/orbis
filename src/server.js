@@ -1,7 +1,8 @@
-// src/server.js
-const express = require('express');
+import express from 'express';
+import { BrainController } from './brain/BrainController.js';
+
 const app = express();
-const BrainController = require('./brain/BrainController'); // তোমার সঠিক ফাইলের পাথ
+const brain = new BrainController();
 
 app.use(express.json());
 app.use(express.static('public'));
@@ -9,11 +10,12 @@ app.use(express.static('public'));
 app.post('/api/chat', async (req, res) => {
     try {
         const { content } = req.body;
-        // আমরা এখন সরাসরি BrainController কে কল করছি
-        const response = await BrainController.handleRequest({
+        
+        const response = await brain.handleRequest({
             type: 'CHAT_MESSAGE',
             content: content
         });
+        
         res.json({ status: 'success', data: response });
     } catch (error) {
         console.error('BrainController Error:', error);
@@ -21,4 +23,7 @@ app.post('/api/chat', async (req, res) => {
     }
 });
 
-app.listen(process.env.PORT || 3000);
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`ORBIS Server is running on port ${PORT}`);
+});
