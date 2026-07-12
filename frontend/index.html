@@ -14,20 +14,7 @@
         }
     </script>
     
-    <style>
-        /* 🔒 LOCKED ARCHITECTURE - NO TOUCHING */
-        html, body { 
-            position: fixed; top: 0; bottom: 0; left: 0; right: 0;
-            width: 100%; height: 100%; overflow: hidden; background: #fdfdfd; 
-            -webkit-tap-highlight-color: transparent;
-        }
-        input:focus { outline: none !important; box-shadow: none !important; border-color: transparent !important; }
-        .pulse-mic { animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite; }
-        @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(255, 153, 51, 0.7); } 100% { box-shadow: 0 0 0 15px rgba(255, 153, 51, 0); } }
-        .dev-scroll::-webkit-scrollbar { width: 4px; }
-        .dev-scroll::-webkit-scrollbar-track { background: transparent; }
-        .dev-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-offwhite text-navy antialiased">
 
@@ -97,7 +84,7 @@
 
                         <div class="bg-white p-2.5 flex justify-between items-center col-span-2">
                             <span class="text-[0.65rem] font-bold uppercase opacity-70">Context Memory</span>
-                            <span class="text-[0.65rem] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-700" x-text="messages.length + ' Nodes Active'"></span>
+                            <span class="text-[0.65rem] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-700" x-text="messages.length + ' Nodes'"></span>
                         </div>
                     </div>
                 </div>
@@ -179,130 +166,6 @@
         </div>
     </div>
 
-    <script>
-        function orbisEngine() {
-            return {
-                // New Advanced Telemetry Object
-                telemetry: { 
-                    ping: '--', 
-                    uptime: '--', 
-                    ram: '--', 
-                    reqs: 0, 
-                    wf: 'IDLE',
-                    brainState: 'IDLE',
-                    systemHealth: 'OK'
-                },
-                logs: [{ type: 'OK', msg: 'Phase 6 Dashboard Loaded.', time: new Date().toLocaleTimeString() }],
-                messages: [],
-                input: '',
-                isOnline: false,
-                loading: false,
-                showTelemetry: false,
-                isListening: false,
-                selectedLang: 'bn-IN',
-
-                init() {
-                    try {
-                        const savedChats = localStorage.getItem('orbis_chats');
-                        if (savedChats) this.messages = JSON.parse(savedChats);
-                    } catch(e) { 
-                        this.addLog('WARN', 'Local Storage Read Failed');
-                    }
-                    
-                    this.fetchTelemetry();
-                    setInterval(() => this.fetchTelemetry(), 4000);
-                    setTimeout(() => this.scrollToBottom(), 100);
-                },
-
-                clearChat() {
-                    if(confirm("Clear chat history and memory context?")) {
-                        this.messages = [];
-                        try { localStorage.removeItem('orbis_chats'); } catch(e){}
-                        this.addLog('WARN', 'Memory Nodes wiped.');
-                    }
-                },
-
-                addLog(type, msg) {
-                    this.logs.push({ type: type, msg: msg, time: new Date().toLocaleTimeString() });
-                    // Keep logs clean (max 50)
-                    if(this.logs.length > 50) this.logs.shift();
-                    
-                    this.$nextTick(() => {
-                        const tBox = document.getElementById('term-box');
-                        if (tBox) tBox.scrollTop = tBox.scrollHeight;
-                    });
-                },
-
-                async fetchTelemetry() {
-                    try {
-                        const res = await fetch('/api/telemetry');
-                        const json = await res.json();
-                        
-                        if (json.success) {
-                            this.telemetry.ping = Math.floor(Math.random() * 30 + 10) + ' ms';
-                            this.telemetry.uptime = json.data.brainHub?.uptime + 's';
-                            this.telemetry.ram = json.data.memoryEngine?.ramUsageMB + ' MB';
-                            this.telemetry.reqs = json.data.performance?.totalRequests;
-                            
-                            if(!this.isOnline) {
-                                this.addLog('OK', 'Server Connection Restored.');
-                                this.telemetry.systemHealth = 'OK';
-                            }
-                            this.isOnline = true;
-                        } else {
-                            throw new Error("Invalid Response");
-                        }
-                    } catch (e) {
-                        this.isOnline = false;
-                        this.telemetry.systemHealth = 'ERR';
-                    }
-                },
-
-                startVoice() {
-                    if (!('webkitSpeechRecognition' in window)) {
-                        this.addLog('ERR', 'Voice Engine not supported.');
-                        return;
-                    }
-                    const recognition = new webkitSpeechRecognition();
-                    recognition.lang = this.selectedLang;
-                    recognition.continuous = false;
-                    recognition.interimResults = false;
-
-                    recognition.onstart = () => {
-                        this.isListening = true;
-                        this.addLog('INFO', 'Voice Engine: ' + this.selectedLang);
-                    };
-                    recognition.onresult = (event) => {
-                        const transcript = event.results[0][0].transcript;
-                        this.input += (this.input ? ' ' : '') + transcript;
-                        this.addLog('OK', 'Voice mapped to Context.');
-                    };
-                    recognition.onerror = (event) => {
-                        this.addLog('ERR', 'Voice Error.');
-                        this.isListening = false;
-                    };
-                    recognition.onend = () => {
-                        this.isListening = false;
-                    };
-                    recognition.start();
-                },
-
-                async handleSend() {
-                    if (!this.input.trim() || this.loading) return;
-                    
-                    const userMsg = this.input.trim();
-                    this.input = '';
-                    this.messages.push({ role: 'user', text: userMsg });
-                    
-                    try { localStorage.setItem('orbis_chats', JSON.stringify(this.messages)); } catch(e){}
-                    
-                    this.loading = true;
-                    // Update Brain State for UI
-                    this.telemetry.brainState = 'SYNTHESIZING';
-                    this.telemetry.systemHealth = 'OK';
-                    
-                    this.addLog('INFO', 'Routing to Gemini Provider...');
-                    this.scrollToBottom();
-
-                    try {
-                        co
+    <script src="app.js"></script>
+</body>
+</html>

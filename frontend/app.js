@@ -1,11 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
     const getEl = (id) => document.getElementById(id);
+    let contextMemory = []; // Added for Phase 6 Memory tracking
 
     function printLog(type, msg) {
         const logBox = getEl('log-box');
         if (!logBox) return;
         const time = new Date().toLocaleTimeString();
-        let color = type === 'OK' ? '#138808' : type === 'ERR' ? '#FF9933' : '#ffffff';
+        let color = type === 'OK' ? '#138808' : type === 'ERR' ? '#FF9933' : type === 'INFO' ? '#3b82f6' : '#ffffff';
         logBox.innerHTML += `<div><span style="color:#aaa;">[${time}]</span> <strong style="color:${color};">${type}</strong>: ${msg}</div>`;
         logBox.scrollTop = logBox.scrollHeight;
     }
@@ -43,22 +44,37 @@ document.addEventListener('DOMContentLoaded', () => {
         const promptBox = getEl('prompt-box');
         const sendBtn = getEl('send-btn');
         const chatBox = getEl('chat-box');
+        const brainState = getEl('tel-brain');
+        const welcomeMsg = getEl('welcome-msg');
         
         if (!promptBox || !sendBtn || !chatBox) return;
         const val = promptBox.value.trim();
         if (!val) return;
 
-        chatBox.innerHTML += `<div class="msg-bubble msg-user"><strong>You</strong><br>${val}</div>`;
+        if(welcomeMsg) welcomeMsg.style.display = 'none';
+
+        // 1. Update UI and Context
+        chatBox.innerHTML += `<div class="msg-bubble msg-user"><span class="msg-label">You</span>${val.replace(/\n/g, '<br>')}</div>`;
+        contextMemory.push({ role: 'user', text: val });
+        if(getEl('tel-nodes')) getEl('tel-nodes').innerText = contextMemory.length + ' Nodes';
+        
         promptBox.value = '';
         sendBtn.disabled = true;
-        printLog('INFO', 'Forwarding request to Gemini Flash...');
+        if(brainState) {
+            brainState.innerText = "SYNTHESIZING";
+            brainState.style.background = "var(--saffron)";
+            brainState.style.color = "white";
+        }
+        printLog('INFO', 'Routing payload to Gemini Hub...');
+        chatBox.scrollTop = chatBox.scrollHeight;
 
+        // 2. Fetch API
         try {
             const start = Date.now();
             const res = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: val })
+                body: JSON.stringify({ prompt: val, history: contextMemory }) // Sending history
             });
             const data = await res.json();
             
@@ -67,14 +83,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (data.success) {
                 printLog('OK', `AI synthesis complete in ${diff}ms`);
-                chatBox.innerHTML += `<div class="msg-bubble msg-ai"><strong>ORBIS ✨</strong><br>${data.response}</div>`;
+                chatBox.innerHTML += `<div class="msg-bubble msg-ai"><span class="msg-label">ORBIS ✨</span>${data.response.replace(/\n/g, '<br>')}</div>`;
+                contextMemory.push({ role: 'ai', text: data.response });
+                if(getEl('tel-nodes')) getEl('tel-nodes').innerText = contextMemory.length + ' Nodes';
+            } else {
+                printLog('ERR', 'API Error: ' + (data.error || 'Unknown'));
             }
         } catch (err) {
-            printLog('ERR', 'Transmission failed.');
+            printLog('ERR', 'Transmission timeout/failed.');
         } finally {
             sendBtn.disabled = false;
+            if(brainState) {
+                brainState.innerText = "IDLE";
+                brainState.style.background = "var(--border)";
+                brainState.style.color = "var(--navy-blue)";
+            }
             chatBox.scrollTop = chatBox.scrollHeight;
             promptBox.focus();
+        }
+    };
+
+    window.clearContext = function() {
+        if(confirm("Clear memory nodes?")) {
+            contextMemory = [];
+            getEl('chat-box').innerHTML = '';
+            if(getEl('tel-nodes')) getEl('tel-nodes').innerText = '0 Nodes';
+            printLog('WARN', 'Memory Context Wiped.');
         }
     };
 
@@ -83,9 +117,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (SR) {
             rec = new SR();
-            rec.onstart = () => { if(getEl('mic-btn')) getEl('mic-btn').classList.add('mic-active'); };
-            rec.onresult = (e) => { if(getEl('prompt-box')) getEl('prompt-box').value = e.results[0][0].transcript; };
-            rec.onend = () => { if(getEl('mic-btn')) getEl('mic-btn').classList.remove('mic-active'); };
+            rec.onstart = () => { 
+                if(getEl('mic-btn')) getEl('mic-btn').classList.add('mic-active'); 
+                printLog('INFO', 'Voice Engine Active.');
+            };
+            rec.onresult = (e) => { 
+                if(getEl('prompt-box')) getEl('prompt-box').value += (getEl('prompt-box').value ? ' ' : '') + e.results[0][0].transcript; 
+            };
+            rec.onend = () => { 
+                if(getEl('mic-btn')) getEl('mic-btn').classList.remove('mic-active'); 
+            };
+            rec.onerror = () => {
+                printLog('ERR', 'Voice Mapping Failed.');
+            }
         }
     } catch(e) {}
 
@@ -93,7 +137,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if(rec) { 
             rec.lang = getEl('lang-select')?.value || 'bn-IN'; 
             rec.start(); 
-        } 
+        } else {
+            alert('Voice not supported in this browser.');
+        }
     };
     
     printLog('OK', 'ORBIS Systems Architecture Locked.');
