@@ -1,7 +1,7 @@
-// js/ui-router.js - Workflow Router (Brain-Integrated without Module Import)
+// js/ui-router.js - Workflow Router (Updated API Call Simulation)
 
 window.WorkflowRouter = {
-    // অরবিসের নিজস্ব কমান্ড লিস্ট (DecisionManager-এর মতো)
+    // অরবিসের নিজস্ব কমান্ড লিস্ট
     internalCommands: ['health', 'telemetry', 'workflow', 'memory', 'status', 'logs', 'verify', 'update'],
 
     route: async function(payload) {
@@ -12,6 +12,7 @@ window.WorkflowRouter = {
         }
 
         if (payload.type === 'CHAT_MESSAGE') {
+            // ইউজার মেসেজ ডিসপ্লে করা
             window.updateChatUI('YOU', payload.content);
 
             // ব্রেইন লজিক: চেক করা হচ্ছে এটা ইন্টারনাল কমান্ড কি না
@@ -20,18 +21,23 @@ window.WorkflowRouter = {
 
             setTimeout(() => {
                 if (isInternal) {
-                    // অরবিস নিজেই উত্তর দেবে (ইন্টারনাল কমান্ড)
-                    const internalResponse = `অরবিস সিস্টেম: '${payload.content}' কমান্ডটি সফলভাবে প্রসেস করা হয়েছে। সিস্টেম এখন পুরোপুরি সচল।`;
-                    window.updateChatUI('ORBIS', internalResponse);
+                    // অরবিসের নিজস্ব রিপ্লাই
+                    window.updateChatUI('ORBIS', `সিস্টেম প্রসেসড: '${payload.content}' কমান্ডটি সফলভাবে রান করেছে।`);
                 } else {
-                    // জেমিনি বা অন্য প্রোভাইডারকে কল করার সিমুলেশন
+                    // প্রোভাইডারকে কল করার সিগন্যাল
                     window.updateChatUI('ORBIS', `প্রোভাইডার 'Gemini'-এর কাছে রিকোয়েস্ট পাঠানো হচ্ছে...`);
+                    
+                    // ২ সেকেন্ড পর জেমিনির রিপ্লাই সিমুলেশন (আসল API কানেক্ট করার আগ পর্যন্ত)
+                    setTimeout(() => {
+                        window.updateChatUI('ORBIS (Gemini API)', `হ্যালো! আমি অরবিস। আপনার মেসেজ "${payload.content}" আমি রিসিভ করেছি। (Note: Real API needs to be connected next)`);
+                        window.printLog('OK', 'API Response Received.');
+                    }, 2000);
                 }
-            }, 500); // হালকা ডিলে দেওয়া হলো যাতে রিয়েলিস্টিক লাগে
+            }, 500);
         }
     }
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    window.printLog('OK', 'Workflow Router & Brain Integrated.');
+    window.printLog('OK', 'Workflow Router Initialized.');
 });
