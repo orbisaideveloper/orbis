@@ -1,66 +1,78 @@
 import express from 'express';
-import { BrainController } from './brain/BrainController.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import fs from 'fs';
+import { getTelemetryData, logRequest } from './brain/telemetry.js';
+import { BrainController } from './brain/BrainController.js'; // Brain যুক্ত করা হলো
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const brain = new BrainController();
+const PORT = process.env.PORT || 3000;
+
+// Brain Controller ইনিশিয়ালাইজ করা হলো
+const brain = new BrainController(); 
+
+// 🔥 PERMANENT CACHE KILLER
+app.use((req, res, next) => {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    next();
+});
 
 app.use(express.json());
 
-// সার্ভার নিজে থেকে এই ফোল্ডারগুলোতে index.html খুঁজবে
-const possibleDirs = [
-    path.join(__dirname, '..'),          // মেইন ফোল্ডার (Repo Root)
-    path.join(__dirname, '..', 'public'), // মেইন ফোল্ডারের ভেতর public ফোল্ডার
-    __dirname                            // src ফোল্ডার
-];
+// ঠিক আগের মতোই তোমার frontend ফোল্ডার থেকে ফাইল লোড হবে (Error 404 আর আসবে না)
+app.use(express.static(path.join(__dirname, '../frontend')));
 
-let staticDir = path.join(__dirname, '..'); // ডিফল্ট
-let indexPath = '';
+app.get('/', (req, res) =>
+    res.sendFile(path.join(__dirname, '../frontend/index.html'))
+);
 
-// স্ক্যানিং প্রসেস
-for (const dir of possibleDirs) {
-    const checkPath = path.join(dir, 'index.html');
-    if (fs.existsSync(checkPath)) {
-        staticDir = dir;
-        indexPath = checkPath;
-        break; // ফাইল পেয়ে গেলে খোঁজা বন্ধ করবে
-    }
-}
-
-// যে ফোল্ডারে index.html পাবে, সেখান থেকেই css এবং js লোড করবে
-app.use(express.static(staticDir));
-
-app.get('/', (req, res) => {
-    if (indexPath && fs.existsSync(indexPath)) {
-        res.sendFile(indexPath);
-    } else {
-        // যদি কোথাও না পায়, তবে কোন কোন ফোল্ডারে খুঁজেছে সেটা স্ক্রিনে দেখাবে
-        res.status(404).send(`Error: index.html not found. Looked in: <br> ${possibleDirs.join('<br>')}`);
-    }
+app.get('/api/telemetry', (req, res) => {
+    res.status(200).json({
+        success: true,
+        data: getTelemetryData()
+    });
 });
 
 app.post('/api/chat', async (req, res) => {
     try {
-        const { content } = req.body;
-        
-        const response = await brain.handleRequest({
+        logRequest();
+
+        // আগের মতোই ফ্রন্টএন্ড থেকে 'prompt' রিসিভ করা হচ্ছে
+        const prompt = req.body.prompt;
+
+        if (!prompt) {
+            return res.status(400).json({
+                success: false,
+                message: "Prompt missing"
+            });
+        }
+
+        // ==========================================
+        // ডাইরেক্ট জেমিনির বদলে এখন Brain কাজ করবে
+        // ==========================================
+        const brainResponse = await brain.handleRequest({
             type: 'CHAT_MESSAGE',
-            content: content
+            content: prompt
         });
-        
-        res.json({ status: 'success', data: response });
+
+        // ঠিক আগের ফরম্যাটেই ফ্রন্টএন্ডকে রেসপন্স পাঠানো হচ্ছে
+        res.status(200).json({
+            success: true,
+            response: brainResponse 
+        });
+
     } catch (error) {
-        console.error('BrainController Error:', error);
-        res.status(500).json({ status: 'error', message: error.message });
+        console.error("AI Bridge Error:", error);
+
+        res.status(500).json({
+            success: false,
+            error: "AI Engine Error"
+        });
     }
 });
 
-const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`ORBIS Server is running on port ${PORT}`);
+    console.log(`ORBIS Live on Port: ${PORT}`);
 });
