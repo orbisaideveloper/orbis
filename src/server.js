@@ -1,18 +1,35 @@
 import express from 'express';
 import { BrainController } from './brain/BrainController.js';
 import path from 'path';
+import { fileURLToPath } from 'url';
+import fs from 'fs';
+
+// ES Module-এর জন্য ডিরেক্টরি পাথ সেট করা হচ্ছে
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const brain = new BrainController();
 
 app.use(express.json());
 
-// তোমার প্রজেক্টের রুট ফোল্ডার (যেখানে index.html আছে) থেকে ফাইলগুলো লোড করবে
-app.use(express.static(process.cwd()));
+// তোমার প্রজেক্টের মেইন ফোল্ডার (src ফোল্ডারের এক ধাপ বাইরে)
+const rootDir = path.join(__dirname, '..');
 
-// যদি কেউ ডিরেক্ট লিংকে ঢোকে, তাকে index.html পেজটি দেখাবে
+// মেইন ফোল্ডার থেকে সব স্ট্যাটিক ফাইল (js, css) লোড করবে
+app.use(express.static(rootDir));
+
+// ওয়েবসাইটের মূল লিংকে গেলে index.html দেখাবে
 app.get('/', (req, res) => {
-    res.sendFile(path.join(process.cwd(), 'index.html'));
+    const indexPath = path.join(rootDir, 'index.html');
+    
+    // ফাইলটি আছে কি না চেক করে দেখা হচ্ছে
+    if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+    } else {
+        // যদি তাও না পায়, তাহলে পরিষ্কারভাবে এরর মেসেজ দেখাবে
+        res.status(404).send(`Error: index.html not found in ${rootDir}`);
+    }
 });
 
 app.post('/api/chat', async (req, res) => {
