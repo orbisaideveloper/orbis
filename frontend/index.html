@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ORBIS Advanced Engineering Control Center</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="/style.css?v=1.4"> 
+    <link rel="stylesheet" href="/style.css?v=2.0"> 
 </head>
 <body>
 
     <div class="top-nav">
-        <div class="brand"><i class="fa-solid fa-microchip"></i> ORBIS Engine</div>
+        <div class="brand"><i class="fa-solid fa-microchip"></i> ORBIS Core Engine</div>
         <div class="sys-badges">
             <span id="sys-status"><span class="status-glow offline" id="glow-dot"></span><span id="status-text">CONNECTING...</span></span>
         </div>
@@ -40,7 +40,9 @@
                 <div class="smart-input-box">
                     <input type="file" id="file-uploader" style="display: none;">
                     <button class="btn-icon" onclick="document.getElementById('file-uploader').click()"><i class="fa-solid fa-plus"></i></button>
+                    
                     <input type="text" id="prompt-box" placeholder="Message ORBIS..." autocomplete="off">
+                    
                     <select id="lang-select" class="lang-selector">
                         <option value="bn-IN">BN</option>
                         <option value="en-US">EN</option>
@@ -52,6 +54,6 @@
         </div>
     </div>
 
-    <script src="/app.js?v=1.4"></script> 
+    <script src="/app.js?v=2.0"></script> 
 </body>
 </html>
