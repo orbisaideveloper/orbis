@@ -1,43 +1,47 @@
-// js/ui-router.js - Workflow Router (Updated API Call Simulation)
+// js/ui-router.js - Workflow Router (Integrated with existing API Gateway)
 
 window.WorkflowRouter = {
-    // অরবিসের নিজস্ব কমান্ড লিস্ট
+    // অরবিসের নিজস্ব ইন্টারনাল কমান্ডস
     internalCommands: ['health', 'telemetry', 'workflow', 'memory', 'status', 'logs', 'verify', 'update'],
 
     route: async function(payload) {
-        window.printLog('INFO', 'Router: Directing payload to Brain...');
+        window.printLog('INFO', 'Router: Directing payload...');
         
-        if(window.EventBus) {
-            window.EventBus.emit('WorkflowStarted', payload);
-        }
+        // ইভেন্ট বাসকে জানানো হচ্ছে
+        if(window.EventBus) window.EventBus.emit('WorkflowStarted', payload);
 
         if (payload.type === 'CHAT_MESSAGE') {
             // ইউজার মেসেজ ডিসপ্লে করা
             window.updateChatUI('YOU', payload.content);
 
-            // ব্রেইন লজিক: চেক করা হচ্ছে এটা ইন্টারনাল কমান্ড কি না
             const msg = payload.content.toLowerCase();
             const isInternal = this.internalCommands.some(cmd => msg.includes(cmd));
 
-            setTimeout(() => {
-                if (isInternal) {
-                    // অরবিসের নিজস্ব রিপ্লাই
-                    window.updateChatUI('ORBIS', `সিস্টেম প্রসেসড: '${payload.content}' কমান্ডটি সফলভাবে রান করেছে।`);
-                } else {
-                    // প্রোভাইডারকে কল করার সিগন্যাল
-                    window.updateChatUI('ORBIS', `প্রোভাইডার 'Gemini'-এর কাছে রিকোয়েস্ট পাঠানো হচ্ছে...`);
+            if (isInternal) {
+                // ইন্টারনাল কমান্ড হলে অরবিস নিজেই রিপ্লাই দিবে
+                window.updateChatUI('ORBIS', `সিস্টেম প্রসেসড: '${payload.content}' কমান্ডটি সচল।`);
+            } else {
+                // এক্সটার্নাল মেসেজ হলে তোমার আগের তৈরি APIGateway কে কল করবে
+                window.updateChatUI('ORBIS', `Gemini-এর সাথে যোগাযোগ করা হচ্ছে...`);
+                
+                try {
+                    // তোমার আগের বানানো APIGateway কে কল করা হচ্ছে
+                    const response = await window.APIGateway.call('gemini', { prompt: payload.content });
                     
-                    // ২ সেকেন্ড পর জেমিনির রিপ্লাই সিমুলেশন (আসল API কানেক্ট করার আগ পর্যন্ত)
-                    setTimeout(() => {
-                        window.updateChatUI('ORBIS (Gemini API)', `হ্যালো! আমি অরবিস। আপনার মেসেজ "${payload.content}" আমি রিসিভ করেছি। (Note: Real API needs to be connected next)`);
-                        window.printLog('OK', 'API Response Received.');
-                    }, 2000);
+                    if (response && response.status === 'success') {
+                        // তোমার এপিআই থেকে আসা ডেটা ডিসপ্লে করা
+                        window.updateChatUI('ORBIS', response.data || "রেসপন্স পাওয়া গেছে।");
+                    } else {
+                        window.updateChatUI('ORBIS', `ত্রুটি: এপিআই থেকে ডেটা পাওয়া যায়নি।`);
+                    }
+                } catch (err) {
+                    window.updateChatUI('ORBIS', `সিস্টেম এরর: ${err.message}`);
                 }
-            }, 500);
+            }
         }
     }
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    window.printLog('OK', 'Workflow Router Initialized.');
+    window.printLog('OK', 'Workflow Router Connected to API Gateway.');
 });
