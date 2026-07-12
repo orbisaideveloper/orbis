@@ -15,7 +15,7 @@
     </script>
     
     <style>
-        /* 🔒 LOCKED ARCHITECTURE */
+        /* 🔒 LOCKED ARCHITECTURE - NO TOUCHING */
         html, body { 
             position: fixed; top: 0; bottom: 0; left: 0; right: 0;
             width: 100%; height: 100%; overflow: hidden; background: #fdfdfd; 
@@ -63,28 +63,41 @@
                     </button>
                 </div>
 
+                <template x-if="telemetry.systemHealth === 'ERR'">
+                    <div class="bg-red-600 text-white p-2 rounded flex items-center gap-2 text-[0.7rem] font-bold animate-pulse shadow-md">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        CRITICAL FAULT DETECTED
+                    </div>
+                </template>
+
                 <div class="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm shrink-0">
                     <div class="bg-slate-100 px-3 py-2 text-[0.7rem] font-bold border-b border-slate-200 text-navy flex justify-between items-center">
                         <span>⚙️ SYSTEM TELEMETRY</span>
                         <span x-text="isListening ? '🎙️ MIC ON' : ''" class="text-saffron animate-pulse"></span>
                     </div>
+                    
                     <div class="grid grid-cols-2 gap-[1px] bg-slate-200">
                         <div class="bg-white p-3 flex flex-col gap-1"><span class="text-[0.6rem] font-bold uppercase opacity-60">API Ping</span><span class="font-mono font-bold text-sm" x-text="telemetry.ping"></span></div>
                         <div class="bg-white p-3 flex flex-col gap-1"><span class="text-[0.6rem] font-bold uppercase opacity-60">Uptime</span><span class="font-mono font-bold text-sm" x-text="telemetry.uptime"></span></div>
-                        <div class="bg-white p-3 flex flex-col gap-1"><span class="text-[0.6rem] font-bold uppercase opacity-60">Memory</span><span class="font-mono font-bold text-sm" x-text="telemetry.ram"></span></div>
+                        <div class="bg-white p-3 flex flex-col gap-1"><span class="text-[0.6rem] font-bold uppercase opacity-60">RAM Usage</span><span class="font-mono font-bold text-sm" x-text="telemetry.ram"></span></div>
                         <div class="bg-white p-3 flex flex-col gap-1"><span class="text-[0.6rem] font-bold uppercase opacity-60">Requests</span><span class="font-mono font-bold text-sm" x-text="telemetry.reqs"></span></div>
                         
                         <div class="bg-white p-2.5 flex justify-between items-center col-span-2">
-                            <span class="text-[0.65rem] font-bold uppercase opacity-70">Voice Engine</span>
-                            <span class="text-[0.65rem] font-bold px-2 py-0.5 rounded bg-green-100 text-green">READY</span>
+                            <span class="text-[0.65rem] font-bold uppercase opacity-70">Active AI</span>
+                            <span class="text-[0.65rem] font-bold px-2 py-0.5 rounded bg-purple-100 text-purple-700">GEMINI 3.5</span>
                         </div>
+                        
+                        <div class="bg-white p-2.5 flex justify-between items-center col-span-2">
+                            <span class="text-[0.65rem] font-bold uppercase opacity-70">Brain State</span>
+                            <span class="text-[0.65rem] font-bold px-2 py-0.5 rounded transition-colors" 
+                                  :class="telemetry.brainState === 'SYNTHESIZING' ? 'bg-saffron text-white animate-pulse' : 'bg-slate-100 text-slate-600'" 
+                                  x-text="telemetry.brainState">
+                            </span>
+                        </div>
+
                         <div class="bg-white p-2.5 flex justify-between items-center col-span-2">
                             <span class="text-[0.65rem] font-bold uppercase opacity-70">Context Memory</span>
-                            <span class="text-[0.65rem] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-700" x-text="messages.length + ' Nodes'"></span>
-                        </div>
-                        <div class="bg-white p-2.5 flex justify-between items-center col-span-2">
-                            <span class="text-[0.65rem] font-bold uppercase opacity-70">Active Workflow</span>
-                            <span class="font-mono font-bold text-sm text-navy" x-text="telemetry.wf"></span>
+                            <span class="text-[0.65rem] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-700" x-text="messages.length + ' Nodes Active'"></span>
                         </div>
                     </div>
                 </div>
@@ -98,7 +111,7 @@
                         <template x-for="log in logs">
                             <div class="mb-1 border-b border-[#ffffff15] pb-1">
                                 <span class="text-slate-500" x-text="'['+log.time+']'"></span> 
-                                <strong :class="log.type === 'OK' ? 'text-green-400' : log.type === 'ERR' ? 'text-red-400' : log.type === 'WARN' ? 'text-saffron' : 'text-blue-300'" x-text="' '+log.type"></strong>: <span class="text-slate-300" x-text="log.msg"></span>
+                                <strong :class="log.type === 'OK' ? 'text-green-400' : log.type === 'ERR' ? 'text-red-400' : log.type === 'WARN' ? 'text-saffron' : log.type === 'INFO' ? 'text-blue-300' : 'text-slate-300'" x-text="' '+log.type"></strong>: <span class="text-slate-300" x-text="log.msg"></span>
                             </div>
                         </template>
                     </div>
@@ -169,8 +182,17 @@
     <script>
         function orbisEngine() {
             return {
-                telemetry: { ping: '--', uptime: '--', ram: '--', reqs: 0, wf: 'IDLE' },
-                logs: [{ type: 'OK', msg: 'System Architecture Re-Locked to V5.', time: new Date().toLocaleTimeString() }],
+                // New Advanced Telemetry Object
+                telemetry: { 
+                    ping: '--', 
+                    uptime: '--', 
+                    ram: '--', 
+                    reqs: 0, 
+                    wf: 'IDLE',
+                    brainState: 'IDLE',
+                    systemHealth: 'OK'
+                },
+                logs: [{ type: 'OK', msg: 'Phase 6 Dashboard Loaded.', time: new Date().toLocaleTimeString() }],
                 messages: [],
                 input: '',
                 isOnline: false,
@@ -183,7 +205,9 @@
                     try {
                         const savedChats = localStorage.getItem('orbis_chats');
                         if (savedChats) this.messages = JSON.parse(savedChats);
-                    } catch(e) { console.log("Storage ignored"); }
+                    } catch(e) { 
+                        this.addLog('WARN', 'Local Storage Read Failed');
+                    }
                     
                     this.fetchTelemetry();
                     setInterval(() => this.fetchTelemetry(), 4000);
@@ -194,12 +218,15 @@
                     if(confirm("Clear chat history and memory context?")) {
                         this.messages = [];
                         try { localStorage.removeItem('orbis_chats'); } catch(e){}
-                        this.addLog('WARN', 'Storage Engine wiped. Context Memory reset.');
+                        this.addLog('WARN', 'Memory Nodes wiped.');
                     }
                 },
 
                 addLog(type, msg) {
-                    this.logs.push({ type, msg, time: new Date().toLocaleTimeString() });
+                    this.logs.push({ type: type, msg: msg, time: new Date().toLocaleTimeString() });
+                    // Keep logs clean (max 50)
+                    if(this.logs.length > 50) this.logs.shift();
+                    
                     this.$nextTick(() => {
                         const tBox = document.getElementById('term-box');
                         if (tBox) tBox.scrollTop = tBox.scrollHeight;
@@ -210,26 +237,30 @@
                     try {
                         const res = await fetch('/api/telemetry');
                         const json = await res.json();
+                        
                         if (json.success) {
-                            this.telemetry = {
-                                ping: Math.floor(Math.random() * 30 + 10) + ' ms',
-                                uptime: json.data.brainHub?.uptime + 's',
-                                ram: json.data.memoryEngine?.ramUsageMB + ' MB',
-                                reqs: json.data.performance?.totalRequests,
-                                wf: json.data.brainHub?.activeWorkflow || 'IDLE'
-                            };
-                            if(!this.isOnline) this.addLog('OK', 'API Server Connected.');
+                            this.telemetry.ping = Math.floor(Math.random() * 30 + 10) + ' ms';
+                            this.telemetry.uptime = json.data.brainHub?.uptime + 's';
+                            this.telemetry.ram = json.data.memoryEngine?.ramUsageMB + ' MB';
+                            this.telemetry.reqs = json.data.performance?.totalRequests;
+                            
+                            if(!this.isOnline) {
+                                this.addLog('OK', 'Server Connection Restored.');
+                                this.telemetry.systemHealth = 'OK';
+                            }
                             this.isOnline = true;
+                        } else {
+                            throw new Error("Invalid Response");
                         }
                     } catch (e) {
                         this.isOnline = false;
+                        this.telemetry.systemHealth = 'ERR';
                     }
                 },
 
                 startVoice() {
                     if (!('webkitSpeechRecognition' in window)) {
                         this.addLog('ERR', 'Voice Engine not supported.');
-                        alert('Your browser does not support Voice Input.');
                         return;
                     }
                     const recognition = new webkitSpeechRecognition();
@@ -239,15 +270,15 @@
 
                     recognition.onstart = () => {
                         this.isListening = true;
-                        this.addLog('INFO', `Voice Engine listening [${this.selectedLang}]...`);
+                        this.addLog('INFO', 'Voice Engine: ' + this.selectedLang);
                     };
                     recognition.onresult = (event) => {
                         const transcript = event.results[0][0].transcript;
                         this.input += (this.input ? ' ' : '') + transcript;
-                        this.addLog('OK', 'Voice transcribed successfully.');
+                        this.addLog('OK', 'Voice mapped to Context.');
                     };
                     recognition.onerror = (event) => {
-                        this.addLog('ERR', 'Voice Error: ' + event.error);
+                        this.addLog('ERR', 'Voice Error.');
                         this.isListening = false;
                     };
                     recognition.onend = () => {
@@ -266,45 +297,12 @@
                     try { localStorage.setItem('orbis_chats', JSON.stringify(this.messages)); } catch(e){}
                     
                     this.loading = true;
-                    // 🔥 CONTEXT FIX (Memory) 🔥
-                    this.addLog('INFO', `Transmitting payload with ${this.messages.length} context nodes...`);
+                    // Update Brain State for UI
+                    this.telemetry.brainState = 'SYNTHESIZING';
+                    this.telemetry.systemHealth = 'OK';
+                    
+                    this.addLog('INFO', 'Routing to Gemini Provider...');
                     this.scrollToBottom();
 
                     try {
-                        const start = Date.now();
-                        const res = await fetch('/api/chat', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ prompt: userMsg, history: this.messages })
-                        });
-                        
-                        const data = await res.json();
-                        const diff = Date.now() - start;
-
-                        if (data.success) {
-                            this.messages.push({ role: 'ai', text: data.response });
-                            this.addLog('OK', `AI synthesis completed in ${diff}ms`);
-                            this.telemetry.ping = diff + ' ms';
-                        } else {
-                            this.addLog('ERR', 'AI Engine Error: ' + data.error);
-                        }
-                    } catch (err) {
-                        this.addLog('ERR', 'Transmission timeout/failed.');
-                    } finally {
-                        try { localStorage.setItem('orbis_chats', JSON.stringify(this.messages)); } catch(e){}
-                        this.loading = false;
-                        this.scrollToBottom();
-                    }
-                },
-
-                scrollToBottom() {
-                    this.$nextTick(() => {
-                        const cBox = document.getElementById('chat-box');
-                        if (cBox) cBox.scrollTop = cBox.scrollHeight;
-                    });
-                }
-            }
-        }
-    </script>
-</body>
-</html>
+                        co
