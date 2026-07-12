@@ -19,12 +19,12 @@ window.WorkflowRouter = {
                 window.updateChatUI('ORBIS', `Gemini-এর সাথে যোগাযোগ করা হচ্ছে...`);
                 
                 try {
-                    // তোমার API Gateway কল করছে
+                    // API Gateway কল করছে
                     const response = await window.APIGateway.call('gemini', { prompt: payload.content });
                     
                     if (response && response.status === 'success') {
-                        // জেমিনি থেকে আসা রেসপন্স ডিসপ্লে করা
-                        window.updateChatUI('ORBIS', response.data.text || "রেসপন্স পাওয়া গেছে।");
+                        // '.text' বাদ দেওয়া হয়েছে, এখন সরাসরি response.data বসবে
+                        window.updateChatUI('ORBIS', response.data || "রেসপন্স পাওয়া গেছে।");
                     } else {
                         window.updateChatUI('ORBIS', `ত্রুটি: ${response.message || 'API কানেকশনে সমস্যা হচ্ছে।'}`);
                     }
