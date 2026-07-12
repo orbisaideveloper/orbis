@@ -21,25 +21,23 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
-// ঠিক আগের মতোই তোমার frontend ফোল্ডার থেকে ফাইল লোড হবে (Error 404 আর আসবে না)
+// ঠিক আগের মতোই frontend ফোল্ডার থেকে ফাইল লোড হবে
 app.use(express.static(path.join(__dirname, '../frontend')));
 
 app.get('/', (req, res) =>
     res.sendFile(path.join(__dirname, '../frontend/index.html'))
 );
 
+// 🟢 FIX: মোড়ক ছাড়া সরাসরি ডেটা পাঠানো হচ্ছে, যাতে ফ্রন্টএন্ড সহজেই পড়তে পারে
 app.get('/api/telemetry', (req, res) => {
-    res.status(200).json({
-        success: true,
-        data: getTelemetryData()
-    });
+    res.status(200).json(getTelemetryData());
 });
 
 app.post('/api/chat', async (req, res) => {
     try {
         logRequest();
 
-        // আগের মতোই ফ্রন্টএন্ড থেকে 'prompt' রিসিভ করা হচ্ছে
+        // ফ্রন্টএন্ড থেকে 'prompt' রিসিভ করা হচ্ছে
         const prompt = req.body.prompt;
 
         if (!prompt) {
