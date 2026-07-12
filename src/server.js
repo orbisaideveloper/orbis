@@ -4,7 +4,6 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 
-// ES Module-এর জন্য ডিরেক্টরি পাথ সেট করা হচ্ছে
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -13,22 +12,35 @@ const brain = new BrainController();
 
 app.use(express.json());
 
-// তোমার প্রজেক্টের মেইন ফোল্ডার (src ফোল্ডারের এক ধাপ বাইরে)
-const rootDir = path.join(__dirname, '..');
+// সার্ভার নিজে থেকে এই ফোল্ডারগুলোতে index.html খুঁজবে
+const possibleDirs = [
+    path.join(__dirname, '..'),          // মেইন ফোল্ডার (Repo Root)
+    path.join(__dirname, '..', 'public'), // মেইন ফোল্ডারের ভেতর public ফোল্ডার
+    __dirname                            // src ফোল্ডার
+];
 
-// মেইন ফোল্ডার থেকে সব স্ট্যাটিক ফাইল (js, css) লোড করবে
-app.use(express.static(rootDir));
+let staticDir = path.join(__dirname, '..'); // ডিফল্ট
+let indexPath = '';
 
-// ওয়েবসাইটের মূল লিংকে গেলে index.html দেখাবে
+// স্ক্যানিং প্রসেস
+for (const dir of possibleDirs) {
+    const checkPath = path.join(dir, 'index.html');
+    if (fs.existsSync(checkPath)) {
+        staticDir = dir;
+        indexPath = checkPath;
+        break; // ফাইল পেয়ে গেলে খোঁজা বন্ধ করবে
+    }
+}
+
+// যে ফোল্ডারে index.html পাবে, সেখান থেকেই css এবং js লোড করবে
+app.use(express.static(staticDir));
+
 app.get('/', (req, res) => {
-    const indexPath = path.join(rootDir, 'index.html');
-    
-    // ফাইলটি আছে কি না চেক করে দেখা হচ্ছে
-    if (fs.existsSync(indexPath)) {
+    if (indexPath && fs.existsSync(indexPath)) {
         res.sendFile(indexPath);
     } else {
-        // যদি তাও না পায়, তাহলে পরিষ্কারভাবে এরর মেসেজ দেখাবে
-        res.status(404).send(`Error: index.html not found in ${rootDir}`);
+        // যদি কোথাও না পায়, তবে কোন কোন ফোল্ডারে খুঁজেছে সেটা স্ক্রিনে দেখাবে
+        res.status(404).send(`Error: index.html not found. Looked in: <br> ${possibleDirs.join('<br>')}`);
     }
 });
 
