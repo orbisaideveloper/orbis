@@ -16,21 +16,26 @@
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
         
-        body { background: var(--white-off); color: var(--navy-blue); display: flex; flex-direction: column; width: 100vw; height: 100vh; overflow: hidden; margin: 0;}
+        html, body { width: 100%; height: 100%; overflow: hidden; background: var(--white-off); }
         
-        .top-nav { background: var(--white); padding: 12px 20px; border-bottom: 1px solid var(--border); border-top: 4px solid var(--saffron); display: flex; justify-content: space-between; align-items: center; z-index: 20; flex-shrink: 0; height: 55px;}
+        /* ১. টপ নেভিগেশন (একদম উপরে পিন করা) */
+        .top-nav { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 60px;
+            background: var(--white); border-bottom: 1px solid var(--border); border-top: 4px solid var(--saffron); 
+            display: flex; justify-content: space-between; align-items: center; padding: 0 20px; z-index: 100; 
+        }
         .brand { font-weight: 800; font-size: 1.2rem; color: var(--navy-blue); display: flex; align-items: center; gap: 8px;}
         .sys-badges { font-size: 0.75rem; font-weight: 700; color: var(--navy-blue); }
-
         .status-glow { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
         .online { background-color: var(--green); box-shadow: 0 0 8px var(--green); }
         .offline { background-color: var(--saffron); box-shadow: 0 0 8px var(--saffron); }
 
-        /* Main Layout */
-        .main-layout { display: flex; flex-direction: row; flex: 1; width: 100vw; height: calc(100vh - 55px); overflow: hidden; }
-
-        /* Sidebar */
-        .telemetry-sidebar { width: 330px; background: var(--white-off); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 15px; gap: 15px; flex-shrink: 0; height: 100%; overflow-y: auto; }
+        /* ২. সাইডবার (বাঁ-দিকে পিন করা - ডেক্সটপের জন্য) */
+        .telemetry-sidebar { 
+            position: absolute; top: 60px; bottom: 0; left: 0; width: 330px; 
+            background: var(--white-off); border-right: 1px solid var(--border); 
+            display: flex; flex-direction: column; padding: 15px; gap: 15px; overflow-y: auto; z-index: 10;
+        }
         .panel { background: var(--white); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column;}
         .panel-header { background: var(--white-off); padding: 10px 12px; font-size: 0.75rem; font-weight: 700; color: var(--navy-blue); border-bottom: 1px solid var(--border); text-transform: uppercase;}
         .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); }
@@ -39,16 +44,27 @@
         .data-value { font-size: 0.95rem; font-weight: 700; font-family: monospace; color: var(--navy-blue);}
         .terminal { flex: 1; background: var(--navy-blue); color: var(--green); font-family: monospace; font-size: 0.75rem; padding: 12px; overflow-y: auto; min-height: 150px; }
 
-        /* Chat UI - Forced to Expand */
-        .chat-section { flex: 1; display: flex; flex-direction: column; background: var(--white); height: 100%; width: 100%; min-width: 0; position: relative;}
-        .chat-display { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; background: var(--white); width: 100%; }
+        /* ৩. মেইন চ্যাট সেকশন (ডানদিকে পিন করা) */
+        .chat-section { 
+            position: absolute; top: 60px; bottom: 0; left: 330px; right: 0; 
+            background: var(--white); z-index: 10;
+        }
 
+        /* ৪. চ্যাট মেসেজ দেখানোর জায়গা (উপরে পিন করা) */
+        .chat-display { 
+            position: absolute; top: 0; bottom: 70px; width: 100%; 
+            padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; 
+        }
         .msg-bubble { max-width: 80%; padding: 12px 16px; border-radius: 16px; font-size: 0.95rem; line-height: 1.5; color: var(--navy-blue); }
         .msg-user { align-self: flex-end; background: var(--saffron-light); border: 1px solid var(--saffron); border-bottom-right-radius: 4px; }
         .msg-ai { align-self: flex-start; background: var(--green-light); border: 1px solid var(--green); border-bottom-left-radius: 4px; }
 
-        /* Input Dock */
-        .input-dock { padding: 15px 20px; background: var(--white); border-top: 1px solid var(--border); display: flex; justify-content: center; width: 100%; flex-shrink: 0; }
+        /* ৫. ইনপুট বক্স (একদম নিচে পিন করা - জীবনেও হাইড হবে না) */
+        .input-dock { 
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 70px; 
+            background: var(--white); border-top: 1px solid var(--border); 
+            display: flex; justify-content: center; align-items: center; padding: 0 15px; 
+        }
         .smart-input-box { display: flex; align-items: center; width: 100%; max-width: 800px; background: var(--white-off); border: 1px solid var(--border); border-radius: 30px; padding: 6px 8px; gap: 6px; }
         .smart-input-box:focus-within { background: var(--white); border-color: var(--green); box-shadow: 0 4px 12px rgba(19, 136, 8, 0.1); }
 
@@ -63,11 +79,10 @@
         
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
 
-        /* Mobile Layout */
+        /* 📱 মোবাইলের ম্যাজিক: সাইডবার হাইড করে চ্যাট সেকশন পুরো স্ক্রিনে দেওয়া হলো */
         @media (max-width: 900px) {
             .telemetry-sidebar { display: none !important; }
-            .main-layout { height: calc(100vh - 55px); flex-direction: column; }
-            .input-dock { padding: 10px; }
+            .chat-section { left: 0; /* মোবাইলে বাঁ-দিক থেকে পুরোটা দখল করবে */ }
         }
     </style>
 </head>
@@ -83,42 +98,40 @@
         </div>
     </div>
 
-    <div class="main-layout">
-        <div class="telemetry-sidebar">
-            <div class="panel">
-                <div class="panel-header">⚙️ CORE TELEMETRY MATRIX</div>
-                <div class="data-grid">
-                    <div class="data-cell"><span class="data-label">API Ping</span><span class="data-value" id="tel-ping">-- ms</span></div>
-                    <div class="data-cell"><span class="data-label">Uptime</span><span class="data-value" id="tel-uptime">--</span></div>
-                    <div class="data-cell"><span class="data-label">Memory</span><span class="data-value" id="tel-ram">-- MB</span></div>
-                    <div class="data-cell"><span class="data-label">Requests</span><span class="data-value" id="tel-req">0</span></div>
-                    <div class="data-cell" style="grid-column: span 2;"><span class="data-label">Active Workflow</span><span class="data-value" id="tel-wf">IDLE</span></div>
-                </div>
-            </div>
-            <div class="panel" style="flex: 1; display: flex; flex-direction: column;">
-                <div class="panel-header">📜 RUNTIME TERMINAL</div>
-                <div class="terminal" id="log-box"></div>
+    <div class="telemetry-sidebar">
+        <div class="panel">
+            <div class="panel-header">⚙️ CORE TELEMETRY MATRIX</div>
+            <div class="data-grid">
+                <div class="data-cell"><span class="data-label">API Ping</span><span class="data-value" id="tel-ping">-- ms</span></div>
+                <div class="data-cell"><span class="data-label">Uptime</span><span class="data-value" id="tel-uptime">--</span></div>
+                <div class="data-cell"><span class="data-label">Memory</span><span class="data-value" id="tel-ram">-- MB</span></div>
+                <div class="data-cell"><span class="data-label">Requests</span><span class="data-value" id="tel-req">0</span></div>
+                <div class="data-cell" style="grid-column: span 2;"><span class="data-label">Active Workflow</span><span class="data-value" id="tel-wf">IDLE</span></div>
             </div>
         </div>
+        <div class="panel" style="flex: 1; display: flex; flex-direction: column;">
+            <div class="panel-header">📜 RUNTIME TERMINAL</div>
+            <div class="terminal" id="log-box"></div>
+        </div>
+    </div>
 
-        <div class="chat-section">
-            <div class="chat-display" id="chat-box"></div>
-            
-            <div class="input-dock">
-                <div class="smart-input-box">
-                    <input type="file" id="file-uploader" style="display: none;">
-                    <button class="btn-icon" onclick="document.getElementById('file-uploader').click()"><i class="fa-solid fa-plus"></i></button>
-                    
-                    <input type="text" id="prompt-box" placeholder="Message ORBIS..." autocomplete="off">
-                    
-                    <select id="lang-select" class="lang-selector">
-                        <option value="bn-IN">BN</option>
-                        <option value="en-US">EN</option>
-                        <option value="hi-IN">HI</option>
-                    </select>
-                    <button class="btn-icon" id="mic-btn" onclick="startVoiceEngine()"><i class="fa-solid fa-microphone"></i></button>
-                    <button class="btn-send" id="send-btn" onclick="dispatchToAI()"><i class="fa-solid fa-arrow-up"></i></button>
-                </div>
+    <div class="chat-section">
+        <div class="chat-display" id="chat-box"></div>
+        
+        <div class="input-dock">
+            <div class="smart-input-box">
+                <input type="file" id="file-uploader" style="display: none;">
+                <button class="btn-icon" onclick="document.getElementById('file-uploader').click()"><i class="fa-solid fa-plus"></i></button>
+                
+                <input type="text" id="prompt-box" placeholder="Message ORBIS..." autocomplete="off">
+                
+                <select id="lang-select" class="lang-selector">
+                    <option value="bn-IN">BN</option>
+                    <option value="en-US">EN</option>
+                    <option value="hi-IN">HI</option>
+                </select>
+                <button class="btn-icon" id="mic-btn" onclick="startVoiceEngine()"><i class="fa-solid fa-microphone"></i></button>
+                <button class="btn-send" id="send-btn" onclick="dispatchToAI()"><i class="fa-solid fa-arrow-up"></i></button>
             </div>
         </div>
     </div>
