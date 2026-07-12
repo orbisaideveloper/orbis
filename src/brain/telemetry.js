@@ -1,40 +1,24 @@
 import os from 'os';
 
-const systemState = {
-    workflowState: 'IDLE',
-    errorCount: 0,
-    requestCount: 0
-};
+const sys = { state: 'IDLE', errs: 0, reqs: 0 };
 
-const getTelemetryData = () => {
-    const totalMemory = os.totalmem();
-    const freeMemory = os.freemem();
-    const usedMemory = totalMemory - freeMemory;
-
+export const getTelemetryData = () => {
     return {
         brainHub: {
             status: 'ONLINE',
             uptime: process.uptime().toFixed(0),
-            activeWorkflow: systemState.workflowState
+            activeWorkflow: sys.state
         },
         memoryEngine: {
-            ramUsageMB: (usedMemory / 1024 / 1024).toFixed(2)
+            ramUsageMB: ((os.totalmem() - os.freemem()) / 1024 / 1024).toFixed(2)
         },
         performance: {
-            totalRequests: systemState.requestCount,
-            errorCount: systemState.errorCount
+            totalRequests: sys.reqs,
+            errorCount: sys.errs
         }
     };
 };
 
-const updateWorkflowState = (newState) => { systemState.workflowState = newState; };
-const logSystemError = () => { systemState.errorCount += 1; };
-const logRequest = () => { systemState.requestCount += 1; };
-
-// মডার্ন ES Module Export
-export {
-    getTelemetryData,
-    updateWorkflowState,
-    logSystemError,
-    logRequest
-};
+export const updateWorkflowState = (s) => sys.state = s;
+export const logSystemError = () => sys.errs++;
+export const logRequest = () => sys.reqs++;

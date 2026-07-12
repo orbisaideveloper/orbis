@@ -5,14 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ORBIS Core Engine</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="/style.css?v=3.0"> 
+    <link rel="stylesheet" href="/style.css?v=4.0"> 
 </head>
 <body>
 
     <div class="top-nav">
         <div class="brand"><i class="fa-solid fa-microchip"></i> ORBIS Engine</div>
         <div class="sys-badges">
-            <span id="sys-status"><span class="status-glow offline" id="glow-dot"></span><span id="status-text" style="font-weight: bold;">CONNECTING...</span></span>
+            <span id="sys-status">
+                <span class="status-glow offline" id="glow-dot"></span>
+                <span id="status-text">CONNECTING...</span>
+            </span>
         </div>
     </div>
 
@@ -21,11 +24,11 @@
             <div class="panel">
                 <div class="panel-header">⚙️ CORE TELEMETRY MATRIX</div>
                 <div class="data-grid">
-                    <div class="data-cell"><span class="data-label">API Ping</span><span class="data-value" id="tel-ping" style="color: var(--green);">-- ms</span></div>
+                    <div class="data-cell"><span class="data-label">API Ping</span><span class="data-value" id="tel-ping">-- ms</span></div>
                     <div class="data-cell"><span class="data-label">Uptime</span><span class="data-value" id="tel-uptime">--</span></div>
                     <div class="data-cell"><span class="data-label">Memory</span><span class="data-value" id="tel-ram">-- MB</span></div>
                     <div class="data-cell"><span class="data-label">Requests</span><span class="data-value" id="tel-req">0</span></div>
-                    <div class="data-cell" style="grid-column: span 2;"><span class="data-label">Active Workflow</span><span class="data-value" id="tel-wf" style="color: var(--saffron);">IDLE</span></div>
+                    <div class="data-cell" style="grid-column: span 2;"><span class="data-label">Active Workflow</span><span class="data-value" id="tel-wf">IDLE</span></div>
                 </div>
             </div>
             <div class="panel" style="flex: 1; display: flex; flex-direction: column;">
@@ -35,8 +38,7 @@
         </div>
 
         <div class="chat-section">
-            <div class="chat-display" id="chat-box">
-                </div>
+            <div class="chat-display" id="chat-box"></div>
             
             <div class="input-dock">
                 <div class="smart-input-box">
@@ -48,6 +50,7 @@
                     <select id="lang-select" class="lang-selector">
                         <option value="bn-IN">BN</option>
                         <option value="en-US">EN</option>
+                        <option value="hi-IN">HI</option>
                     </select>
                     <button class="btn-icon" id="mic-btn" onclick="startVoiceEngine()"><i class="fa-solid fa-microphone"></i></button>
                     <button class="btn-send" id="send-btn" onclick="dispatchToAI()"><i class="fa-solid fa-arrow-up"></i></button>
@@ -56,6 +59,6 @@
         </div>
     </div>
 
-    <script src="/app.js?v=3.0"></script> 
+    <script src="/app.js?v=4.0"></script> 
 </body>
 </html>

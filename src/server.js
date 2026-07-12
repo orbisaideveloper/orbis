@@ -10,7 +10,7 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Permanent Cache Killer হেডার
+// 🔥 PERMANENT CACHE KILLER - ব্রাউজারকে প্রতিবার ফ্রেশ ফাইল লোড করতে বাধ্য করবে
 app.use((req, res, next) => {
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     next();
@@ -38,11 +38,10 @@ app.post('/api/chat', async (req, res) => {
         const prompt = req.body.prompt;
         if (!prompt) return res.status(400).json({ success: false, message: "Prompt missing" });
 
-        // জেমিনি কী ভ্যালিডেশন এবং কল
         if (!process.env.GEMINI_API_KEY || !ai) {
             return res.status(200).json({ 
                 success: true, 
-                response: `[Dev Mode Active]: API Key is missing in Render. Received prompt: "${prompt}"` 
+                response: `[ORBIS Dev Mode]: API Key is missing in Render Settings. Received prompt: "${prompt}"` 
             });
         }
 
@@ -58,4 +57,4 @@ app.post('/api/chat', async (req, res) => {
     }
 });
 
-app.listen(PORT, () => console.log(`ORBIS Cloud Web Service Live on Port: ${PORT}`));
+app.listen(PORT, () => console.log(`ORBIS Live on Port: ${PORT}`));
