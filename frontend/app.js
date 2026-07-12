@@ -1,136 +1,91 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const chatBox = document.getElementById('chat-box');
-    const promptInput = document.getElementById('prompt-input');
-    const sendBtn = document.getElementById('send-btn');
-    const logBox = document.getElementById('log-box');
-    const pingStatus = document.getElementById('ping-status');
-    const langSelect = document.getElementById('lang-select');
-    const micBtn = document.getElementById('mic-btn');
-    
-    function commitLog(level, module, text) {
+    const ui = {
+        chat: document.getElementById('chat-box'),
+        prompt: document.getElementById('prompt-box'),
+        sendBtn: document.getElementById('send-btn'),
+        log: document.getElementById('log-box'),
+        ping: document.getElementById('tel-ping'),
+        uptime: document.getElementById('tel-uptime'),
+        ram: document.getElementById('tel-ram'),
+        wf: document.getElementById('tel-wf'),
+        req: document.getElementById('tel-req'),
+        glowDot: document.getElementById('glow-dot'),
+        statusText: document.getElementById('status-text'),
+        micBtn: document.getElementById('mic-btn')
+    };
+
+    function printLog(type, msg) {
         const time = new Date().toLocaleTimeString();
-        let color = level === 'SUCCESS' ? '#34d399' : level === 'ERROR' ? '#f87171' : '#38bdf8'; 
-        logBox.innerHTML += `<div class="log-line">[${time}] <span style="color:${color};font-weight:bold;">${level}</span> [${module}] ${text}</div>`;
-        logBox.scrollTop = logBox.scrollHeight;
+        let color = type === 'OK' ? '#10b981' : type === 'ERR' ? '#ef4444' : '#38bdf8';
+        ui.log.innerHTML += `<div><span style="color:#64748b;">[${time}]</span> <strong style="color:${color};">${type}</strong>: ${msg}</div>`;
+        ui.log.scrollTop = ui.log.scrollHeight;
     }
 
-    // Telemetry Engine Fetch
-    async function runTelemetryStream() {
+    async function fetchTelemetry() {
         try {
             const res = await fetch('/api/telemetry');
-            if(!res.ok) throw new Error("API Offline");
+            if(!res.ok) throw new Error();
             const json = await res.json();
-            
-            if (json.success && json.data) {
-                const data = json.data;
-                document.getElementById('tel-brainhub').innerText = data.brainHub?.status || "ONLINE";
-                document.getElementById('tel-brainhub').className = "text-green";
-                document.getElementById('tel-ram').innerText = (data.memoryEngine?.ramUsageMB || "--") + ' MB';
-                document.getElementById('tel-uptime').innerText = (data.brainHub?.uptime || "0") + 's';
-                document.getElementById('tel-total-req').innerText = data.performance?.totalRequests || 0;
-                document.getElementById('tel-errors').innerText = data.performance?.errorCount || 0;
-
-                const activeStep = data.brainHub?.activeWorkflow || "IDLE";
-                document.getElementById('tel-wf-status').innerText = activeStep;
-                
-                document.querySelectorAll('.wf-node').forEach(n => n.classList.remove('active'));
-                if (activeStep !== "IDLE") {
-                    document.getElementById('wf-input').classList.add('active');
-                    document.getElementById('wf-brain').classList.add('active');
-                }
+            if (json.success) {
+                ui.glowDot.className = "status-glow online";
+                ui.statusText.innerText = "SYSTEM ONLINE";
+                ui.statusText.style.color = "#10b981";
+                ui.uptime.innerText = json.data.brainHub.uptime + 's';
+                ui.ram.innerText = json.data.memoryEngine.ramUsageMB + ' MB';
+                ui.wf.innerText = json.data.brainHub.activeWorkflow;
+                ui.req.innerText = json.data.performance.totalRequests;
             }
         } catch (e) {
-            document.getElementById('tel-brainhub').innerText = "OFFLINE";
-            document.getElementById('tel-brainhub').className = "text-red";
+            ui.glowDot.className = "status-glow offline";
+            ui.statusText.innerText = "OFFLINE";
+            ui.statusText.style.color = "#ef4444";
         }
     }
+    setInterval(fetchTelemetry, 3000);
+    fetchTelemetry();
 
-    setInterval(runTelemetryStream, 3000);
-    setTimeout(runTelemetryStream, 500);
+    window.dispatchToAI = async function() {
+        const val = ui.prompt.value.trim();
+        if (!val) return;
 
-    function appendMessageFrame(sender, messageText, cssClass) {
-        const formatted = messageText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        chatBox.innerHTML += `<div class="message ${cssClass}"><strong>${sender}</strong><br>${formatted}</div>`;
-        chatBox.scrollTop = chatBox.scrollHeight;
-    }
-
-    promptInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') window.executeSecureDispatch();
-    });
-
-    // Chat API Execution
-    window.executeSecureDispatch = async function() {
-        const input = promptInput.value.trim();
-        if (!input) return;
-
-        appendMessageFrame('You', input, 'msg-dev');
-        promptInput.value = ''; 
-        sendBtn.disabled = true; 
-        sendBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; 
-        
-        commitLog('INFO', 'API', `Dispatching message to BrainHub...`);
-        const startTime = Date.now();
+        ui.chat.innerHTML += `<div class="msg-bubble msg-user"><strong>You</strong><br>${val}</div>`;
+        ui.prompt.value = '';
+        ui.sendBtn.disabled = true;
+        printLog('INFO', 'Sending message to AI Brain...');
 
         try {
-            const response = await fetch('/api/chat', {
+            const start = Date.now();
+            const res = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: input })
+                body: JSON.stringify({ prompt: val })
             });
-
-            const data = await response.json();
-            const latency = Date.now() - startTime;
-            pingStatus.innerText = latency + ' ms';
+            const data = await res.json();
+            ui.ping.innerText = (Date.now() - start) + ' ms';
 
             if (data.success) {
-                commitLog('SUCCESS', 'API', `Replied in ${latency}ms`);
-                appendMessageFrame('ORBIS ✨', data.response, 'msg-orbis');
-            } else {
-                appendMessageFrame('System Error', 'Request failed.', 'text-red');
+                printLog('OK', 'AI response compiled.');
+                ui.chat.innerHTML += `<div class="msg-bubble msg-ai"><strong>ORBIS ✨</strong><br>${data.response}</div>`;
             }
-        } catch (error) {
-            commitLog('ERROR', 'NET', `Error: ${error.message}`);
-            appendMessageFrame('System Error', 'Network unreachable.', 'text-red');
+        } catch (err) {
+            printLog('ERR', 'Failed execution.');
         } finally {
-            sendBtn.disabled = false; 
-            sendBtn.innerHTML = '<i class="fa-solid fa-arrow-up"></i>';
-            promptInput.focus();
+            ui.sendBtn.disabled = false;
+            ui.chat.scrollTop = ui.chat.scrollHeight;
         }
     };
-    
-    // Voice API
-    let recognition;
+
+    let rec;
     try {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (SpeechRecognition) {
-            recognition = new SpeechRecognition();
-            recognition.continuous = false; 
-            
-            recognition.onstart = () => {
-                micBtn.classList.add('recording');
-                promptInput.placeholder = "Listening...";
-            };
-            recognition.onresult = (e) => promptInput.value = e.results[0][0].transcript;
-            recognition.onerror = (e) => {
-                micBtn.classList.remove('recording');
-                promptInput.placeholder = "Message ORBIS...";
-            };
-            recognition.onend = () => {
-                micBtn.classList.remove('recording');
-                promptInput.placeholder = "Message ORBIS...";
-            };
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SR) {
+            rec = new SR();
+            rec.onstart = () => ui.micBtn.classList.add('mic-active');
+            rec.onresult = (e) => ui.prompt.value = e.results[0][0].transcript;
+            rec.onend = () => ui.micBtn.classList.remove('mic-active');
         }
-    } catch (err) {}
+    } catch(e) {}
 
-    window.startVoiceEngine = function() {
-        if (recognition) {
-            recognition.lang = langSelect.value;
-            recognition.start();
-        } else {
-            alert("Voice not supported.");
-        }
-    };
-
-    commitLog('SUCCESS', 'SYS', 'ORBIS Interface Initialized securely.');
+    window.startVoiceEngine = () => { if(rec) { rec.lang = document.getElementById('lang-select').value; rec.start(); } };
+    printLog('OK', 'ORBIS Systems Architecture Modularized.');
 });
-
