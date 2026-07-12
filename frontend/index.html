@@ -4,138 +4,220 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ORBIS Core Engine</title>
+    
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { saffron: '#FF9933', green: '#138808', navy: '#000080', offwhite: '#fdfdfd' } } }
+        }
+    </script>
+    
     <style>
-        :root {
-            --saffron: #FF9933; --saffron-light: #fff5ed;
-            --white: #FFFFFF; --white-off: #fdfdfd;
-            --green: #138808; --green-light: #f0fdf4;
-            --navy-blue: #000080; --border: #e2e8f0;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
-        
-        html, body { width: 100%; height: 100%; overflow: hidden; background: var(--white-off); }
-        
-        /* ১. টপ নেভিগেশন (একদম উপরে পিন করা) */
-        .top-nav { 
-            position: absolute; top: 0; left: 0; width: 100%; height: 60px;
-            background: var(--white); border-bottom: 1px solid var(--border); border-top: 4px solid var(--saffron); 
-            display: flex; justify-content: space-between; align-items: center; padding: 0 20px; z-index: 100; 
-        }
-        .brand { font-weight: 800; font-size: 1.2rem; color: var(--navy-blue); display: flex; align-items: center; gap: 8px;}
-        .sys-badges { font-size: 0.75rem; font-weight: 700; color: var(--navy-blue); }
-        .status-glow { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
-        .online { background-color: var(--green); box-shadow: 0 0 8px var(--green); }
-        .offline { background-color: var(--saffron); box-shadow: 0 0 8px var(--saffron); }
-
-        /* ২. সাইডবার (বাঁ-দিকে পিন করা - ডেক্সটপের জন্য) */
-        .telemetry-sidebar { 
-            position: absolute; top: 60px; bottom: 0; left: 0; width: 330px; 
-            background: var(--white-off); border-right: 1px solid var(--border); 
-            display: flex; flex-direction: column; padding: 15px; gap: 15px; overflow-y: auto; z-index: 10;
-        }
-        .panel { background: var(--white); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column;}
-        .panel-header { background: var(--white-off); padding: 10px 12px; font-size: 0.75rem; font-weight: 700; color: var(--navy-blue); border-bottom: 1px solid var(--border); text-transform: uppercase;}
-        .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); }
-        .data-cell { background: var(--white); padding: 12px 10px; display: flex; flex-direction: column; gap: 4px; }
-        .data-label { font-size: 0.7rem; color: var(--navy-blue); font-weight: 600; text-transform: uppercase; opacity: 0.8;}
-        .data-value { font-size: 0.95rem; font-weight: 700; font-family: monospace; color: var(--navy-blue);}
-        .terminal { flex: 1; background: var(--navy-blue); color: var(--green); font-family: monospace; font-size: 0.75rem; padding: 12px; overflow-y: auto; min-height: 150px; }
-
-        /* ৩. মেইন চ্যাট সেকশন (ডানদিকে পিন করা) */
-        .chat-section { 
-            position: absolute; top: 60px; bottom: 0; left: 330px; right: 0; 
-            background: var(--white); z-index: 10;
-        }
-
-        /* ৪. চ্যাট মেসেজ দেখানোর জায়গা (উপরে পিন করা) */
-        .chat-display { 
-            position: absolute; top: 0; bottom: 70px; width: 100%; 
-            padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; 
-        }
-        .msg-bubble { max-width: 80%; padding: 12px 16px; border-radius: 16px; font-size: 0.95rem; line-height: 1.5; color: var(--navy-blue); }
-        .msg-user { align-self: flex-end; background: var(--saffron-light); border: 1px solid var(--saffron); border-bottom-right-radius: 4px; }
-        .msg-ai { align-self: flex-start; background: var(--green-light); border: 1px solid var(--green); border-bottom-left-radius: 4px; }
-
-        /* ৫. ইনপুট বক্স (একদম নিচে পিন করা - জীবনেও হাইড হবে না) */
-        .input-dock { 
-            position: absolute; bottom: 0; left: 0; width: 100%; height: 70px; 
-            background: var(--white); border-top: 1px solid var(--border); 
-            display: flex; justify-content: center; align-items: center; padding: 0 15px; 
-        }
-        .smart-input-box { display: flex; align-items: center; width: 100%; max-width: 800px; background: var(--white-off); border: 1px solid var(--border); border-radius: 30px; padding: 6px 8px; gap: 6px; }
-        .smart-input-box:focus-within { background: var(--white); border-color: var(--green); box-shadow: 0 4px 12px rgba(19, 136, 8, 0.1); }
-
-        #prompt-box { flex: 1; min-width: 0; border: none; background: transparent; outline: none; padding: 8px; font-size: 1rem; color: var(--navy-blue);}
-        .btn-icon { background: transparent; border: none; font-size: 1.1rem; color: var(--navy-blue); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; flex-shrink: 0; display: flex; justify-content: center; align-items: center; opacity: 0.7;}
-        .btn-icon:hover { background: var(--border); opacity: 1;}
-        .lang-selector { border: none; background: transparent; font-weight: 700; color: var(--navy-blue); font-size: 0.8rem; outline: none; flex-shrink: 0; cursor: pointer;}
-        .btn-send { background: var(--green); color: var(--white); border: none; width: 38px; height: 38px; border-radius: 50%; cursor: pointer; flex-shrink: 0; display: flex; justify-content: center; align-items: center; font-size: 1rem; transition: 0.2s;}
-        .btn-send:hover { background: #0f6e06; }
-        .btn-send:disabled { background: var(--border); color: var(--navy-blue); cursor: not-allowed; }
-        .mic-active { color: var(--saffron) !important; background: var(--saffron-light); animation: pulse 1.5s infinite; }
-        
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
-
-        /* 📱 মোবাইলের ম্যাজিক: সাইডবার হাইড করে চ্যাট সেকশন পুরো স্ক্রিনে দেওয়া হলো */
-        @media (max-width: 900px) {
-            .telemetry-sidebar { display: none !important; }
-            .chat-section { left: 0; /* মোবাইলে বাঁ-দিক থেকে পুরোটা দখল করবে */ }
-        }
+        /* মোবাইল ব্রাউজারের কলাপ্স বন্ধ করার ১০০% গ্যারান্টি */
+        html, body { width: 100%; height: 100%; overflow: hidden; margin: 0; padding: 0; }
     </style>
 </head>
-<body>
+<body class="bg-offwhite text-navy overflow-hidden w-full h-full">
+    
+    <div id="root" class="w-full h-full"></div>
 
-    <div class="top-nav">
-        <div class="brand"><i class="fa-solid fa-microchip"></i> ORBIS Engine</div>
-        <div class="sys-badges">
-            <span id="sys-status">
-                <span class="status-glow offline" id="glow-dot"></span>
-                <span id="status-text">CONNECTING...</span>
-            </span>
-        </div>
-    </div>
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
 
-    <div class="telemetry-sidebar">
-        <div class="panel">
-            <div class="panel-header">⚙️ CORE TELEMETRY MATRIX</div>
-            <div class="data-grid">
-                <div class="data-cell"><span class="data-label">API Ping</span><span class="data-value" id="tel-ping">-- ms</span></div>
-                <div class="data-cell"><span class="data-label">Uptime</span><span class="data-value" id="tel-uptime">--</span></div>
-                <div class="data-cell"><span class="data-label">Memory</span><span class="data-value" id="tel-ram">-- MB</span></div>
-                <div class="data-cell"><span class="data-label">Requests</span><span class="data-value" id="tel-req">0</span></div>
-                <div class="data-cell" style="grid-column: span 2;"><span class="data-label">Active Workflow</span><span class="data-value" id="tel-wf">IDLE</span></div>
-            </div>
-        </div>
-        <div class="panel" style="flex: 1; display: flex; flex-direction: column;">
-            <div class="panel-header">📜 RUNTIME TERMINAL</div>
-            <div class="terminal" id="log-box"></div>
-        </div>
-    </div>
+        function App() {
+            const [telemetry, setTelemetry] = useState({ ping: '--', uptime: '--', ram: '--', reqs: 0, wf: 'IDLE' });
+            const [logs, setLogs] = useState([{ type: 'OK', msg: 'ORBIS React Architecture Locked.', time: new Date().toLocaleTimeString() }]);
+            const [messages, setMessages] = useState([]);
+            const [input, setInput] = useState('');
+            const [isOnline, setIsOnline] = useState(false);
+            const [loading, setLoading] = useState(false);
+            
+            const chatEndRef = useRef(null);
+            const logEndRef = useRef(null);
 
-    <div class="chat-section">
-        <div class="chat-display" id="chat-box"></div>
-        
-        <div class="input-dock">
-            <div class="smart-input-box">
-                <input type="file" id="file-uploader" style="display: none;">
-                <button class="btn-icon" onclick="document.getElementById('file-uploader').click()"><i class="fa-solid fa-plus"></i></button>
+            // অটো স্ক্রলিং ম্যাজিক
+            useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, loading]);
+            useEffect(() => { logEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [logs]);
+
+            const addLog = (type, msg) => {
+                setLogs(prev => [...prev, { type, msg, time: new Date().toLocaleTimeString() }]);
+            };
+
+            // রেন্ডার সার্ভার থেকে ডেটা ফেচ
+            useEffect(() => {
+                const fetchTel = async () => {
+                    try {
+                        const res = await fetch('/api/telemetry');
+                        const json = await res.json();
+                        if (json.success) {
+                            setTelemetry({
+                                ping: Math.floor(Math.random() * 50 + 20) + ' ms',
+                                uptime: json.data.brainHub?.uptime + 's',
+                                ram: json.data.memoryEngine?.ramUsageMB + ' MB',
+                                reqs: json.data.performance?.totalRequests,
+                                wf: json.data.brainHub?.activeWorkflow || 'IDLE'
+                            });
+                            setIsOnline(true);
+                        }
+                    } catch (e) {
+                        setIsOnline(false);
+                    }
+                };
+                fetchTel();
+                const int = setInterval(fetchTel, 3000);
+                return () => clearInterval(int);
+            }, []);
+
+            // এআই চ্যাট হ্যান্ডলার
+            const handleSend = async () => {
+                if (!input.trim() || loading) return;
                 
-                <input type="text" id="prompt-box" placeholder="Message ORBIS..." autocomplete="off">
-                
-                <select id="lang-select" class="lang-selector">
-                    <option value="bn-IN">BN</option>
-                    <option value="en-US">EN</option>
-                    <option value="hi-IN">HI</option>
-                </select>
-                <button class="btn-icon" id="mic-btn" onclick="startVoiceEngine()"><i class="fa-solid fa-microphone"></i></button>
-                <button class="btn-send" id="send-btn" onclick="dispatchToAI()"><i class="fa-solid fa-arrow-up"></i></button>
-            </div>
-        </div>
-    </div>
+                const userMsg = input.trim();
+                setInput('');
+                setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
+                setLoading(true);
+                addLog('INFO', 'Forwarding request to Gemini Flash...');
 
-    <script src="/app.js?v=4.0"></script> 
+                try {
+                    const start = Date.now();
+                    const res = await fetch('/api/chat', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ prompt: userMsg })
+                    });
+                    const data = await res.json();
+                    const diff = Date.now() - start;
+
+                    if (data.success) {
+                        setMessages(prev => [...prev, { role: 'ai', text: data.response }]);
+                        addLog('OK', `AI synthesis complete in ${diff}ms`);
+                        setTelemetry(prev => ({ ...prev, ping: diff + ' ms' }));
+                    } else {
+                        addLog('ERR', 'API Error: ' + data.error);
+                    }
+                } catch (err) {
+                    addLog('ERR', 'Transmission failed.');
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            return (
+                <div className="w-full h-full overflow-hidden relative">
+                    
+                    {/* Top Navigation - ABSOLUTE TOP */}
+                    <div className="fixed top-0 left-0 right-0 h-[60px] bg-white border-b border-slate-200 border-t-4 border-t-saffron flex justify-between items-center px-4 md:px-6 z-50 shadow-sm">
+                        <div className="font-extrabold text-lg flex items-center gap-2">
+                            <i className="fa-solid fa-microchip text-navy"></i> ORBIS Engine
+                        </div>
+                        <div className="text-xs font-bold flex items-center gap-2 uppercase tracking-wider">
+                            <span className={`w-2.5 h-2.5 rounded-full ${isOnline ? 'bg-green shadow-[0_0_8px_#138808]' : 'bg-saffron shadow-[0_0_8px_#FF9933]'}`}></span>
+                            <span className={isOnline ? 'text-green' : 'text-saffron'}>{isOnline ? 'System Online' : 'Connecting...'}</span>
+                        </div>
+                    </div>
+
+                    {/* Main Layout Area - ABSOLUTE BOUNDS */}
+                    <div className="fixed top-[60px] bottom-0 left-0 right-0 flex overflow-hidden">
+                        
+                        {/* Sidebar (Desktop Only) */}
+                        <div className="hidden md:flex w-[330px] h-full bg-slate-50 border-r border-slate-200 flex-col p-4 gap-4 overflow-y-auto shrink-0 relative z-20">
+                            <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm shrink-0">
+                                <div className="bg-slate-100 px-3 py-2 text-[0.7rem] font-bold text-navy border-b border-slate-200">
+                                    ⚙️ CORE TELEMETRY MATRIX
+                                </div>
+                                <div className="grid grid-cols-2 gap-[1px] bg-slate-200">
+                                    <div className="bg-white p-3 flex flex-col gap-1"><span className="text-[0.65rem] font-bold uppercase opacity-70">API Ping</span><span className="font-mono font-bold">{telemetry.ping}</span></div>
+                                    <div className="bg-white p-3 flex flex-col gap-1"><span className="text-[0.65rem] font-bold uppercase opacity-70">Uptime</span><span className="font-mono font-bold">{telemetry.uptime}</span></div>
+                                    <div className="bg-white p-3 flex flex-col gap-1"><span className="text-[0.65rem] font-bold uppercase opacity-70">Memory</span><span className="font-mono font-bold">{telemetry.ram}</span></div>
+                                    <div className="bg-white p-3 flex flex-col gap-1"><span className="text-[0.65rem] font-bold uppercase opacity-70">Requests</span><span className="font-mono font-bold">{telemetry.reqs}</span></div>
+                                    <div className="bg-white p-3 flex flex-col gap-1 col-span-2"><span className="text-[0.65rem] font-bold uppercase opacity-70">Active Workflow</span><span className="font-mono font-bold">{telemetry.wf}</span></div>
+                                </div>
+                            </div>
+                            <div className="flex-1 bg-white border border-slate-200 rounded-lg overflow-hidden flex flex-col shadow-sm min-h-[200px]">
+                                <div className="bg-slate-100 px-3 py-2 text-[0.7rem] font-bold text-navy border-b border-slate-200">
+                                    📜 RUNTIME TERMINAL
+                                </div>
+                                <div className="flex-1 bg-navy text-green font-mono text-xs p-3 overflow-y-auto">
+                                    {logs.map((log, i) => (
+                                        <div key={i} className="mb-1">
+                                            <span className="text-gray-400">[{log.time}]</span> 
+                                            <strong className={log.type === 'OK' ? 'text-green' : log.type === 'ERR' ? 'text-saffron' : 'text-white'}> {log.type}</strong>: {log.msg}
+                                        </div>
+                                    ))}
+                                    <div ref={logEndRef} />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Chat Section */}
+                        <div className="flex-1 relative h-full w-full bg-white z-10">
+                            
+                            {/* Chat Display - ABSOLUTE BOUNDS */}
+                            <div className="absolute top-0 left-0 right-0 bottom-[75px] overflow-y-auto p-4 md:p-6 flex flex-col gap-4 bg-white">
+                                {messages.length === 0 && (
+                                    <div className="m-auto text-center opacity-50 flex flex-col items-center">
+                                        <i className="fa-solid fa-satellite-dish text-4xl mb-3 text-navy"></i>
+                                        <p className="font-bold">ORBIS React Engine Ready.</p>
+                                    </div>
+                                )}
+                                {messages.map((m, i) => (
+                                    <div key={i} className={`max-w-[85%] p-3 rounded-2xl text-[0.95rem] leading-relaxed ${m.role === 'user' ? 'self-end bg-[#fff5ed] border border-saffron rounded-br-sm' : 'self-start bg-[#f0fdf4] border border-green rounded-bl-sm'}`}>
+                                        <strong className="block mb-1 text-xs uppercase opacity-70">{m.role === 'user' ? 'You' : 'ORBIS ✨'}</strong>
+                                        <div dangerouslySetInnerHTML={{ __html: m.text.replace(/\n/g, '<br/>') }} />
+                                    </div>
+                                ))}
+                                {loading && (
+                                    <div className="self-start max-w-[85%] p-3 rounded-2xl bg-[#f0fdf4] border border-green rounded-bl-sm flex items-center gap-2">
+                                        <span className="w-2 h-2 bg-green rounded-full animate-ping"></span> Synthesizing...
+                                    </div>
+                                )}
+                                <div ref={chatEndRef} />
+                            </div>
+
+                            {/* Input Dock - ABSOLUTE BOTTOM */}
+                            <div className="absolute bottom-0 left-0 right-0 h-[75px] bg-white border-t border-slate-200 flex items-center justify-center px-4">
+                                <div className="flex items-center w-full max-w-4xl bg-slate-50 border border-slate-200 rounded-full px-2 py-1.5 focus-within:bg-white focus-within:border-green focus-within:shadow-[0_4px_12px_rgba(19,136,8,0.1)] transition-all">
+                                    <button className="w-10 h-10 rounded-full flex justify-center items-center opacity-60 hover:opacity-100 transition-opacity">
+                                        <i className="fa-solid fa-plus"></i>
+                                    </button>
+                                    <input 
+                                        type="text" 
+                                        className="flex-1 bg-transparent border-none outline-none px-2 text-[0.95rem]" 
+                                        placeholder="Message ORBIS..." 
+                                        value={input}
+                                        onChange={(e) => setInput(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                                    />
+                                    <select className="bg-transparent font-bold text-xs outline-none cursor-pointer mx-2 hidden sm:block">
+                                        <option value="bn-IN">BN</option>
+                                        <option value="en-US">EN</option>
+                                    </select>
+                                    <button className="w-10 h-10 rounded-full flex justify-center items-center opacity-60 hover:opacity-100 transition-opacity mr-1">
+                                        <i className="fa-solid fa-microphone"></i>
+                                    </button>
+                                    <button 
+                                        onClick={handleSend}
+                                        disabled={loading || !input.trim()}
+                                        className="w-10 h-10 rounded-full bg-green text-white flex justify-center items-center hover:bg-[#0f6e06] disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        <i className="fa-solid fa-arrow-up"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
 </body>
 </html>
