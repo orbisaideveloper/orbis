@@ -4,16 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ORBIS Core Engine</title>
-    
-    <!-- Modular CSS -->
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-
-    <!-- Top Nav -->
     <header class="top-nav">
         <div class="brand">
-            <button onclick="toggleSidebar()" style="background:none; border:none; font-size:1.2rem; cursor:pointer; margin-right:10px; color:var(--navy-blue);" class="mobile-menu-btn">☰</button>
+            <button onclick="toggleSidebar()" class="mobile-menu-btn">☰</button>
             <span>ORBIS Engine</span>
         </div>
         <div class="sys-badges">
@@ -23,15 +19,11 @@
         </div>
     </header>
 
-    <!-- Main Layout -->
     <div class="main-layout">
-        
-        <!-- Telemetry Sidebar -->
         <aside class="telemetry-sidebar" id="dev-sidebar">
             <div style="text-align: right; margin-bottom: -10px;">
                 <button onclick="toggleSidebar()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--saffron); font-weight:bold;">×</button>
             </div>
-
             <div class="panel">
                 <div class="panel-header">⚙️ System Telemetry</div>
                 <div class="data-grid">
@@ -39,24 +31,11 @@
                     <div class="data-cell"><span class="data-label">Uptime</span><span class="data-value" id="tel-uptime">-- s</span></div>
                     <div class="data-cell"><span class="data-label">RAM Usage</span><span class="data-value" id="tel-ram">-- MB</span></div>
                     <div class="data-cell"><span class="data-label">Requests</span><span class="data-value" id="tel-req">0</span></div>
-                    
-                    <div class="data-cell" style="grid-column: span 2; display: flex; flex-direction: row; justify-content: space-between;">
-                        <span class="data-label">Active Workflow</span>
-                        <span class="data-value" id="tel-wf" style="font-size:0.7rem; background:#f3e8ff; padding:2px 6px; border-radius:4px; color:#7e22ce;">IDLE</span>
-                    </div>
-
-                    <div class="data-cell" style="grid-column: span 2; display: flex; flex-direction: row; justify-content: space-between;">
-                        <span class="data-label">Brain State</span>
-                        <span class="data-value" id="tel-brain" style="font-size:0.7rem; padding:2px 6px; border-radius:4px; background:var(--border);">IDLE</span>
-                    </div>
-
-                    <div class="data-cell" style="grid-column: span 2; display: flex; flex-direction: row; justify-content: space-between;">
-                        <span class="data-label">Context Memory</span>
-                        <span class="data-value" id="tel-nodes" style="font-size:0.7rem; background:#e0f2fe; padding:2px 6px; border-radius:4px; color:#0369a1;">0 Nodes</span>
-                    </div>
+                    <div class="data-cell" style="grid-column: span 2;"><span class="data-label">Active Workflow</span><span class="data-value" id="tel-wf" style="font-size:0.7rem; background:#f3e8ff; padding:2px 6px; border-radius:4px; color:#7e22ce;">IDLE</span></div>
+                    <div class="data-cell" style="grid-column: span 2;"><span class="data-label">Brain State</span><span class="data-value" id="tel-brain" style="font-size:0.7rem; padding:2px 6px; border-radius:4px; background:var(--border);">IDLE</span></div>
+                    <div class="data-cell" style="grid-column: span 2;"><span class="data-label">Context Memory</span><span class="data-value" id="tel-nodes" style="font-size:0.7rem; background:#e0f2fe; padding:2px 6px; border-radius:4px; color:#0369a1;">0 Nodes</span></div>
                 </div>
             </div>
-
             <div class="panel" style="flex:1;">
                 <div class="panel-header" style="display:flex; justify-content:space-between;">
                     <span>📜 RUNTIME LOGS</span>
@@ -66,7 +45,6 @@
             </div>
         </aside>
 
-        <!-- Chat Section -->
         <main class="chat-section">
             <div class="chat-display" id="chat-box">
                 <div style="margin:auto; text-align:center; opacity:0.5;" id="welcome-msg">
@@ -74,15 +52,9 @@
                     <p style="font-size:0.8rem;">System Architecture Locked.</p>
                 </div>
             </div>
-
-            <!-- Input Dock -->
             <div class="input-dock">
                 <div class="smart-input-box">
-                    <select id="lang-select" class="lang-selector">
-                        <option value="bn-IN">BN</option>
-                        <option value="hi-IN">HI</option>
-                        <option value="en-US">EN</option>
-                    </select>
+                    <select id="lang-select" class="lang-selector"><option value="bn-IN">BN</option><option value="hi-IN">HI</option><option value="en-US">EN</option></select>
                     <input type="text" id="prompt-box" placeholder="Message ORBIS..." onkeydown="if(event.key === 'Enter') dispatchToAI()" />
                     <button id="mic-btn" class="btn-icon" onclick="startVoiceEngine()">🎙️</button>
                     <button id="send-btn" class="btn-send" onclick="dispatchToAI()">➤</button>
@@ -91,12 +63,14 @@
         </main>
     </div>
 
-    <!-- Modular JavaScript Bricks (Phase 6B) -->
     <script src="js/ui-core.js"></script>
     <script src="js/ui-events.js"></script>
+    <script src="js/ui-api.js"></script>
+    <script src="js/ui-router.js"></script>
+    <script src="js/ui-storage.js"></script>
+    <script src="js/ui-dashboard.js"></script>
     <script src="js/ui-telemetry.js"></script>
     <script src="js/ui-chat.js"></script>
     <script src="js/ui-voice.js"></script>
-    <script src="js/ui-storage.js"></script>
 </body>
 </html>
