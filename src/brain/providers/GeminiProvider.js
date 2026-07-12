@@ -1,23 +1,22 @@
 import { GoogleGenAI } from '@google/genai';
 
 export class GeminiProvider {
-  constructor(apiKey) {
+  constructor() {
     this.name = 'GeminiProvider';
-    // গুগলের নতুন SDK-এর ইনিশিয়ালাইজেশন
-    this.ai = new GoogleGenAI({ apiKey: apiKey });
+    // রেন্ডারের এনভায়রনমেন্ট থেকে কি-টি নিচ্ছে
+    this.ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   }
 
-  async process(prompt) {
+  async execute(payload) { // আমরা 'process' এর বদলে 'execute' ব্যবহার করব
     try {
       const response = await this.ai.models.generateContent({
-        // নতুন এবং লেটেস্ট মডেল যা আপনার AQ চাবির সাথে পারফেক্টলি কাজ করবে
         model: 'gemini-3.5-flash',
-        contents: prompt,
+        contents: payload.content, // payload থেকে কন্টেন্ট নিচ্ছে
       });
       return response.text;
     } catch (error) {
       console.error("Gemini GenAI Error:", error);
-      throw new Error("Failed to process request");
+      throw new Error("Gemini Provider failed to process request");
     }
   }
 }
