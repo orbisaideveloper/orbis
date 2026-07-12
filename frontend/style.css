@@ -1,59 +1,50 @@
-/* ================= INDIAN FLAG THEME (Saffron, White, Green, Navy Blue) ================= */
 :root {
-    --saffron: #FF9933;         /* পতাকার গেরুয়া */
-    --saffron-light: #fff0e6;   /* হালকা গেরুয়া (ব্যাকগ্রাউন্ডের জন্য) */
-    --white: #FFFFFF;           /* পতাকার সাদা */
-    --white-off: #f8f9fa;       /* হালকা সাদা (প্যানেলের জন্য) */
-    --green: #138808;           /* পতাকার সবুজ */
-    --green-light: #e6f7e6;     /* হালকা সবুজ */
-    --navy-blue: #000080;       /* অশোক চক্রের নীল (টেক্সট এবং বর্ডারের জন্য) */
-    --border: #e2e8f0;          /* সফট বর্ডার */
+    --saffron: #FF9933;         
+    --saffron-light: #fff0e6;   
+    --white: #FFFFFF;           
+    --white-off: #f8f9fa;       
+    --green: #138808;           
+    --green-light: #e6f7e6;     
+    --navy-blue: #000080;       
+    --border: #e2e8f0;          
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
 
-/* 100dvh বাদ দিয়ে 100vh এবং flex ব্যবহার করা হলো, যাতে কোনো বক্স স্ক্রিনের বাইরে না যায় */
-body { background: var(--white-off); color: var(--navy-blue); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+/* 100vw and 100vh guarantee full screen usage */
+body { background: var(--white-off); color: var(--navy-blue); display: flex; flex-direction: column; width: 100vw; height: 100vh; overflow: hidden; margin: 0;}
 
-/* Top Navigation (Saffron Border Top) */
-.top-nav { background: var(--white); padding: 12px 20px; border-bottom: 1px solid var(--border); border-top: 4px solid var(--saffron); display: flex; justify-content: space-between; align-items: center; z-index: 20; box-shadow: 0 1px 4px rgba(0,0,0,0.05);}
+.top-nav { background: var(--white); padding: 12px 20px; border-bottom: 1px solid var(--border); border-top: 4px solid var(--saffron); display: flex; justify-content: space-between; align-items: center; z-index: 20; box-shadow: 0 1px 4px rgba(0,0,0,0.05); flex-shrink: 0;}
 .brand { font-weight: 800; font-size: 1.2rem; color: var(--navy-blue); display: flex; align-items: center; gap: 8px;}
 .brand i { color: var(--saffron); }
 .sys-badges { font-size: 0.75rem; font-weight: 600; color: var(--navy-blue); }
 
-/* Status Indicators */
 .status-glow { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
 .online { background-color: var(--green); box-shadow: 0 0 8px var(--green); }
-.offline { background-color: var(--saffron); box-shadow: 0 0 8px var(--saffron); } /* Error/Offline in Saffron */
+.offline { background-color: var(--saffron); box-shadow: 0 0 8px var(--saffron); }
 
-/* Main Layout Grid */
-.main-layout { display: flex; flex: 1; overflow: hidden; }
+/* Bulletproof Flex Layout */
+.main-layout { display: flex; flex: 1; width: 100%; height: 100%; overflow: hidden; }
 
-/* Sidebar */
 .telemetry-sidebar { width: 350px; background: var(--white-off); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 15px; gap: 15px; overflow-y: auto; flex-shrink: 0;}
-
-.panel { background: var(--white); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.02);}
+.panel { background: var(--white); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column;}
 .panel-header { background: var(--white-off); padding: 10px 12px; font-size: 0.75rem; font-weight: 700; color: var(--navy-blue); border-bottom: 1px solid var(--border); text-transform: uppercase;}
-
 .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); }
 .data-cell { background: var(--white); padding: 12px 10px; display: flex; flex-direction: column; gap: 4px; }
 .data-label { font-size: 0.7rem; color: var(--navy-blue); font-weight: 600; text-transform: uppercase; opacity: 0.8;}
 .data-value { font-size: 0.95rem; font-weight: 700; font-family: monospace; color: var(--navy-blue);}
-
-/* Terminal */
 .terminal { flex: 1; background: var(--navy-blue); color: var(--green); font-family: monospace; font-size: 0.75rem; padding: 12px; overflow-y: auto; min-height: 150px; }
 
-/* Chat Section (Solid Flexbox - Never Hides) */
-.chat-section { flex: 1; display: flex; flex-direction: column; background: var(--white); min-width: 0; }
+/* Chat Section Fix: Forced to take full remaining width and height */
+.chat-section { flex: 1; display: flex; flex-direction: column; background: var(--white); min-width: 0; height: 100%; justify-content: space-between;}
 .chat-display { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; background: var(--white);}
 
-/* Message Bubbles - Indian Theme */
 .msg-bubble { max-width: 85%; padding: 14px 18px; border-radius: 16px; font-size: 0.95rem; line-height: 1.5; color: var(--navy-blue);}
 .msg-user { align-self: flex-end; background: var(--saffron-light); border: 1px solid var(--saffron); border-bottom-right-radius: 4px; }
 .msg-ai { align-self: flex-start; background: var(--green-light); border: 1px solid var(--green); border-bottom-left-radius: 4px; }
 
-/* Perfect Input Dock */
-.input-dock { padding: 15px 20px; background: var(--white); border-top: 1px solid var(--border); flex-shrink: 0; display: flex; justify-content: center;}
+/* Input Dock Fix */
+.input-dock { padding: 15px 20px; background: var(--white); border-top: 1px solid var(--border); flex-shrink: 0; display: flex; justify-content: center; width: 100%;}
 .smart-input-box { display: flex; align-items: center; width: 100%; max-width: 850px; background: var(--white-off); border: 1px solid var(--border); border-radius: 30px; padding: 6px 8px; gap: 6px; transition: 0.3s;}
 .smart-input-box:focus-within { background: var(--white); border-color: var(--green); box-shadow: 0 4px 12px rgba(19, 136, 8, 0.1); }
 
@@ -62,7 +53,6 @@ body { background: var(--white-off); color: var(--navy-blue); display: flex; fle
 .btn-icon:hover { background: var(--border); opacity: 1;}
 .lang-selector { border: none; background: transparent; font-weight: 700; color: var(--navy-blue); font-size: 0.8rem; outline: none; flex-shrink: 0; opacity: 0.8;}
 
-/* Green Send Button */
 .btn-send { background: var(--green); color: var(--white); border: none; width: 38px; height: 38px; border-radius: 50%; cursor: pointer; flex-shrink: 0; display: flex; justify-content: center; align-items: center; font-size: 1rem; transition: 0.2s;}
 .btn-send:hover { background: #0f6e06; }
 .btn-send:disabled { background: var(--border); color: var(--navy-blue); cursor: not-allowed; }
@@ -70,8 +60,8 @@ body { background: var(--white-off); color: var(--navy-blue); display: flex; fle
 .mic-active { color: var(--saffron) !important; background: var(--saffron-light); animation: pulse 1.5s infinite; }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
 
-/* 📱 Mobile Mode Auto-Convert */
+/* Mobile View Convert */
 @media (max-width: 900px) {
-    .telemetry-sidebar { display: none; /* Hide sidebar entirely on mobile */ }
+    .telemetry-sidebar { display: none; }
     .input-dock { padding: 10px; }
 }

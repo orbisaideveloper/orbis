@@ -16,8 +16,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function printLog(type, msg) {
         const time = new Date().toLocaleTimeString();
-        let color = type === 'OK' ? '#10b981' : type === 'ERR' ? '#ef4444' : '#38bdf8';
-        ui.log.innerHTML += `<div><span style="color:#64748b;">[${time}]</span> <strong style="color:${color};">${type}</strong>: ${msg}</div>`;
+        let color = type === 'OK' ? '#138808' : type === 'ERR' ? '#FF9933' : '#ffffff';
+        ui.log.innerHTML += `<div><span style="color:#888;">[${time}]</span> <strong style="color:${color};">${type}</strong>: ${msg}</div>`;
         ui.log.scrollTop = ui.log.scrollHeight;
     }
 
@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (json.success) {
                 ui.glowDot.className = "status-glow online";
                 ui.statusText.innerText = "SYSTEM ONLINE";
-                ui.statusText.style.color = "#10b981";
+                ui.statusText.style.color = "var(--green)";
                 ui.uptime.innerText = json.data.brainHub.uptime + 's';
                 ui.ram.innerText = json.data.memoryEngine.ramUsageMB + ' MB';
                 ui.wf.innerText = json.data.brainHub.activeWorkflow;
@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (e) {
             ui.glowDot.className = "status-glow offline";
             ui.statusText.innerText = "OFFLINE";
-            ui.statusText.style.color = "#ef4444";
+            ui.statusText.style.color = "var(--saffron)";
         }
     }
     setInterval(fetchTelemetry, 3000);
@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ui.chat.innerHTML += `<div class="msg-bubble msg-user"><strong>You</strong><br>${val}</div>`;
         ui.prompt.value = '';
         ui.sendBtn.disabled = true;
-        printLog('INFO', 'Sending message to AI Brain...');
+        printLog('INFO', 'Dispatching query to BrainHub...');
 
         try {
             const start = Date.now();
@@ -87,5 +87,5 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch(e) {}
 
     window.startVoiceEngine = () => { if(rec) { rec.lang = document.getElementById('lang-select').value; rec.start(); } };
-    printLog('OK', 'ORBIS Systems Architecture Modularized.');
+    printLog('OK', 'ORBIS Systems UI Rendered Successfully.');
 });
