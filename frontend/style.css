@@ -1,55 +1,77 @@
+/* ================= INDIAN FLAG THEME (Saffron, White, Green, Navy Blue) ================= */
 :root {
-    --bg-body: #f1f5f9; --bg-panel: #ffffff; --primary: #0f172a; 
-    --accent: #10b981; --danger: #ef4444; --text-muted: #64748b; --border: #e2e8f0;
+    --saffron: #FF9933;         /* পতাকার গেরুয়া */
+    --saffron-light: #fff0e6;   /* হালকা গেরুয়া (ব্যাকগ্রাউন্ডের জন্য) */
+    --white: #FFFFFF;           /* পতাকার সাদা */
+    --white-off: #f8f9fa;       /* হালকা সাদা (প্যানেলের জন্য) */
+    --green: #138808;           /* পতাকার সবুজ */
+    --green-light: #e6f7e6;     /* হালকা সবুজ */
+    --navy-blue: #000080;       /* অশোক চক্রের নীল (টেক্সট এবং বর্ডারের জন্য) */
+    --border: #e2e8f0;          /* সফট বর্ডার */
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
-body { background: var(--bg-body); color: #1e293b; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
-.top-nav { background: var(--bg-panel); padding: 12px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-.brand { font-weight: 800; font-size: 1.2rem; color: var(--primary); display: flex; align-items: center; gap: 8px;}
-.brand i { color: var(--accent); }
-.sys-badges { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); }
+/* 100dvh বাদ দিয়ে 100vh এবং flex ব্যবহার করা হলো, যাতে কোনো বক্স স্ক্রিনের বাইরে না যায় */
+body { background: var(--white-off); color: var(--navy-blue); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
+/* Top Navigation (Saffron Border Top) */
+.top-nav { background: var(--white); padding: 12px 20px; border-bottom: 1px solid var(--border); border-top: 4px solid var(--saffron); display: flex; justify-content: space-between; align-items: center; z-index: 20; box-shadow: 0 1px 4px rgba(0,0,0,0.05);}
+.brand { font-weight: 800; font-size: 1.2rem; color: var(--navy-blue); display: flex; align-items: center; gap: 8px;}
+.brand i { color: var(--saffron); }
+.sys-badges { font-size: 0.75rem; font-weight: 600; color: var(--navy-blue); }
+
+/* Status Indicators */
 .status-glow { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
-.online { background-color: var(--accent); box-shadow: 0 0 8px var(--accent); }
-.offline { background-color: var(--danger); box-shadow: 0 0 8px var(--danger); }
+.online { background-color: var(--green); box-shadow: 0 0 8px var(--green); }
+.offline { background-color: var(--saffron); box-shadow: 0 0 8px var(--saffron); } /* Error/Offline in Saffron */
 
-/* Auto-Responsive Layout */
-.main-layout { display: grid; grid-template-columns: 350px 1fr; flex: 1; overflow: hidden; }
-.telemetry-sidebar { background: #f8fafc; border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 15px; gap: 15px; overflow-y: auto; }
+/* Main Layout Grid */
+.main-layout { display: flex; flex: 1; overflow: hidden; }
 
-.panel { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-.panel-header { background: #f1f5f9; padding: 10px 12px; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+/* Sidebar */
+.telemetry-sidebar { width: 350px; background: var(--white-off); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 15px; gap: 15px; overflow-y: auto; flex-shrink: 0;}
+
+.panel { background: var(--white); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.02);}
+.panel-header { background: var(--white-off); padding: 10px 12px; font-size: 0.75rem; font-weight: 700; color: var(--navy-blue); border-bottom: 1px solid var(--border); text-transform: uppercase;}
 
 .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); }
-.data-cell { background: var(--bg-panel); padding: 12px 10px; display: flex; flex-direction: column; gap: 4px; }
-.data-label { font-size: 0.7rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
-.data-value { font-size: 0.9rem; font-weight: 700; font-family: monospace; }
+.data-cell { background: var(--white); padding: 12px 10px; display: flex; flex-direction: column; gap: 4px; }
+.data-label { font-size: 0.7rem; color: var(--navy-blue); font-weight: 600; text-transform: uppercase; opacity: 0.8;}
+.data-value { font-size: 0.95rem; font-weight: 700; font-family: monospace; color: var(--navy-blue);}
 
-.terminal { flex: 1; background: #0f172a; color: #34d399; font-family: monospace; font-size: 0.75rem; padding: 12px; overflow-y: auto; min-height: 150px; }
+/* Terminal */
+.terminal { flex: 1; background: var(--navy-blue); color: var(--green); font-family: monospace; font-size: 0.75rem; padding: 12px; overflow-y: auto; min-height: 150px; }
 
-/* Chat Section */
-.chat-section { display: flex; flex-direction: column; background: #ffffff; position: relative; }
-.chat-display { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; padding-bottom: 90px; }
-.msg-bubble { max-width: 85%; padding: 14px 18px; border-radius: 16px; font-size: 0.95rem; line-height: 1.5; }
-.msg-user { align-self: flex-end; background: #f1f5f9; border-bottom-right-radius: 4px; }
-.msg-ai { align-self: flex-start; border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+/* Chat Section (Solid Flexbox - Never Hides) */
+.chat-section { flex: 1; display: flex; flex-direction: column; background: var(--white); min-width: 0; }
+.chat-display { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; background: var(--white);}
 
-/* Fixed Flex Input Dock (Prevents Overflow) */
-.input-dock { position: absolute; bottom: 0; left: 0; right: 0; padding: 15px 20px; background: #ffffff; display: flex; justify-content: center; }
-.smart-input-box { display: flex; align-items: center; width: 100%; max-width: 850px; background: #f8fafc; border: 1px solid var(--border); border-radius: 30px; padding: 6px 8px; gap: 6px; }
-.smart-input-box:focus-within { background: #ffffff; border-color: var(--accent); }
+/* Message Bubbles - Indian Theme */
+.msg-bubble { max-width: 85%; padding: 14px 18px; border-radius: 16px; font-size: 0.95rem; line-height: 1.5; color: var(--navy-blue);}
+.msg-user { align-self: flex-end; background: var(--saffron-light); border: 1px solid var(--saffron); border-bottom-right-radius: 4px; }
+.msg-ai { align-self: flex-start; background: var(--green-light); border: 1px solid var(--green); border-bottom-left-radius: 4px; }
 
-#prompt-box { flex: 1; min-width: 0; border: none; background: transparent; outline: none; padding: 8px; font-size: 1rem; }
-.btn-icon { background: transparent; border: none; font-size: 1.1rem; color: var(--text-muted); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; flex-shrink: 0; display: flex; justify-content: center; align-items: center; }
-.lang-selector { border: none; background: transparent; font-weight: 700; color: var(--text-muted); font-size: 0.8rem; outline: none; flex-shrink: 0; }
-.btn-send { background: var(--primary); color: #fff; border: none; width: 38px; height: 38px; border-radius: 50%; cursor: pointer; flex-shrink: 0; display: flex; justify-content: center; align-items: center; }
-.mic-active { color: var(--danger) !important; background: #fee2e2; }
+/* Perfect Input Dock */
+.input-dock { padding: 15px 20px; background: var(--white); border-top: 1px solid var(--border); flex-shrink: 0; display: flex; justify-content: center;}
+.smart-input-box { display: flex; align-items: center; width: 100%; max-width: 850px; background: var(--white-off); border: 1px solid var(--border); border-radius: 30px; padding: 6px 8px; gap: 6px; transition: 0.3s;}
+.smart-input-box:focus-within { background: var(--white); border-color: var(--green); box-shadow: 0 4px 12px rgba(19, 136, 8, 0.1); }
 
-/* 📱 Responsive Engine: ডেস্কটপে দুই কলাম, মোবাইলে অটো-কনভার্ট */
+#prompt-box { flex: 1; min-width: 0; border: none; background: transparent; outline: none; padding: 8px; font-size: 1rem; color: var(--navy-blue);}
+.btn-icon { background: transparent; border: none; font-size: 1.1rem; color: var(--navy-blue); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; flex-shrink: 0; display: flex; justify-content: center; align-items: center; opacity: 0.7;}
+.btn-icon:hover { background: var(--border); opacity: 1;}
+.lang-selector { border: none; background: transparent; font-weight: 700; color: var(--navy-blue); font-size: 0.8rem; outline: none; flex-shrink: 0; opacity: 0.8;}
+
+/* Green Send Button */
+.btn-send { background: var(--green); color: var(--white); border: none; width: 38px; height: 38px; border-radius: 50%; cursor: pointer; flex-shrink: 0; display: flex; justify-content: center; align-items: center; font-size: 1rem; transition: 0.2s;}
+.btn-send:hover { background: #0f6e06; }
+.btn-send:disabled { background: var(--border); color: var(--navy-blue); cursor: not-allowed; }
+
+.mic-active { color: var(--saffron) !important; background: var(--saffron-light); animation: pulse 1.5s infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+/* 📱 Mobile Mode Auto-Convert */
 @media (max-width: 900px) {
-    .main-layout { grid-template-columns: 1fr; }
-    .telemetry-sidebar { display: none; /* মোবাইলে শুধু চ্যাট দেখাবে, মনিটর ব্যাকগ্রাউন্ডে কাজ করবে */ }
+    .telemetry-sidebar { display: none; /* Hide sidebar entirely on mobile */ }
     .input-dock { padding: 10px; }
 }
