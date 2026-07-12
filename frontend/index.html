@@ -54,37 +54,44 @@
         .logs-container { flex: 1; background-color: var(--dark-log); color: #34d399; padding: 12px; font-size: 0.75rem; overflow-y: auto; border-radius: 0 0 8px 8px; }
         .log-line { margin-bottom: 4px; line-height: 1.4; }
 
-        .tools-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; padding: 12px; }
-        .btn-tool { background-color: #f1f5f9; border: 1px solid var(--border-color); padding: 8px; font-size: 0.75rem; font-weight: bold; cursor: pointer; border-radius: 4px; transition: all 0.2s ease; text-align: center; }
-        .btn-tool:hover { background-color: #e2e8f0; color: var(--saffron); }
+        /* AI Chat UI Redesign */
+        .chat-panel { flex: 1.3; display: flex; flex-direction: column; background-color: var(--panel-bg); border-radius: 8px; overflow: hidden; border-top-color: #10b981;}
+        .chat-area { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; background: #ffffff; }
+        .message { max-width: 85%; padding: 12px 16px; border-radius: 12px; font-size: 0.95rem; line-height: 1.5; word-wrap: break-word; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;}
+        .msg-dev { align-self: flex-end; background-color: #f4f4f5; color: var(--text-main); border-bottom-right-radius: 4px; }
+        .msg-orbis { align-self: flex-start; background-color: #ecfdf5; color: #065f46; border-bottom-left-radius: 4px; border: 1px solid #a7f3d0;}
 
-        .chat-panel { flex: 1.3; display: flex; flex-direction: column; background-color: var(--panel-bg); border-radius: 8px; overflow: hidden; }
-        .chat-area { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background: #fafafa; }
-        .message { max-width: 85%; padding: 10px 14px; border-radius: 8px; font-size: 0.9rem; line-height: 1.4; word-wrap: break-word; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
-        .msg-dev { align-self: flex-end; background-color: #fffbeb; border-right: 4px solid var(--saffron); color: var(--text-main); }
-        .msg-orbis { align-self: flex-start; background-color: #f0fdf4; border-left: 4px solid var(--green); color: var(--text-main); }
-
-        .input-area { 
-            padding: 12px; border-top: 1px solid var(--border-color); 
-            display: flex; align-items: center; gap: 8px; 
-            background-color: #f8fafc; flex-wrap: wrap; 
+        /* Modern ChatGPT/Gemini Style Input Box */
+        .input-container { padding: 10px 20px 20px 20px; background-color: #ffffff; }
+        .chat-input-wrapper {
+            display: flex; align-items: center; gap: 8px;
+            background-color: #f4f4f5; border-radius: 30px;
+            padding: 8px 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            transition: all 0.3s ease; border: 1px solid transparent;
         }
-        .icon-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 8px; border-radius: 4px; color: var(--text-main); transition: 0.2s;}
-        .icon-btn:hover { background-color: #e2e8f0; }
-        .recording { color: red !important; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .chat-input-wrapper:focus-within { background-color: #ffffff; border-color: #d4d4d8; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         
-        select.lang-select { background-color: #fff; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; font-weight: bold; outline: none; cursor: pointer;}
-        input[type="text"] { flex: 1; min-width: 150px; background-color: #fff; border: 1px solid var(--border-color); padding: 12px; border-radius: 6px; font-size: 1rem; outline: none; color: var(--text-main); }
-        input[type="text"]:focus { border-color: var(--saffron); }
-        #send-btn { background-color: var(--green); color: white; border: none; padding: 12px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s;}
-        #send-btn:disabled { background-color: #94a3b8; cursor: not-allowed; }
+        .icon-btn { background: transparent; border: none; font-size: 1.1rem; color: #52525b; cursor: pointer; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .icon-btn:hover { background-color: #e4e4e7; color: #18181b; }
+        
+        .chat-input-wrapper input[type="text"] { flex: 1; border: none; background: transparent; font-size: 1rem; outline: none; padding: 4px 8px; color: var(--text-main); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;}
+        
+        .lang-select-minimal { border: none; background: transparent; font-weight: 600; color: #52525b; outline: none; cursor: pointer; font-size: 0.8rem; appearance: none; padding: 0 4px; text-align: center;}
+        .lang-select-minimal:hover { color: #18181b; }
+        
+        .send-btn-arrow { background-color: var(--text-main); color: #fff; width: 34px; height: 34px; }
+        .send-btn-arrow:hover { background-color: #3f3f46; color: #fff; }
+        .send-btn-arrow:disabled { background-color: #d4d4d8; color: #a1a1aa; cursor: not-allowed; }
+        
+        .recording { color: var(--red) !important; animation: pulse 1.5s infinite; background-color: #fee2e2 !important; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
         #file-input { display: none; }
 
         .text-green { color: var(--green) !important; }
         .text-saffron { color: var(--saffron) !important; }
         .text-red { color: var(--red) !important; }
         .text-blue { color: var(--blue) !important; }
+        .text-gray { color: var(--text-muted) !important; }
 
         @media (max-width: 900px) {
             body { overflow-y: auto; height: auto; display: block; }
@@ -95,10 +102,7 @@
             .chat-panel { min-height: 500px; height: 75vh; }
             .chat-area { flex: 1; min-height: 350px; }
             .logs-container { min-height: 180px; }
-            
-            #prompt-input { order: -1; flex: 1 1 100%; margin-bottom: 8px; }
-            .lang-select { flex: 1; }
-            #send-btn { flex: 1; }
+            .input-container { padding: 10px; }
         }
     </style>
 </head>
@@ -176,17 +180,7 @@
                     <div class="health-box"><span class="health-indicator bg-green" id="h-dependabot"></span>Dependabot</div>
                 </div>
             </div>
-
-            <div class="panel">
-                <div class="panel-header">🛠️ CLIENT DEV UTILITY ENGINE COMMANDS</div>
-                <div class="tools-grid">
-                    <button class="btn-tool" onclick="triggerDevAction('Health Check')">Run Health Check</button>
-                    <button class="btn-tool" onclick="triggerDevAction('Reload Brain')">Reload Brain</button>
-                    <button class="btn-tool" onclick="triggerDevAction('Reset Session')">Reset Session</button>
-                    <button class="btn-tool" onclick="clearLogWindow()">Clear Logs</button>
-                </div>
-            </div>
-
+            
             <div class="panel logs-panel">
                 <div class="panel-header">📜 LIVE RUNTIME LOG TERMINAL INTERFACE</div>
                 <div class="log-filters">
@@ -200,23 +194,35 @@
         </div>
 
         <div class="right-column">
-            <div class="chat-panel panel panel-green">
-                <div class="panel-header">🚀 ORBIS CORE LIVE ENGINEERING CONNECT BRIDGE</div>
+            <div class="chat-panel">
+                <div class="panel-header" style="background-color: #ffffff; border-bottom: 1px solid #e2e8f0; justify-content: center; font-family: 'Segoe UI', sans-serif;">
+                    ✨ ORBIS AI ENGINE
+                </div>
                 <div class="chat-area" id="chat-box"></div>
                 
-                <div class="input-area">
-                    <input type="text" id="prompt-input" placeholder="Enter engineering prompt..." autocomplete="off">
-                    <input type="file" id="file-input">
-                    <button class="icon-btn" onclick="document.getElementById('file-input').click()" style="color: var(--saffron);">
-                        <i class="fa-solid fa-paperclip"></i>
-                    </button>
-                    <select id="lang-select" class="lang-select">
-                        <option value="bn-IN">BN (বাংলা)</option>
-                        <option value="en-US">EN (English)</option>
-                        <option value="hi-IN">HI (হিন্দি)</option>
-                    </select>
-                    <button class="icon-btn" id="mic-btn" onclick="startVoiceEngine()"><i class="fa-solid fa-microphone"></i></button>
-                    <button id="send-btn" onclick="executeSecureDispatch()">Send</button>
+                <div class="input-container">
+                    <div class="chat-input-wrapper">
+                        <input type="file" id="file-input">
+                        <button class="icon-btn" onclick="document.getElementById('file-input').click()" title="Attach File">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                        
+                        <input type="text" id="prompt-input" placeholder="Message ORBIS..." autocomplete="off">
+                        
+                        <select id="lang-select" class="lang-select-minimal" title="Select Voice Language">
+                            <option value="bn-IN">BN</option>
+                            <option value="en-US">EN</option>
+                            <option value="hi-IN">HI</option>
+                        </select>
+                        
+                        <button class="icon-btn" id="mic-btn" onclick="startVoiceEngine()" title="Voice Input">
+                            <i class="fa-solid fa-microphone"></i>
+                        </button>
+                        
+                        <button class="icon-btn send-btn-arrow" id="send-btn" onclick="executeSecureDispatch()" title="Send Message">
+                            <i class="fa-solid fa-arrow-up"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -230,6 +236,7 @@
         const logBox = document.getElementById('log-box');
         const pingStatus = document.getElementById('ping-status');
         const langSelect = document.getElementById('lang-select');
+        const micBtn = document.getElementById('mic-btn');
         
         let localLogMemory = [];
         let activeLogFilter = 'ALL';
@@ -260,24 +267,54 @@
             localLogMemory.forEach(renderLogLine);
         }
 
-        function clearLogWindow() {
-            localLogMemory = [];
-            logBox.innerHTML = '';
-            commitLog('INFO', 'SYS', 'Active structural telemetry log terminal cleared.');
-        }
+        // Web Speech API for Voice Input
+        let recognition;
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = false; 
+            recognition.interimResults = false;
 
-        // Dummy functions to prevent errors when UI buttons are clicked
-        function triggerDevAction(action) {
-            commitLog('INFO', 'DEV', `Triggered Action: ${action}`);
+            recognition.onstart = function() {
+                micBtn.classList.add('recording');
+                promptInput.placeholder = "Listening...";
+                commitLog('INFO', 'MIC', 'Listening...');
+            };
+
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                promptInput.value = transcript;
+                commitLog('SUCCESS', 'MIC', `Captured: ${transcript}`);
+            };
+
+            recognition.onerror = function(event) {
+                commitLog('ERROR', 'MIC', `Mic Error: ${event.error}`);
+                micBtn.classList.remove('recording');
+                promptInput.placeholder = "Message ORBIS...";
+            };
+
+            recognition.onend = function() {
+                micBtn.classList.remove('recording');
+                promptInput.placeholder = "Message ORBIS...";
+            };
+        } else {
+            commitLog('ERROR', 'MIC', 'Voice not supported.');
         }
 
         function startVoiceEngine() {
-            commitLog('WARNING', 'MIC', 'Voice engine module is currently on STANDBY.');
+            if (recognition) {
+                recognition.lang = langSelect.value;
+                recognition.start();
+            } else {
+                alert("Voice feature is not supported in this browser.");
+            }
         }
 
+        // Backend Connection & Telemetry
         async function runTelemetryStream() {
             try {
                 const res = await fetch('/api/telemetry');
+                if(!res.ok) throw new Error("Network response was not ok");
                 const json = await res.json();
                 
                 if (json.success && json.data) {
@@ -292,34 +329,4 @@
                     const activeStep = data.brainHub?.activeWorkflow || "IDLE";
                     document.getElementById('tel-wf-status').innerText = activeStep;
                     syncPipelineUI(activeStep);
-                }
-            } catch (e) {
-                document.getElementById('tel-brainhub').innerText = "OFFLINE";
-                document.getElementById('tel-brainhub').className = "text-red";
-            }
-        }
-
-        function syncPipelineUI(stepText) {
-            document.querySelectorAll('.wf-node').forEach(n => n.classList.remove('active'));
-            if (stepText.includes("BrainHub")) {
-                document.getElementById('wf-input').classList.add('active');
-                document.getElementById('wf-brain').classList.add('active');
-                document.getElementById('wf-decision').classList.add('active');
-                document.getElementById('wf-planner').classList.add('active');
-                document.getElementById('wf-registry').classList.add('active');
-                document.getElementById('wf-provider').classList.add('active');
-            } else {
-                document.getElementById('wf-response').classList.add('active');
-            }
-        }
-
-        setInterval(runTelemetryStream, 4000);
-        runTelemetryStream();
-
-        function appendMessageFrame(sender, messageText, cssClass) {
-            const formatted = messageText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-            chatBox.innerHTML += `<div class="message ${cssClass}"><strong>${sender}:</strong> ${formatted}</div>`;
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
-
-        // Enter press event listen
+   
