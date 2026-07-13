@@ -32,31 +32,28 @@ window.APIGateway = {
             try {
                 const result = JSON.parse(textResponse);
                 
+                // 🟢 যদি সার্ভার সফল (200 OK) রেসপন্স পাঠায়
                 if (response.ok && result.success) {
                     let aiReply = result.response;
                     
-                    // ==========================================
-                    // 🚨 THE ERROR INTERCEPTOR (ম্যাজিক ছাঁকনি)
-                    // ==========================================
-                    if (typeof aiReply === 'string' && (aiReply.includes('[API Error]') || aiReply.includes('quota') || aiReply.includes('429'))) {
-                        
+                    // 🟢 স্মার্ট ছাঁকনি: যদি উত্তরটি সত্যি এরর মেসেজ হয় তবেই ড্যাশবোর্ড অ্যালার্ট দেবে
+                    // আমরা এখন চেক করছি এটা কি জেমিনি এরর নাকি আমাদের ব্রেইনের তৈরি করা ফলব্যাক মেসেজ
+                    const isSystemError = (typeof aiReply === 'string' && (aiReply.includes('[API Error]') || aiReply.includes('quota') || aiReply.includes('503')));
+                    const isBrainFallback = (typeof aiReply === 'string' && aiReply.includes('[Local Brain Active]'));
+
+                    if (isSystemError) {
                         window.printLog('ERR', 'API Quota/Error Detected!');
                         
-                        // ড্যাশবোর্ডে লাল অ্যালার্ট পাঠানো এবং রাউটার ফ্রি করা
                         if (window.Dashboard && window.Dashboard.triggerError) {
-                            window.Dashboard.triggerError('Gemini API', 'Quota Exceeded or Connection Error. Please wait a minute.', aiReply);
+                            window.Dashboard.triggerError('Gemini API', 'Server busy/quota limit.', aiReply);
                             window.Dashboard.updateModuleState('router', 'ready'); 
-                            window.Dashboard.updateWorkflow('wf-user'); 
                         }
 
-                        // চ্যাট বক্সে হিজিবিজি না দেখিয়ে মানুষের ভাষার মেসেজ
-                        return { 
-                            status: 'success', 
-                            data: 'দুঃখিত, গুগলের সার্ভারে এই মুহূর্তে একটু চাপ যাচ্ছে (Quota Overload)। দয়া করে ১ মিনিট পর আবার চেষ্টা করুন।' 
-                        };
+                        // এরর হলে পুরনো হার্ডকোড করা মেসেজ না দেখিয়ে ব্রেইনের ফলব্যাক বা এরর ডিটেইলস দেখাবে
+                        return { status: 'success', data: aiReply }; 
                     }
 
-                    // কোনো এরর না থাকলে স্বাভাবিক উত্তর যাবে
+                    // 🟢 ব্রেইনের স্মার্ট উত্তর বা স্বাভাবিক উত্তর হলে সরাসরি পাস করবে
                     return { status: 'success', data: aiReply };
 
                 } else {
