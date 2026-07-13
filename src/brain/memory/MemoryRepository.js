@@ -84,11 +84,12 @@ export class MemoryRepository {
       if (error) throw error;
       if (!data || data.length === 0) return [];
 
-      // ডেটাবেস থেকে এনে সুন্দর করে সাজিয়ে দেওয়া হচ্ছে
+      // 🟢 FIX: এখন সে ডেটাবেস থেকে আসল টাইমস্ট্যাম্পটাও সাথে করে নিয়ে যাবে
       return data.reverse().map(row => ({
          role: row.role,
          message: row.content,
-         content: row.content
+         content: row.content,
+         created_at: row.created_at // এই একটা লাইনের জন্যই এত সমস্যা হচ্ছিল!
       }));
     } catch (err) {
       console.error("[MemoryRepository] Chat fetch error:", err.message);

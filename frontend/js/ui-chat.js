@@ -6,7 +6,6 @@ window.dispatchToAI = function() {
 
     window.printLog('INFO', 'Chat: Dispatching to Router...');
     
-    // রাউটার চেক করা হচ্ছে
     if (typeof window.WorkflowRouter !== 'undefined') {
         window.WorkflowRouter.route({ type: 'CHAT_MESSAGE', content: msg });
     } else {
@@ -16,44 +15,53 @@ window.dispatchToAI = function() {
     promptBox.value = '';
 };
 
-// 🟢 আপডেটেড: এখন সে ডেটাবেসের পুরনো সময় (timestamp) রিসিভ করতে পারবে
+// 🟢 SMART TIME LOGIC (Today vs Older Dates)
 window.updateChatUI = function(sender, message, timestamp = null) {
     const chatBox = document.getElementById('chat-box');
     const msgDiv = document.createElement('div');
     
     let timeString = '';
-    
-    // যদি ডেটাবেস থেকে পুরনো সময় আসে, সেটা কনভার্ট করবে। নাহলে বর্তমান সময় নেবে।
+    const now = new Date();
+    let msgDate = now; // ডিফল্টভাবে বর্তমান সময়
+
+    // যদি ডেটাবেস থেকে আসল সময় আসে
     if (timestamp) {
-        const dateObj = new Date(timestamp);
-        timeString = dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        msgDate = new Date(timestamp);
+    }
+
+    // চেক করছি মেসেজটা আজকের কিনা
+    const isToday = msgDate.getDate() === now.getDate() &&
+                    msgDate.getMonth() === now.getMonth() &&
+                    msgDate.getFullYear() === now.getFullYear();
+
+    const timePart = msgDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+    if (isToday) {
+        timeString = timePart; // আজকের হলে শুধু সময়
     } else {
-        timeString = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        // আগের দিনের হলে শর্ট ডেট (যেমন: Jul 12) + সময়
+        const datePart = msgDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); 
+        timeString = `${datePart}, ${timePart}`;
     }
 
     msgDiv.className = `msg-bubble ${sender === 'YOU' ? 'msg-user' : 'msg-ai'}`;
-    
-    // মেসেজের শেষে টাইমস্ট্যাম্পের স্প্যান যুক্ত করা হলো
     msgDiv.innerHTML = `<span class="msg-label">${sender}</span>${message}<span class="msg-time">${timeString}</span>`;
     
     chatBox.appendChild(msgDiv);
     chatBox.scrollTop = chatBox.scrollHeight;
 };
 
-// ==========================================
-// পেজ রিলোড দিলে মেমোরি প্রিন্ট করার ফাংশন
-// ==========================================
+// মেমোরি প্রিন্ট করার ফাংশন
 window.renderHistoryMessages = function(historyArray) {
     if (!historyArray || !Array.isArray(historyArray)) return;
     
     window.printLog('INFO', 'UI: Rendering chat history to screen...');
     
-    // ইতিহাস লুপ করে স্ক্রিনে বাবল হিসেবে দেখানো হচ্ছে
     historyArray.forEach(item => {
         const sender = item.role === 'user' ? 'YOU' : 'ORBIS';
         const messageText = item.content || item.message; 
         
-        // 🟢 ডেটাবেসের আসল সময়টা পাঠানো হচ্ছে
+        // ডেটাবেসের আসল সময়টা পাঠানো হচ্ছে (যেটা আপাতত ব্যাকএন্ড থেকে আসছে না)
         const dbTime = item.created_at; 
         
         window.updateChatUI(sender, messageText, dbTime);
