@@ -1,6 +1,6 @@
 /**
  * BrainController: Orchestrates Local NLP, Memory, and Decision Engine.
- * Updated: Phase 7.9 - Developer Mode & Confidence-Based Routing.
+ * Updated: Phase 7.9 - Smart Routing & Intelligent Fallback System.
  */
 import { DecisionEngine } from './DecisionEngine.js';
 import { ExecutionTracer } from './core/ExecutionTracer.js'; 
@@ -12,7 +12,7 @@ export class BrainController {
     this.config = {
       provider: 'gemini',
       memoryEnabled: true,
-      developerMode: true, // 🟢 ডিফল্ট অন
+      developerMode: true,
       confidenceThreshold: 0.8, // 🟢 কনফিডেন্স লেভেল
       ...initialConfig
     };
@@ -30,7 +30,6 @@ export class BrainController {
     // ১. লোকাল ব্রেইন (NLP) চেক
     if (payload.content) {
         const localResponse = await this.localNLP.processLocally(payload.content, sessionId);
-        // ধরলাম লোকাল রেসপন্সে এখন {text: '...', confidence: 0.9} ফরমেট আছে
         if (localResponse && localResponse.confidence >= this.config.confidenceThreshold) {
             console.log("[BrainController] ⚡ Local NLP High Confidence Match!");
             return localResponse.text;
@@ -46,18 +45,24 @@ export class BrainController {
         }
     }
 
-    // ৩. ডেভেলপার মোড ইন্টারসেপ্ট (Gemini কল করার আগে)
-    if (this.config.developerMode) {
-        return `[Developer Mode] লোকাল ব্রেইন বা মেমোরিতে সঠিক উত্তর নেই। আমি কি জেমিনি (Gemini) এপিআই কল করব? (Yes/No)`;
-    }
-
-    // ৪. জেমিনি কল লজিক (ইন্টারসেপ্ট না থাকলে বা অনুমতি পেলে)
+    // ৩. জেমিনি কল লজিক (যেহেতু লোকাল ব্রেইনে বা মেমোরিতে উত্তর নেই)
     try {
+        console.log("[BrainController] 🌐 Routing to External API (Gemini)...");
         const response = await this.decisionEngine.processRequest(payload, this.config);
         return response;
     } catch (error) {
         console.error("[BrainController] 🚨 API Error:", error.message);
-        return "জেমিনি সার্ভার ব্যস্ত। আমি লোকাল মোডে আছি।";
+        
+        // ৪. স্মার্ট ফলব্যাক (জেমিনি ডাউন থাকলে ব্রেইন নিজে সামলে নেবে)
+        const fallbackResponses = [
+            "অজয় বাবু, এই মুহূর্তে বাইরের সার্ভার (Gemini) খুব ব্যস্ত আছে। তবে আমি আমার লোকাল মেমোরি থেকে কাজ চালিয়ে নেওয়ার চেষ্টা করছি। বলুন কীভাবে সাহায্য করতে পারি?",
+            "জেমিনির সাথে কানেকশন করা যাচ্ছে না (সার্ভার লোড বেশি)। আমি এখন পুরোপুরি আমার লোকাল ব্রেইন (NLP) ব্যবহার করছি।",
+            "বাইরের এপিআই এখন ডাউন আছে। তবে চিন্তার কিছু নেই, আমার নিজস্ব মেমোরি অ্যাক্টিভ আছে। আপনি কোড বা লজিক সম্পর্কিত কিছু জানতে চাইলে বলতে পারেন।"
+        ];
+        
+        // ন্যাচারাল শোনানোর জন্য র‍্যান্ডম মেসেজ নির্বাচন
+        const randomReply = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
+        return `[Local Brain Active] 🧠 ${randomReply}`;
     }
   }
 
