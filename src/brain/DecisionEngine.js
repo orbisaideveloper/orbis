@@ -26,9 +26,9 @@ export class DecisionEngine {
 
       if (!text) return "[ORBIS Core]: আপনার ইনপুটটি ফাঁকা। দয়া করে কিছু লিখুন।";
 
-      // 🧠 স্মার্ট রাউটিং: ইউজারের মেসেজটি কত বড় তা মাপা হচ্ছে (শব্দ সংখ্যা)
+      // 🧠 স্মার্ট রাউটিং: ইউজারের মেসেজটি কত বড় তা মাপা হচ্ছে
       const words = text.split(/\s+/);
-      const isComplexQuery = words.length > 4; // ৫ শব্দ বা তার বেশি হলে এটা সাধারণ কমান্ড নয়, তাই জেমিনিকে দেবে
+      const isComplexQuery = words.length > 4;
 
       // ১. সময় (সবসময় কাজ করবে)
       if (this.intents.time.test(text)) {
@@ -54,26 +54,31 @@ export class DecisionEngine {
                   missingCount++;
               }
           }
-          // 🟢 আপডেট: মেমোরি এখন লাইভ!
           report += "<br><b>🔍 অ্যানালিসিস:</b><br>" + (missingCount === 0 ? "সব ফাইল ঠিক আছে।" : "কিছু ফাইল মিসিং।") + "<br>🟢 <b>মেমোরি মডিউল (Supabase) এখন অ্যাক্টিভ!</b>";
           return report;
       }
 
-      // ৩. সিস্টেম স্ট্যাটাস এবং পরিচয় (শুধুমাত্র ছোট কমান্ডের জন্য কাজ করবে)
+      // ৩. সিস্টেম স্ট্যাটাস এবং পরিচয়
       if (!isComplexQuery) {
           if (this.intents.system_status.test(text)) return `[ORBIS Core]: সিস্টেম সচল। প্রোভাইডার: ${config.provider || 'Gemini'}।`;
           if (this.intents.identity.test(text)) return "[ORBIS Core]: আমি ORBIS (Universal AI Engineering Platform)।";
       }
 
-      // 🤖 এক্সটার্নাল প্রোভাইডার (Gemini) - বড় বা অন্য যেকোনো প্রশ্নের জন্য
+      // 🤖 এক্সটার্নাল প্রোভাইডার (Gemini) কল
       const response = await this.provider.execute(input);
+      
+      // 🟢 🚨 স্মার্ট ফিক্স: প্রোভাইডার যদি এরর গিলে ফেলে ভুয়া টেক্সট দেয়, তবে সেটাকে ধরে এরর হিসেবে Throw করো
+      if (typeof response === 'string' && (response.includes('Quota Overload') || response.includes('দুঃখিত, গুগলের সার্ভারে'))) {
+          throw new Error("Provider Quota Overload API Limit Reached.");
+      }
+
       return response; 
 
     } catch (error) {
       console.error("[DecisionEngine Error]:", error);
       
-      // আসল এরর মেসেজটা স্ক্রিনে দেখাবে
-      return `[ORBIS Core Error]: Gemini API কানেকশনে সমস্যা হয়েছে। আসল কারণ: ${error.message || String(error)}`;
+      // 🟢 🚨 মাস্টার ফিক্স: আগে এখানে return ছিল বলে ব্রেইন ফলব্যাক করত না। এখন throw করায় ব্রেইন কন্ট্রোলার ঠিকমতো কাজ করবে।
+      throw error;
     }
   }
 }
