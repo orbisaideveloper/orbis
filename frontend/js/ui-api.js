@@ -1,4 +1,8 @@
-// js/ui-api.js - Frontend API Gateway
+// frontend/js/ui-api.js - Frontend API Gateway
+/**
+ * APIGateway: Manages synchronous communication with ORBIS Core Backend.
+ * Updated: Phase 8.0 - Safe Payload Mapping & Autonomous Log Interception.
+ */
 window.APIGateway = {
     fetchHistory: async function(sessionId = 'default_user') {
         window.printLog('INFO', `API: Fetching chat history...`);
@@ -7,6 +11,10 @@ window.APIGateway = {
             const result = await response.json();
             
             if (response.ok && result.success) {
+                // গ্লোবাল ইভেন্ট বাসে জানিয়ে দেওয়া যে মেমোরি লোড হয়েছে
+                if (window.globalEventBus) {
+                    window.globalEventBus.emit('MemoryRestored', result.history);
+                }
                 return { status: 'success', data: result.history };
             } else {
                 return { status: 'error', message: result.error || 'Failed to fetch history' };
@@ -21,10 +29,15 @@ window.APIGateway = {
         window.printLog('INFO', `API: Calling backend (/api/chat)...`);
         
         try {
+            // 🟢 ফিক্স: ব্যাকএন্ডের server.js এর সাথে সামঞ্জস্য রেখে পেলোড প্রম্পট ম্যাপিং নিশ্চিত করা হলো
+            const payload = {
+                prompt: typeof data === 'string' ? data : (data.prompt || data.content)
+            };
+
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data) 
+                body: JSON.stringify(payload) 
             });
 
             const textResponse = await response.text();
@@ -32,31 +45,33 @@ window.APIGateway = {
             try {
                 const result = JSON.parse(textResponse);
                 
-                // 🟢 যদি সার্ভার সফল (200 OK) রেসপন্স পাঠায়
                 if (response.ok && result.success) {
                     let aiReply = result.response;
                     
-                    // 🟢 স্মার্ট ছাঁকনি: যদি উত্তরটি সত্যি এরর মেসেজ হয় তবেই ড্যাশবোর্ড অ্যালার্ট দেবে
-                    // আমরা এখন চেক করছি এটা কি জেমিনি এরর নাকি আমাদের ব্রেইনের তৈরি করা ফলব্যাক মেসেজ
+                    // চেক করা হচ্ছে এটি কি এরর মেসেজ নাকি আমাদের লোকাল ব্রেইনের তৈরি করা স্বায়ত্তশাসিত মেসেজ
                     const isSystemError = (typeof aiReply === 'string' && (aiReply.includes('[API Error]') || aiReply.includes('quota') || aiReply.includes('503')));
                     const isBrainFallback = (typeof aiReply === 'string' && aiReply.includes('[Local Brain Active]'));
 
                     if (isSystemError) {
                         window.printLog('ERR', 'API Quota/Error Detected!');
-                        
                         if (window.Dashboard && window.Dashboard.triggerError) {
                             window.Dashboard.triggerError('Gemini API', 'Server busy/quota limit.', aiReply);
                             window.Dashboard.updateModuleState('router', 'ready'); 
                         }
-
-                        // এরর হলে পুরনো হার্ডকোড করা মেসেজ না দেখিয়ে ব্রেইনের ফলব্যাক বা এরর ডিটেইলস দেখাবে
                         return { status: 'success', data: aiReply }; 
                     }
 
-                    // 🟢 ব্রেইনের স্মার্ট উত্তর বা স্বাভাবিক উত্তর হলে সরাসরি পাস করবে
+                    if (isBrainFallback) {
+                        // 🟢 ফিক্স: লোকাল ব্রেইন অ্যাক্টিভ হলে ড্যাশবোর্ডে সাকসেস লগ পুশ হবে, ব্ল্যাক হোলে আটকাবে না
+                        window.printLog('OK', 'Core: Local Autonomous Mind responded successfully.');
+                    } else {
+                        window.printLog('OK', 'Core: Response generated and dispatched successfully.');
+                    }
+
                     return { status: 'success', data: aiReply };
 
                 } else {
+                    window.printLog('ERR', `API Error: ${result.error || result.message}`);
                     return { status: 'error', message: result.error || result.message || 'API Error' };
                 }
             } catch (e) {
