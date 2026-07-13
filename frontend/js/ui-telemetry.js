@@ -1,75 +1,110 @@
-// js/ui-telemetry.js - Real-time Dashboard Metrics & Log Engine
+// frontend/js/ui-telemetry.js - System X-Ray Core Scanner
+let isXRayFetching = false;
 
-let isFetching = false;
+window.syncXRayData = function(data, computedPing = 8) {
+    if (!data) return;
 
-// 🟢 নতুন: লাইভ লগ রেন্ডার করার ফাংশন
-function renderLogs(logs) {
-    // লক্ষ্য করুন: আপনার HTML-এ লগ দেখানোর বক্সের ID যদি 'runtime-logs' না হয়, তবে নিচের লাইনটি এডিট করে সঠিক ID বসিয়ে দেবেন।
-    const logBox = document.getElementById('runtime-logs'); 
-    if (!logBox) return;
+    // ১. হার্ডওয়্যার ও নেটওয়ার্ক আপডেট
+    if (document.getElementById('sys-ram') && data.ramUsage) document.getElementById('sys-ram').innerText = data.ramUsage + ' MB';
+    if (document.getElementById('net-ping')) document.getElementById('net-ping').innerText = computedPing + ' ms';
+    if (document.getElementById('prov-gemini-latency') && data.latency) document.getElementById('prov-gemini-latency').innerText = data.latency + ' ms';
+    if (document.getElementById('mem-nodes') && data.memoryNodes !== undefined) document.getElementById('mem-nodes').innerText = data.memoryNodes;
+    if (document.getElementById('router-last') && data.lastRoute) document.getElementById('router-last').innerText = data.lastRoute;
 
-    logBox.innerHTML = ''; // আগেরগুলো মুছে নতুন প্যাকেট বসানো হচ্ছে
-    
-    logs.forEach(log => {
-        const logLine = document.createElement('div');
-        logLine.style.marginBottom = '5px';
-        logLine.style.fontSize = '12px';
-        logLine.style.borderBottom = '1px solid rgba(255,255,255,0.1)';
-
-        // কালার কোডিং লজিক (Error = লাল, OK = সবুজ, INFO = নীল)
-        if (log.type === 'ERROR' || log.message.includes('❌')) {
-            logLine.style.color = '#ff4d4d'; 
-        } else if (log.type === 'OK' || log.message.includes('✅')) {
-            logLine.style.color = '#00e676'; 
+    // ২. এক্স-রে ফাইল হেলথ চেকার (প্রতিটা ফাইলের লাইভ সোর্স স্টেট ট্র্যাকার)
+    try {
+        // ui-chat.js স্ক্যানার
+        if (typeof window.dispatchToAI === 'function') {
+            document.getElementById('st-chat').innerText = "ACTIVE";
+            document.getElementById('st-chat').className = "xray-status status-ok";
         } else {
-            logLine.style.color = '#64b5f6'; 
+            throw new Error("ui-chat.js: Critical Ingestion Failure");
         }
 
-        logLine.innerText = `[${log.time}] ${log.message}`;
-        logBox.appendChild(logLine);
-    });
+        // ui-voice.js স্ক্যানার
+        if (typeof window.startVoiceEngine === 'function') {
+            document.getElementById('st-voice').innerText = "READY";
+            document.getElementById('st-voice').className = "xray-status status-ok";
+        } else {
+            document.getElementById('st-voice').innerText = "DEAD";
+            document.getElementById('st-voice').className = "xray-status status-fail";
+        }
 
-    // নতুন লগ আসলে অটোমেটিক নিচে স্ক্রল করার জন্য
+        // Supabase ডেটাবেস নোড লক স্ক্যানার
+        if (data.memoryNodes && data.memoryNodes > 0) {
+            document.getElementById('st-supabase').innerText = "CONNECTED";
+            document.getElementById('st-supabase').className = "xray-status status-ok";
+            document.getElementById('mem-status').innerText = "OK";
+            document.getElementById('mem-status').style.color = "#00e676";
+        } else {
+            document.getElementById('st-supabase').innerText = "DROP_ALERT";
+            document.getElementById('st-supabase').className = "xray-status status-fail";
+            document.getElementById('mem-status').innerText = "ERROR";
+            document.getElementById('mem-status').style.color = "#ff4d4d";
+        }
+
+        // কোনো সমস্যা না থাকলে এরর বক্স লুকিয়ে রাখা হবে
+        document.getElementById('xray-err-trace').style.display = 'none';
+
+    } catch (err) {
+        const errBox = document.getElementById('xray-err-trace');
+        if (errBox) {
+            errBox.style.display = 'block';
+            errBox.innerText = `🚨 CRITICAL FAULT:\n${err.message}`;
+        }
+    }
+};
+
+// লাইভ টার্মিনাল লগ রেন্ডারার
+function renderTerminalLogs(logs) {
+    const logBox = document.getElementById('log-box');
+    if (!logBox || !logs) return;
+
+    logBox.innerHTML = '';
+    logs.forEach(log => {
+        const line = document.createElement('div');
+        line.style.marginBottom = '3px';
+        const level = log.level || log.type || 'INFO';
+        const msg = log.message || log.msg || '';
+        
+        line.style.color = level === 'ERR' || level === 'ERROR' ? '#ff4d4d' : level === 'OK' ? '#00e676' : '#64b5f6';
+        line.innerText = `[${level}]: ${msg}`;
+        logBox.appendChild(line);
+    });
     logBox.scrollTop = logBox.scrollHeight;
 }
 
-// 🟢 আপডেট: ফেক ডেটার বদলে রিয়েল ডেটা ফেচিং
+// প্রতি ২ সেকেন্ড পর পর ব্যাকএন্ড থেকে সোর্স রিপোর্ট স্ক্যান করার অটো লুপ
 setInterval(async () => {
-    if (isFetching) return;
-    isFetching = true;
-
-    const pingStart = Date.now();
+    if (isXRayFetching) return;
+    isXRayFetching = true;
+    const start = Date.now();
 
     try {
-        const response = await fetch('/api/telemetry'); // ব্যাকএন্ড থেকে ডেটা টানা
+        const response = await fetch('/api/telemetry');
         if (response.ok) {
-            const data = await response.json();
-            
-            // আসল Ping ক্যালকুলেশন
-            const realPing = Date.now() - pingStart;
+            const result = await response.json();
+            const computedPing = Date.now() - start;
 
-            // আসল Uptime আপডেট 
-            const uptimeEl = document.getElementById('tel-uptime');
-            if (uptimeEl && data.brainHub) uptimeEl.innerText = data.brainHub.uptime + ' s';
-
-            // আসল RAM আপডেট
-            const ramEl = document.getElementById('tel-ram');
-            if (ramEl && data.memoryEngine) ramEl.innerText = data.memoryEngine.ramUsageMB + ' MB';
-
-            // আসল Ping আপডেট
-            const pingEl = document.getElementById('tel-ping');
-            if (pingEl) pingEl.innerText = realPing + ' ms';
-
-            // লগ আপডেট
-            if (data.logs && data.logs.length > 0) {
-                renderLogs(data.logs);
+            if (result.success && result.telemetry) {
+                window.syncXRayData(result.telemetry, computedPing);
+                if (result.telemetry.logs) renderTerminalLogs(result.telemetry.logs);
             }
         }
-    } catch (error) {
-        console.error("Telemetry Connection Lost:", error);
+    } catch (e) {
+        if (document.getElementById('st-telemetry')) {
+            document.getElementById('st-telemetry').innerText = "OFFLINE";
+            document.getElementById('st-telemetry').className = "xray-status status-fail";
+        }
     } finally {
-        isFetching = false;
+        isXRayFetching = false;
     }
-}, 2000); // প্রতি ২ সেকেন্ড পর পর আপডেট হবে
+}, 2000);
 
-console.log("Real-time Telemetry Engine Active");
+// চ্যাট থেকে ইনস্ট্যান্ট ডেটা ক্যাচ করার হুক
+if (window.globalEventBus) {
+    window.globalEventBus.on('TelemetryUpdated', (data) => {
+        window.syncXRayData(data);
+    });
+}
+console.log("Ultimate System X-Ray Active.");

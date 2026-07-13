@@ -3,100 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ORBIS Engineering Cockpit</title>
+    <title>ORBIS Engineering Cockpit (Live X-Ray)</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* ককপিট আর্কিটেকচার এক্সপ্যানশন লাইভ স্টাইলস */
+        .wf-step { transition: all 0.3s ease; padding: 2px 6px; border-radius: 4px; }
+        .wf-active { background: #00e676 !important; color: #000 !important; font-weight: bold; box-shadow: 0 0 10px #00e676; }
+        .wf-error { background: #ff4d4d !important; color: #fff !important; font-weight: bold; animation: blinker 1s linear infinite; }
+        .live-node-item { font-size: 0.7rem; background: rgba(0,0,0,0.05); padding: 4px; border-left: 3px solid var(--navy-blue); margin-bottom: 4px; border-radius: 2px; }
+        @keyframes blinker { 50% { opacity: 0.5; } }
+        /* X-Ray Styles */
+        .xray-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 5px; }
+        .xray-card { background: #f8fafc; border: 1px solid #e2e8f0; padding: 6px; border-radius: 4px; font-size: 0.65rem; font-family: monospace; }
+        .xray-status { float: right; font-weight: bold; }
+    </style>
 </head>
 <body>
     <header class="top-nav">
         <div class="brand">
             <button onclick="toggleSidebar()" class="mobile-menu-btn">☰</button>
-            <span>ORBIS Engine</span>
+            <span>ORBIS Core Autonomous Mind</span>
         </div>
         <div class="sys-badges">
-            <button onclick="clearContext()" style="background:none; border:1px solid var(--border); font-size:0.6rem; padding:2px 6px; cursor:pointer; color:var(--navy-blue); font-weight:bold; margin-right:10px;">CLEAR</button>
+            <button onclick="window.clearContext ? window.clearContext() : location.reload()" style="background:none; border:1px solid var(--border); font-size:0.6rem; padding:2px 6px; cursor:pointer; color:var(--navy-blue); font-weight:bold; margin-right:10px;">RESET BUS</button>
             <span id="glow-dot" class="status-glow online"></span>
-            <span id="status-text" style="color:var(--saffron);">Online</span>
+            <span id="status-text" style="color:var(--saffron);">CONNECTED</span>
         </div>
     </header>
 
     <div class="main-layout">
-        <aside class="telemetry-sidebar cockpit-mode" id="dev-sidebar">
-            <div class="cockpit-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h3 style="margin: 0; font-size: 0.9rem; color: var(--navy-blue);">🛠️ ENGINEERING COCKPIT</h3>
-                <button onclick="toggleSidebar()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--saffron); font-weight:bold;">×</button>
+        <aside class="telemetry-sidebar cockpit-mode" id="dev-sidebar" style="width: 380px; display: flex; flex-direction: column; gap: 10px;">
+            <div class="cockpit-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0; font-size: 0.9rem; color: var(--navy-blue); font-weight: 800;">🛠️ DIAGNOSTIC COCKPIT v9.0</h3>
+                <button onclick="toggleSidebar()" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:var(--red); font-weight:bold;">×</button>
             </div>
 
-            <div class="panel error-center" id="cockpit-error-center" style="display:none; border-color: #ff4d4d; background: #fff0f0;">
-                <div class="panel-header" style="color: #ff4d4d; font-weight: bold;">🚨 CRITICAL ALERT</div>
-                <div id="error-display-box" style="font-size: 0.75rem; color: #d32f2f; padding-top: 5px; word-wrap: break-word;">--</div>
+            <div class="panel error-center" id="cockpit-error-center" style="display:none; border:2px solid #ff4d4d; background: #fff0f0; border-radius: 6px; padding: 8px;">
+                <div class="panel-header" style="color: #ff4d4d; font-weight: bold; font-size: 0.8rem; display:flex; justify-content:space-between;">
+                    <span>🚨 CRITICAL FAULT</span>
+                    <button onclick="document.getElementById('cockpit-error-center').style.display='none'" style="border:none; background:none; color:#ff4d4d; cursor:pointer;">×</button>
+                </div>
+                <div id="error-display-box" style="font-size: 0.75rem; color: #d32f2f; font-family: monospace; padding-top: 5px; word-wrap: break-word;">--</div>
             </div>
 
             <div class="panel">
-                <div class="panel-header">🌐 SYSTEM & NETWORK</div>
+                <div class="panel-header" style="color:#0f172a;">🔍 SOURCE X-RAY MONITOR</div>
+                <div class="xray-grid">
+                    <div class="xray-card">CHAT <span id="st-chat" class="xray-status">--</span></div>
+                    <div class="xray-card">VOICE <span id="st-voice" class="xray-status">--</span></div>
+                    <div class="xray-card">DB <span id="st-supabase" class="xray-status">--</span></div>
+                    <div class="xray-card">ROUTER <span id="st-router" class="xray-status">--</span></div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">🌐 HARDWARE TELEMETRY</div>
                 <div class="data-grid">
-                    <div class="data-cell"><span class="data-label">Build</span><span class="data-value" id="sys-env">PROD v5.0</span></div>
+                    <div class="data-cell"><span class="data-label">Build</span><span class="data-value" id="sys-env">AUTONOMOUS_PROD</span></div>
                     <div class="data-cell"><span class="data-label">Uptime</span><span class="data-value" id="sys-uptime">0 s</span></div>
-                    <div class="data-cell"><span class="data-label">API Ping</span><span class="data-value" id="net-ping">-- ms</span></div>
-                    <div class="data-cell"><span class="data-label">RAM Usage</span><span class="data-value" id="sys-ram">-- MB</span></div>
+                    <div class="data-cell"><span class="data-label">Ping</span><span class="data-value" id="net-ping">-- ms</span></div>
+                    <div class="data-cell"><span class="data-label">RAM</span><span class="data-value" id="sys-ram">-- MB</span></div>
+                </div>
+            </div>
+
+            <div class="panel" style="background: #fdfefe; border-left: 4px solid var(--saffron);">
+                <div class="panel-header">⚡ LIVE EXECUTION BUS</div>
+                <div class="workflow-path" style="display: flex; justify-content: space-between; align-items: center; background: #2d3748; padding: 10px; border-radius: 6px; color: #fff; font-size: 0.7rem; font-family: monospace;">
+                    <span id="wf-user" class="wf-step">USER</span> ➔
+                    <span id="wf-router" class="wf-step">ROUTER</span> ➔
+                    <span id="wf-core" class="wf-step">CORE</span> ➔
+                    <span id="wf-provider" class="wf-step">PROVIDER</span>
                 </div>
             </div>
 
             <div class="panel">
-                <div class="panel-header">⚡ EXECUTION PATH</div>
-                <div class="workflow-path">
-                    <span id="wf-user" class="wf-step">User</span> ➔
-                    <span id="wf-router" class="wf-step">Router</span> ➔
-                    <span id="wf-core" class="wf-step">Core</span> ➔
-                    <span id="wf-provider" class="wf-step">Provider</span>
-                </div>
-            </div>
-
-            <div class="panel">
-                <div class="panel-header">🤖 PROVIDERS & API</div>
+                <div class="panel-header">🧠 SUPABASE MEMORY BUS</div>
                 <div class="data-grid">
-                    <div class="data-cell"><span class="data-label">Gemini Status</span><span class="data-value mod-badge ready" id="prov-gemini-status">READY</span></div>
-                    <div class="data-cell"><span class="data-label">Latency</span><span class="data-value" id="prov-gemini-latency">-- ms</span></div>
-                    <div class="data-cell"><span class="data-label">Rate Limit</span><span class="data-value" id="api-rate-limit">OK</span></div>
-                    <div class="data-cell"><span class="data-label">Retry Timer</span><span class="data-value" id="api-retry">--</span></div>
+                    <div class="data-cell"><span class="data-label">Sync</span><span class="data-value" id="mem-status">--</span></div>
+                    <div class="data-cell"><span class="data-label">Nodes</span><span class="data-value" id="mem-nodes" style="font-weight:bold; color:var(--navy-blue);">36</span></div>
+                    <div class="data-cell"><span class="data-label">Route</span><span class="data-value" id="router-last">--</span></div>
+                    <div class="data-cell"><span class="data-label">Queue</span><span class="data-value" id="router-queue">0</span></div>
                 </div>
             </div>
 
-            <div class="panel">
-                <div class="panel-header">🧠 MEMORY & EVENT BUS</div>
-                <div class="data-grid">
-                    <div class="data-cell"><span class="data-label">Memory Sync</span><span class="data-value mod-badge ready" id="mem-status">ONLINE</span></div>
-                    <div class="data-cell"><span class="data-label">Nodes</span><span class="data-value" id="mem-nodes">0</span></div>
-                    <div class="data-cell"><span class="data-label">Last Route</span><span class="data-value" id="router-last">--</span></div>
-                    <div class="data-cell"><span class="data-label">Queue Size</span><span class="data-value" id="router-queue">0</span></div>
-                </div>
+            <div class="panel" style="max-height: 120px; overflow-y: auto;">
+                <div class="panel-header">📋 LIVE MEMORY STREAM</div>
+                <div id="live-memory-inspector" style="padding-top: 5px;"></div>
             </div>
 
-            <div class="panel">
-                <div class="panel-header">🧩 MODULE HEALTH</div>
-                <div class="module-grid" style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px;">
-                    <span class="mod-pill ready" id="mod-router">Router</span>
-                    <span class="mod-pill ready" id="mod-memory">Memory</span>
-                    <span class="mod-pill ready" id="mod-voice">Voice</span>
-                    <span class="mod-pill ready" id="mod-dashboard">Dashboard</span>
-                </div>
-            </div>
-
-            <div class="panel" style="flex:1; display:flex; flex-direction:column; min-height: 200px;">
-                <div class="panel-header" style="display: flex; justify-content: space-between;">
-                    <span>📜 LIVE LOGS</span>
-                    <div class="log-controls">
-                        <button id="log-pause-btn" style="font-size: 0.6rem; cursor:pointer;">⏸</button>
-                        <button onclick="document.getElementById('log-box').innerHTML=''" style="font-size: 0.6rem; cursor:pointer;">🗑</button>
-                    </div>
-                </div>
-                <div class="log-filters" style="display: flex; gap: 5px; margin: 5px 0; overflow-x: auto; font-size: 0.65rem;">
-                    <span class="filter-badge active" data-filter="ALL">ALL</span>
-                    <span class="filter-badge" data-filter="INFO">INFO</span>
-                    <span class="filter-badge" data-filter="ERR">ERR</span>
-                    <span class="filter-badge" data-filter="PROV">PROV</span>
-                    <span class="filter-badge" data-filter="MEM">MEM</span>
-                </div>
-                <div class="terminal" id="log-box" style="flex:1; overflow-y: auto;"></div>
+            <div class="panel" style="flex:1; display:flex; flex-direction:column; min-height: 150px;">
+                <div class="panel-header">📜 CENTRAL LOGS</div>
+                <div class="terminal" id="log-box" style="flex:1; background:#1e293b; color:#f8fafc; font-family:monospace; font-size:0.7rem; padding:6px; overflow-y: auto;"></div>
             </div>
         </aside>
 
@@ -113,22 +110,21 @@
         </main>
     </div>
 
+    <script>
+        // X-Ray ও telemetry সিঙ্ক লজিক
+        window.globalEventBus.on('TelemetryUpdated', (data) => {
+            if (data.ramUsage) document.getElementById('sys-ram').innerText = data.ramUsage + ' MB';
+            if (data.latency) document.getElementById('prov-gemini-latency')?.innerText = data.latency + ' ms';
+            if (data.memoryNodes) document.getElementById('mem-nodes').innerText = data.memoryNodes;
+            
+            // X-Ray আপডেট
+            if(window.updateXRay) window.updateXRay(data);
+        });
+    </script>
+
     <script src="js/ui-core.js"></script>
-    <script src="js/ui-events.js"></script>
-    <script src="js/ui-api.js"></script>
-    <script src="js/ui-router.js"></script>
-    <script src="js/ui-storage.js"></script>
-    <script src="js/ui-dashboard.js"></script>
     <script src="js/ui-telemetry.js"></script>
     <script src="js/ui-chat.js"></script>
     <script src="js/ui-voice.js"></script>
-    
-    <script src="js/ui-router-monitor.js"></script>
-    <script src="js/ui-provider-monitor.js"></script>
-    <script src="js/ui-memory-monitor.js"></script>
-    <script src="js/ui-performance.js"></script>
-    <script src="js/ui-errors.js"></script>
-    <script src="js/ui-network.js"></script>
-    <script src="js/ui-workflow.js"></script>
-</body>
+    </body>
 </html>
