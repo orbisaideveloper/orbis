@@ -6,15 +6,12 @@ import { MemoryRepository } from './MemoryRepository.js';
  */
 export class MemoryEngine {
   constructor(repository = null) {
-    // রেপোজিটরি না দিলে সে নিজে থেকেই ডাটাবেস এক্সপার্টকে (Repository) ডেকে নেবে
     this.repository = repository || new MemoryRepository();
     
-    // ⚠️ Separate Maps to perfectly match Phase 1-4 tests and Governance
     this.userMemory = new Map(); 
     this.projectMemory = new Map();
     this.history = [];
     
-    // Universal Cache for other categories
     this.cache = new Map();
   }
 
@@ -94,28 +91,89 @@ export class MemoryEngine {
   async saveConversation(role, message, sessionId = 'default_user') {
     if (!role || !message) throw new Error("Role and message are required");
     
-    // ১. লোকাল RAM-এ সেভ (দ্রুত কাজের জন্য)
     this.history.push({ role, message, content: message });
 
-    // ২. পারমানেন্ট মেমোরিতে সেভ (রেপোজিটরির মাধ্যমে)
     if (this.repository) {
        await this.repository.saveConversationMessage(sessionId, role, message);
     }
   }
 
   async getRecentConversations(sessionId = 'default_user', limit = 6) {
-    // ডাটাবেস থেকে আনার চেষ্টা করবে
     if (this.repository) {
        const dbHistory = await this.repository.getRecentConversations(sessionId, limit);
        if (dbHistory && dbHistory.length > 0) {
            return dbHistory;
        }
     }
-    // ডাটাবেস না পেলে আগের মতো লোকাল মেমোরিটাই দেবে
     return this.history;
   }
   
   clearHistory() {
     this.history = [];
+  }
+
+  // ==============================================================
+  // 🚀 PHASE 6C: COGNITIVE ENGINE (Vector Embeddings & Semantic Search)
+  // ==============================================================
+  
+  // গুগল জেমিনির মাধ্যমে সাধারণ লেখাকে ভেক্টরে রূপান্তর করার ম্যাজিক ফাংশন
+  async generateEmbedding(text) {
+    try {
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) throw new Error("GEMINI_API_KEY is missing!");
+
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: 'models/text-embedding-004',
+                content: { parts: [{ text }] }
+            })
+        });
+
+        const data = await response.json();
+        if (data.embedding && data.embedding.values) {
+            return data.embedding.values; // ৭৬৮ ডাইমেনশনের অ্যারে
+        }
+        return null;
+    } catch (error) {
+        console.error("[MemoryEngine] Embedding Error:", error.message);
+        return null;
+    }
+  }
+
+  // জেমিনির কাছে যাওয়ার আগে লোকাল ভেক্টর মেমোরিতে উত্তর খোঁজা
+  async searchCognitiveMemory(userInput, sessionId) {
+    if (!this.repository) return null;
+    try {
+        console.log("[MemoryEngine] Generating vector for search...");
+        const embedding = await this.generateEmbedding(userInput);
+        if (!embedding) return null;
+
+        // ০.৮৫ (85%) মিল থাকলে তবেই উত্তরটা ক্যাশ থেকে নেবে
+        const matches = await this.repository.searchSemanticMemory(embedding, 0.85, 1);
+        
+        if (matches && matches.length > 0) {
+            return matches[0].ai_response;
+        }
+        return null;
+    } catch (error) {
+        console.error("[MemoryEngine] Cognitive Search Failed:", error.message);
+        return null;
+    }
+  }
+
+  // নতুন কথা এবং উত্তর ভবিষ্যতের জন্য ভেক্টর হিসেবে সেভ করে রাখা
+  async saveCognitiveMemory(sessionId, userInput, aiResponse) {
+    if (!this.repository) return false;
+    try {
+        const embedding = await this.generateEmbedding(userInput);
+        if (!embedding) return false;
+
+        return await this.repository.saveSemanticMemory(sessionId, userInput, aiResponse, embedding);
+    } catch (error) {
+        console.error("[MemoryEngine] Cognitive Save Failed:", error.message);
+        return false;
+    }
   }
 }

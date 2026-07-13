@@ -6,7 +6,6 @@ import { createClient } from '@supabase/supabase-js';
  */
 export class MemoryRepository {
   constructor(dbClient = null) {
-    // যদি বাইরে থেকে ক্লায়েন্ট না আসে, তাহলে .env থেকে চাবি নিয়ে নিজেই ডাটাবেস কানেক্ট করবে
     if (!dbClient && process.env.SUPABASE_URL && process.env.SUPABASE_KEY) {
         this.db = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
         console.log("[MemoryRepository] 🟢 Supabase Database Connected!");
@@ -79,20 +78,61 @@ export class MemoryRepository {
         .select('*')
         .eq('session_id', sessionId)
         .order('created_at', { ascending: false })
-        .limit(limit * 2); // User + AI pairs
+        .limit(limit * 2);
 
       if (error) throw error;
       if (!data || data.length === 0) return [];
 
-      // 🟢 FIX: এখন সে ডেটাবেস থেকে আসল টাইমস্ট্যাম্পটাও সাথে করে নিয়ে যাবে
       return data.reverse().map(row => ({
          role: row.role,
          message: row.content,
          content: row.content,
-         created_at: row.created_at // এই একটা লাইনের জন্যই এত সমস্যা হচ্ছিল!
+         created_at: row.created_at 
       }));
     } catch (err) {
       console.error("[MemoryRepository] Chat fetch error:", err.message);
+      return [];
+    }
+  }
+
+  // =======================================================
+  // 🚀 PHASE 6C: COGNITIVE MEMORY (Vector Search & Store)
+  // =======================================================
+  
+  async saveSemanticMemory(sessionId, userInput, aiResponse, embeddingArray) {
+    if (!this.db) return false;
+    try {
+      const { error } = await this.db
+        .from('orbis_semantic_memory')
+        .insert([{ 
+            session_id: sessionId, 
+            user_input: userInput, 
+            ai_response: aiResponse, 
+            embedding: embeddingArray 
+        }]);
+      
+      if (error) throw error;
+      console.log("[MemoryRepository] 🧠 Cognitive Memory Saved.");
+      return true;
+    } catch (err) {
+      console.error("[MemoryRepository] Semantic save error:", err.message);
+      return false;
+    }
+  }
+
+  async searchSemanticMemory(queryEmbedding, threshold = 0.75, matchCount = 3) {
+    if (!this.db) return [];
+    try {
+      const { data, error } = await this.db.rpc('match_memories', {
+        query_embedding: queryEmbedding,
+        match_threshold: threshold,
+        match_count: matchCount
+      });
+      
+      if (error) throw error;
+      return data || [];
+    } catch (err) {
+      console.error("[MemoryRepository] Semantic search error:", err.message);
       return [];
     }
   }
