@@ -1,10 +1,12 @@
 /**
  * BrainController: Manages runtime configuration, system state,
- * passes requests to the DecisionEngine, and handles Persistent Memory.
+ * passes requests to the DecisionEngine, handles Persistent Memory,
+ * and routes requests via Local NLP Engine for ultra-low latency.
  */
 import { DecisionEngine } from './DecisionEngine.js';
 import { ExecutionTracer } from './core/ExecutionTracer.js'; 
 import { MemoryEngine } from './memory/MemoryEngine.js';
+import { LocalNLPEngine } from './LocalNLPEngine.js'; // 🟢 নতুন লেগো ব্লক যুক্ত হলো
 
 export class BrainController {
   constructor(initialConfig = {}) {
@@ -15,6 +17,7 @@ export class BrainController {
     };
     
     this.memory = new MemoryEngine();
+    this.localNLP = new LocalNLPEngine(); // 🟢 লোকাল ইন্টেলিজেন্স (NLP) চালু করা হলো
 
     const baseEngine = new DecisionEngine();
     baseEngine.memory = this.memory; 
@@ -26,10 +29,21 @@ export class BrainController {
     let finalPayload = payload;
     const sessionId = payload.sessionId || 'default_user';
 
-    // ১. মেমোরি অন থাকলে ইউজারের মেসেজ প্রসেস করা
+    // ================================================================
+    // 🚀 PHASE 7: LOCAL NLP BYPASS (Ultra-low Latency & RBAC)
+    // জেমিনি বা ভেক্টর মেমোরির কাছে যাওয়ার আগে লোকাল ব্রেইনে চেক করা
+    // ================================================================
+    if (payload.content) {
+        const localResponse = await this.localNLP.processLocally(payload.content, sessionId);
+        if (localResponse) {
+            console.log("[BrainController] ⚡ Local NLP Match! Bypassing API & Vector DB...");
+            return localResponse; // মিলি-সেকেন্ডে উত্তর রিটার্ন!
+        }
+    }
+
+    // ১. মেমোরি অন থাকলে ইউজারের মেসেজ প্রসেস করা (Phase 6C)
     if (this.config.memoryEnabled && payload.content) {
         
-        // 🚀 PHASE 6C: COGNITIVE BYPASS (API সাশ্রয় করার ম্যাজিক)
         // জেমিনির কাছে যাওয়ার আগেই আমরা লোকাল ভেক্টর ব্রেনে খুঁজব
         const cachedResponse = await this.memory.searchCognitiveMemory(payload.content, sessionId);
         
@@ -54,7 +68,7 @@ export class BrainController {
         // সাধারণ হিস্ট্রি সেভ
         await this.memory.saveConversation('orbis', aiText, sessionId);
         
-        // 🚀 PHASE 6C: নতুন উত্তরটা ভেক্টর ব্রেনে (Cognitive Memory) সেভ করে রাখা ভবিষ্যতের জন্য
+        // নতুন উত্তরটা ভেক্টর ব্রেনে (Cognitive Memory) সেভ করে রাখা ভবিষ্যতের জন্য
         if (payload.content) {
             await this.memory.saveCognitiveMemory(sessionId, payload.content, aiText);
         }
