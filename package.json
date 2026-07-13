@@ -9,6 +9,7 @@
   "dependencies": {
     "@google/genai": "latest",
     "express": "^4.21.0",
-    "@supabase/supabase-js": "^2.39.0"
+    "@supabase/supabase-js": "^2.39.0",
+    "node-nlp": "^4.27.0"
   }
 }
