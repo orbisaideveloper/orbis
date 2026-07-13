@@ -1,11 +1,18 @@
+// frontend/js/ui-dashboard.js
+/**
+ * UI Dashboard Module: Manages engineering cockpit telemetry tracking, 
+ * active process visualization, and automated diagnostics mapping.
+ */
 window.Dashboard = {
     startTime: Date.now(),
+    lastEventTimestamp: 0,
     
     init: function() {
         this.startUptimeCounter();
         this.setupCardInteractions();
-        this.setupLogFilters(); // ফিল্টার চালু করা হলো
-        window.printLog('OK', 'Dashboard Diagnostic System Ready.');
+        this.setupLogFilters();
+        this.initLiveTelemetryLoop(); // লাইভ সার্ভার সিঙ্ক চালু হলো
+        window.printLog('OK', 'Dashboard Diagnostic System Live.');
     },
 
     startUptimeCounter: function() {
@@ -15,20 +22,80 @@ window.Dashboard = {
         }, 1000);
     },
 
+    // 🟢 🚨 NEW HIGH-INTEL FEATURE: লাইভ টেলিমেট্রি সিঙ্ক লুপ
+    initLiveTelemetryLoop: function() {
+        // প্রতি ৫ সেকেন্ড পর পর সার্ভার থেকে ব্যাকগ্রাউন্ড টেলিমেট্রি আপডেট নেবে
+        setInterval(async () => {
+            try {
+                const response = await fetch('/api/telemetry');
+                const result = await response.json();
+                if(response.ok && result.success) {
+                    this.updateCockpitUI(result.telemetry);
+                }
+            } catch(e) {
+                // সাইলেন্ট বাইপাস যাতে লগে ফ্লাড না হয়
+            }
+        }, 5000);
+
+        // গ্লোবাল ইন্টারসেপ্টর হুক: যদি এপিআই গেটওয়ে কোনো ডেটা পায়, তা সরাসরি এখানেও রিফ্লেক্ট হবে
+        window.globalEventBus?.on('MemoryRestored', (history) => {
+            const nodeEl = document.getElementById('telemetry-nodes') || document.querySelector('[data-type="nodes"]');
+            if(nodeEl && history) nodeEl.innerText = history.length;
+        });
+    },
+
+    // 🟢 ককপিট ড্যাশবোর্ডের ভিজ্যুয়াল মেকানিজম আপডেট করার মেইন মেথড
+    updateCockpitUI: function(telemetry) {
+        if (!telemetry) return;
+
+        // ১. এপিআই পিং এবং ল্যাটেন্সি আপডেট
+        const pingEl = document.getElementById('api-ping') || document.querySelector('.panel:nth-child(3) .panel-body div'); 
+        const ramEl = document.getElementById('ram-usage') || document.querySelector('.panel:nth-child(4) .panel-body div');
+        const latencyEl = document.getElementById('gemini-latency') || document.querySelector('[data-type="latency"]');
+        const nodesEl = document.getElementById('memory-nodes') || document.querySelector('[data-type="nodes"]');
+        
+        // আপনার ইউআই কন্টেইনার ম্যাচিং (স্ক্রিনশটের সাপেক্ষে ডাইনামিক ইন্জেকশন)
+        const uiFields = document.querySelectorAll('.panel-body div');
+        if(uiFields && uiFields.length >= 4) {
+            if(telemetry.apiPing) uiFields[2].innerText = `${telemetry.apiPing} ms`;
+            if(telemetry.ramUsage) uiFields[3].innerText = `${telemetry.ramUsage} MB`;
+        }
+
+        // ২. এক্সিকিউশন পাথ বা ভিজ্যুয়াল লাইট আপডেট (User -> Router -> Core)
+        const pathNodes = document.querySelectorAll('.execution-path span, .panel-body span');
+        if(pathNodes && telemetry.lastRoute) {
+            pathNodes.forEach(node => {
+                if(telemetry.lastRoute.includes(node.innerText)) {
+                    node.style.color = 'var(--green)';
+                    node.style.fontWeight = 'bold';
+                } else {
+                    node.style.color = '';
+                    node.style.fontWeight = '';
+                }
+            });
+        }
+    },
+
+    // 🟢 🚨 SMART DIAGNOSTIC: ইভেন্ট লকিং (ডুপ্লিকেট মেসেজ ঠেকাতে এন্টি-লুপ প্রোটেকশন)
+    checkDuplicateTrigger: function() {
+        const now = Date.now();
+        if (now - this.lastEventTimestamp < 500) { // ৫০০ মিলিসেকেন্ডের মধ্যে ডাবল ফায়ার হলে
+            window.printLog('ERR', 'Anti-Loop Triggered: Duplicate UI Event Blocked!');
+            return true;
+        }
+        this.lastEventTimestamp = now;
+        return false;
+    },
+
     setupCardInteractions: function() {
         const panels = document.querySelectorAll('.panel');
         panels.forEach(panel => {
             panel.addEventListener('click', (e) => {
-                // ফিল্টার বাটন বা লগ কন্ট্রোলে ক্লিক করলে যেন মডাল না খোলে
                 if(e.target.closest('.log-controls') || e.target.closest('.filter-badge')) return;
-
                 const header = panel.querySelector('.panel-header')?.innerText.trim() || 'System Details';
-                
-                // 🟢 অরিজিনাল রিয়েল-টাইম কন্টেন্ট কপি করা হচ্ছে (আগের ভুয়া টেক্সট বাদ দেওয়া হলো)
                 const originalContent = panel.innerHTML; 
                 let extraTools = "";
 
-                // 🟢 লগ প্যানেল হলে তার নিচে কপি বাটন যুক্ত করা
                 if (header.includes('LIVE LOGS')) {
                     const logText = document.querySelector('.terminal')?.innerText || 'No logs found.';
                     extraTools = `
@@ -38,8 +105,6 @@ window.Dashboard = {
                         </div>
                     `;
                 }
-
-                // মডালে রিয়েল-টাইম ডেটা + এক্সট্রা টুলস পাঠানো
                 this.showMinimalModal(header, originalContent + extraTools);
             });
         });
@@ -56,14 +121,9 @@ window.Dashboard = {
             <div style="flex:1;">${content}</div>
         `;
         document.body.appendChild(modal);
-        
-        // 🟢 মডাল ওপেন হওয়ার পর ফিল্টার বাটনগুলো যাতে মডালের ভেতরেও কাজ করে তার ব্যবস্থা
-        if(title.includes('LIVE LOGS')) {
-            this.setupLogFilters(); 
-        }
+        if(title.includes('LIVE LOGS')) this.setupLogFilters(); 
     },
 
-    // লগ ফিল্টার লজিক
     setupLogFilters: function() {
         const badges = document.querySelectorAll('.filter-badge');
         badges.forEach(badge => {
@@ -81,7 +141,6 @@ window.Dashboard = {
             if (filter === 'ALL') {
                 log.style.display = 'block';
             } else {
-                // টেক্সট চেক করে ফিল্টার করা (case insensitive)
                 if (log.innerText.toUpperCase().includes(filter.toUpperCase())) {
                     log.style.display = 'block';
                 } else {
