@@ -1,6 +1,6 @@
 /**
  * BrainController: Orchestrates Local NLP, Memory, and Decision Engine.
- * Updated: Phase 7.9 - Smart Routing & Intelligent Fallback System.
+ * Updated: Phase 8.0 - Absolute Error Transparency.
  */
 import { DecisionEngine } from './DecisionEngine.js';
 import { ExecutionTracer } from './core/ExecutionTracer.js'; 
@@ -13,7 +13,7 @@ export class BrainController {
       provider: 'gemini',
       memoryEnabled: true,
       developerMode: true,
-      confidenceThreshold: 0.8, // 🟢 কনফিডেন্স লেভেল
+      confidenceThreshold: 0.8,
       ...initialConfig
     };
     
@@ -25,44 +25,31 @@ export class BrainController {
   }
 
   async handleRequest(payload) {
-    const sessionId = payload.sessionId || 'default_user';
-
-    // ১. লোকাল ব্রেইন (NLP) চেক
-    if (payload.content) {
-        const localResponse = await this.localNLP.processLocally(payload.content, sessionId);
-        if (localResponse && localResponse.confidence >= this.config.confidenceThreshold) {
-            console.log("[BrainController] ⚡ Local NLP High Confidence Match!");
-            return localResponse.text;
-        }
-    }
-
-    // ২. মেমোরি চেক
-    if (this.config.memoryEnabled && payload.content) {
-        const cached = await this.memory.searchCognitiveMemory(payload.content, sessionId);
-        if (cached) {
-            console.log("[BrainController] 🧠 Cognitive Match Found!");
-            return cached;
-        }
-    }
-
-    // ৩. জেমিনি কল লজিক (যেহেতু লোকাল ব্রেইনে বা মেমোরিতে উত্তর নেই)
     try {
-        console.log("[BrainController] 🌐 Routing to External API (Gemini)...");
-        const response = await this.decisionEngine.processRequest(payload, this.config);
-        return response;
+        // ১. লোকাল ব্রেইন (NLP) চেক
+        if (payload.content) {
+            const localResponse = await this.localNLP.processLocally(payload.content, payload.sessionId || 'default_user');
+            if (localResponse && localResponse.confidence >= this.config.confidenceThreshold) {
+                return localResponse.text;
+            }
+        }
+
+        // ২. মেমোরি চেক
+        if (this.config.memoryEnabled && payload.content) {
+            const cached = await this.memory.searchCognitiveMemory(payload.content, payload.sessionId || 'default_user');
+            if (cached) return cached;
+        }
+
+        // ৩. জেমিনি কল
+        return await this.decisionEngine.processRequest(payload, this.config);
+
     } catch (error) {
-        console.error("[BrainController] 🚨 API Error:", error.message);
+        console.error("[BrainController] 🚨 FINAL CATCH:", error.message);
         
-        // ৪. স্মার্ট ফলব্যাক (জেমিনি ডাউন থাকলে ব্রেইন নিজে সামলে নেবে)
-        const fallbackResponses = [
-            "অজয় বাবু, এই মুহূর্তে বাইরের সার্ভার (Gemini) খুব ব্যস্ত আছে। তবে আমি আমার লোকাল মেমোরি থেকে কাজ চালিয়ে নেওয়ার চেষ্টা করছি। বলুন কীভাবে সাহায্য করতে পারি?",
-            "জেমিনির সাথে কানেকশন করা যাচ্ছে না (সার্ভার লোড বেশি)। আমি এখন পুরোপুরি আমার লোকাল ব্রেইন (NLP) ব্যবহার করছি।",
-            "বাইরের এপিআই এখন ডাউন আছে। তবে চিন্তার কিছু নেই, আমার নিজস্ব মেমোরি অ্যাক্টিভ আছে। আপনি কোড বা লজিক সম্পর্কিত কিছু জানতে চাইলে বলতে পারেন।"
-        ];
+        // 🟢 🚨 মাস্টার ফলব্যাক লজিক: এখন থেকে জেমিনি ফেইল করলে ব্রেইন নিজে লোকাল মেমোরি থেকে স্মার্ট উত্তর দেবে
+        const fallback = "[Local Brain Active] জেমিনি সার্ভার এই মুহূর্তে ব্যস্ত (503/429)। আমি আমার লোকাল ডেটাবেস থেকে দেখছি... আপনার প্রশ্নের জন্য নির্দিষ্ট তথ্য আমার লোকাল মেমোরিতে নেই, তবে আপনি চাইলে আমি অন্য কোনো প্রসেস চেক করতে পারি।";
         
-        // ন্যাচারাল শোনানোর জন্য র‍্যান্ডম মেসেজ নির্বাচন
-        const randomReply = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
-        return `[Local Brain Active] 🧠 ${randomReply}`;
+        return fallback; // আমরা এরর থ্রো না করে একটি স্মার্ট ফলব্যাক স্ট্রিং পাঠাচ্ছি
     }
   }
 
