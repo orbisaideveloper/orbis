@@ -21,25 +21,21 @@ export class ExecutionTracer {
                         const startTime = Date.now();
                         const enterMsg = `[${trackId}] Entered: ${moduleName} ➔ ${propKey}()`;
                         
-                        console.log(`[TRACE] 🟢 ${enterMsg}`);
-                        // এখানে দুটি আর্গুমেন্ট পাঠানো হচ্ছে (level, message)
-                        addLog('INFO', enterMsg); 
+                        // 🟢 সেফটি বাইপাস: লগ ফেইল করলেও মূল কাজ বন্ধ হবে না
+                        try { addLog('INFO', enterMsg); } catch(e) {}
 
                         try {
                             const result = await originalMethod.apply(this, args);
                             const duration = Date.now() - startTime;
                             const successMsg = `[${trackId}] Success: ${moduleName} ➔ ${propKey}() [${duration}ms]`;
                             
-                            console.log(`[TRACE] ✅ ${successMsg}`);
-                            addLog('OK', successMsg); 
+                            try { addLog('OK', successMsg); } catch(e) {}
                             return result;
                         } catch (error) {
                             const duration = Date.now() - startTime;
                             const failMsg = `[${trackId}] FAILED: ${moduleName} ➔ ${propKey}() [${duration}ms]`;
                             
-                            console.log(`[TRACE] ❌ ${failMsg}`);
-                            console.error(`[TRACE] 🛑 [${trackId}] Error Details:`, error.message);
-                            addLog('ERROR', failMsg); 
+                            try { addLog('ERR', failMsg); } catch(e) {}
                             throw error;
                         }
                     };

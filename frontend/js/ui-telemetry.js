@@ -13,7 +13,6 @@ window.syncXRayData = function(data, computedPing = 8) {
 
     // ২. এক্স-রে ফাইল হেলথ চেকার (প্রতিটা ফাইলের লাইভ সোর্স স্টেট ট্র্যাকার)
     try {
-        // ui-chat.js স্ক্যানার
         if (typeof window.dispatchToAI === 'function') {
             document.getElementById('st-chat').innerText = "ACTIVE";
             document.getElementById('st-chat').className = "xray-status status-ok";
@@ -21,7 +20,6 @@ window.syncXRayData = function(data, computedPing = 8) {
             throw new Error("ui-chat.js: Critical Ingestion Failure");
         }
 
-        // ui-voice.js স্ক্যানার
         if (typeof window.startVoiceEngine === 'function') {
             document.getElementById('st-voice').innerText = "READY";
             document.getElementById('st-voice').className = "xray-status status-ok";
@@ -30,21 +28,23 @@ window.syncXRayData = function(data, computedPing = 8) {
             document.getElementById('st-voice').className = "xray-status status-fail";
         }
 
-        // Supabase ডেটাবেস নোড লক স্ক্যানার
         if (data.memoryNodes && data.memoryNodes > 0) {
             document.getElementById('st-supabase').innerText = "CONNECTED";
             document.getElementById('st-supabase').className = "xray-status status-ok";
-            document.getElementById('mem-status').innerText = "OK";
-            document.getElementById('mem-status').style.color = "#00e676";
+            if (document.getElementById('mem-status')) {
+                document.getElementById('mem-status').innerText = "OK";
+                document.getElementById('mem-status').style.color = "#00e676";
+            }
         } else {
             document.getElementById('st-supabase').innerText = "DROP_ALERT";
             document.getElementById('st-supabase').className = "xray-status status-fail";
-            document.getElementById('mem-status').innerText = "ERROR";
-            document.getElementById('mem-status').style.color = "#ff4d4d";
+            if (document.getElementById('mem-status')) {
+                document.getElementById('mem-status').innerText = "ERROR";
+                document.getElementById('mem-status').style.color = "#ff4d4d";
+            }
         }
 
-        // কোনো সমস্যা না থাকলে এরর বক্স লুকিয়ে রাখা হবে
-        document.getElementById('xray-err-trace').style.display = 'none';
+        if(document.getElementById('xray-err-trace')) document.getElementById('xray-err-trace').style.display = 'none';
 
     } catch (err) {
         const errBox = document.getElementById('xray-err-trace');
@@ -68,7 +68,7 @@ function renderTerminalLogs(logs) {
         const msg = log.message || log.msg || '';
         
         line.style.color = level === 'ERR' || level === 'ERROR' ? '#ff4d4d' : level === 'OK' ? '#00e676' : '#64b5f6';
-        line.innerText = `[${level}]: ${msg}`;
+        line.innerText = `[${log.time}] [${level}]: ${msg}`;
         logBox.appendChild(line);
     });
     logBox.scrollTop = logBox.scrollHeight;
@@ -86,9 +86,12 @@ setInterval(async () => {
             const result = await response.json();
             const computedPing = Date.now() - start;
 
-            if (result.success && result.telemetry) {
-                window.syncXRayData(result.telemetry, computedPing);
-                if (result.telemetry.logs) renderTerminalLogs(result.telemetry.logs);
+            // ডেটা ডিরেক্টলি বা result.telemetry এর মাধ্যমে রিসিভ করা
+            const telemetryData = result.telemetry || result;
+            
+            if (telemetryData) {
+                window.syncXRayData(telemetryData, computedPing);
+                if (telemetryData.logs) renderTerminalLogs(telemetryData.logs);
             }
         }
     } catch (e) {
@@ -101,7 +104,6 @@ setInterval(async () => {
     }
 }, 2000);
 
-// চ্যাট থেকে ইনস্ট্যান্ট ডেটা ক্যাচ করার হুক
 if (window.globalEventBus) {
     window.globalEventBus.on('TelemetryUpdated', (data) => {
         window.syncXRayData(data);
