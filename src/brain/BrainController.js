@@ -6,7 +6,7 @@
 import { DecisionEngine } from './DecisionEngine.js';
 import { ExecutionTracer } from './core/ExecutionTracer.js'; 
 import { MemoryEngine } from './memory/MemoryEngine.js';
-import { LocalNLPEngine } from './LocalNLPEngine.js'; // 🟢 নতুন লেগো ব্লক যুক্ত হলো
+import { LocalNLPEngine } from './LocalNLPEngine.js';
 
 export class BrainController {
   constructor(initialConfig = {}) {
@@ -17,7 +17,7 @@ export class BrainController {
     };
     
     this.memory = new MemoryEngine();
-    this.localNLP = new LocalNLPEngine(); // 🟢 লোকাল ইন্টেলিজেন্স (NLP) চালু করা হলো
+    this.localNLP = new LocalNLPEngine();
 
     const baseEngine = new DecisionEngine();
     baseEngine.memory = this.memory; 
@@ -29,52 +29,46 @@ export class BrainController {
     let finalPayload = payload;
     const sessionId = payload.sessionId || 'default_user';
 
-    // ================================================================
-    // 🚀 PHASE 7: LOCAL NLP BYPASS (Ultra-low Latency & RBAC)
-    // জেমিনি বা ভেক্টর মেমোরির কাছে যাওয়ার আগে লোকাল ব্রেইনে চেক করা
-    // ================================================================
+    // 🚀 PHASE 7: LOCAL NLP BYPASS
     if (payload.content) {
         const localResponse = await this.localNLP.processLocally(payload.content, sessionId);
         if (localResponse) {
-            console.log("[BrainController] ⚡ Local NLP Match! Bypassing API & Vector DB...");
-            return localResponse; // মিলি-সেকেন্ডে উত্তর রিটার্ন!
+            console.log("[BrainController] ⚡ Local NLP Match! Bypassing API...");
+            return localResponse;
         }
     }
 
-    // ১. মেমোরি অন থাকলে ইউজারের মেসেজ প্রসেস করা (Phase 6C)
+    // ১. মেমোরি চেক
     if (this.config.memoryEnabled && payload.content) {
-        
-        // জেমিনির কাছে যাওয়ার আগেই আমরা লোকাল ভেক্টর ব্রেনে খুঁজব
         const cachedResponse = await this.memory.searchCognitiveMemory(payload.content, sessionId);
-        
         if (cachedResponse) {
             console.log("[BrainController] 🧠 Cognitive Match Found! Bypassing Gemini API...");
-            return cachedResponse; // উত্তর জানা থাকলে এখান থেকেই সোজা রিটার্ন!
+            return cachedResponse;
         }
 
-        // উত্তর না পেলে সাধারণ চ্যাট হিস্ট্রি সেভ করা এবং হিস্ট্রি ফেচ করা
         await this.memory.saveConversation('user', payload.content, sessionId);
         const history = await this.memory.getRecentConversations(sessionId);
         finalPayload = { ...payload, history };
     }
 
-    // ২. মেইন ডিসিশন ইঞ্জিনের কাছে রিকোয়েস্ট পাঠানো (যেহেতু লোকাল মেমোরিতে উত্তর নেই)
-    const response = await this.decisionEngine.processRequest(finalPayload, this.config);
-
-    // ৩. AI-এর দেওয়া নতুন উত্তরটা মেমোরিতে সেভ করে রাখা
-    if (this.config.memoryEnabled && response) {
-        const aiText = typeof response === 'string' ? response : response.text || JSON.stringify(response);
+    // ২. মেইন ডিসিশন ইঞ্জিন (Try-Catch সার্কিট ব্রেকার)
+    try {
+        const response = await this.decisionEngine.processRequest(finalPayload, this.config);
         
-        // সাধারণ হিস্ট্রি সেভ
-        await this.memory.saveConversation('orbis', aiText, sessionId);
-        
-        // নতুন উত্তরটা ভেক্টর ব্রেনে (Cognitive Memory) সেভ করে রাখা ভবিষ্যতের জন্য
-        if (payload.content) {
-            await this.memory.saveCognitiveMemory(sessionId, payload.content, aiText);
+        // ৩. মেমোরিতে সেভ করা
+        if (this.config.memoryEnabled && response) {
+            const aiText = typeof response === 'string' ? response : response.text || JSON.stringify(response);
+            await this.memory.saveConversation('orbis', aiText, sessionId);
+            if (payload.content) {
+                await this.memory.saveCognitiveMemory(sessionId, payload.content, aiText);
+            }
         }
+        return response;
+    } catch (error) {
+        // 🚨 এরর হ্যান্ডলিং: জেমিনি ডাউন থাকলে লুপে পড়বে না
+        console.error("[BrainController] 🚨 API Error: Gemini is unreachable.", error);
+        return "জেমিনি সার্ভার বর্তমানে খুব ব্যস্ত বা ডাউন। আমি এখন লোকাল মোডে আছি, দয়া করে একটু পর আবার চেষ্টা করুন!";
     }
-
-    return response;
   }
 
   getActiveConfig() { return { ...this.config }; }
