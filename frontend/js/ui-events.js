@@ -23,3 +23,24 @@ window.EventBus = {
 document.addEventListener('DOMContentLoaded', () => {
     window.printLog('OK', 'Global Event Bus Initialized.');
 });
+
+// ========================================================
+// 📱 UX Magic: Click outside to close Dashboard
+// ========================================================
+document.addEventListener('click', (event) => {
+    const sidebar = document.getElementById('dev-sidebar');
+    const chatSection = document.querySelector('.chat-section');
+    
+    // শুধু মোবাইলের স্ক্রিনে কাজ করবে (৯০০ পিক্সেলের কম)
+    if (window.innerWidth <= 900 && sidebar && sidebar.style.display !== 'none') {
+        // চ্যাট বক্সের ওপর ক্লিক করলে সাইডবার বন্ধ হবে
+        if (chatSection.contains(event.target)) {
+            if (typeof window.toggleSidebar === 'function') {
+                window.toggleSidebar();
+            } else {
+                sidebar.style.display = 'none';
+            }
+            window.printLog('INFO', 'UX: Sidebar dismissed by click-outside.');
+        }
+    }
+});

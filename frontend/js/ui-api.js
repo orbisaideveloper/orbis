@@ -1,12 +1,8 @@
 // js/ui-api.js - Frontend API Gateway
 window.APIGateway = {
-    // ==========================================
-    // 🟢 NEW: সার্ভার থেকে পুরনো চ্যাট (Memory) টেনে আনার ফাংশন
-    // ==========================================
     fetchHistory: async function(sessionId = 'default_user') {
         window.printLog('INFO', `API: Fetching chat history...`);
         try {
-            // আমাদের নতুন তৈরি করা রাস্তায় রিকোয়েস্ট যাচ্ছে
             const response = await fetch(`/api/history?sessionId=${sessionId}`);
             const result = await response.json();
             
@@ -21,34 +17,52 @@ window.APIGateway = {
         }
     },
 
-    // ==========================================
-    // (আগের কোড) চ্যাট মেসেজ পাঠানোর ফাংশন
-    // ==========================================
     call: async function(endpoint, data) {
         window.printLog('INFO', `API: Calling backend (/api/chat)...`);
         
         try {
-            // সার্ভারের সঠিক রাউট /api/chat-এ রিকোয়েস্ট পাঠানো হচ্ছে
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data) // এখানে { prompt: "..." } যাচ্ছে
+                body: JSON.stringify(data) 
             });
 
             const textResponse = await response.text();
             
             try {
-                // রেসপন্সটাকে JSON এ কনভার্ট করার চেষ্টা
                 const result = JSON.parse(textResponse);
                 
                 if (response.ok && result.success) {
-                    // সার্ভার থেকে { success: true, response: "উত্তর" } আসছে
-                    return { status: 'success', data: result.response };
+                    let aiReply = result.response;
+                    
+                    // ==========================================
+                    // 🚨 THE ERROR INTERCEPTOR (ম্যাজিক ছাঁকনি)
+                    // ==========================================
+                    if (typeof aiReply === 'string' && (aiReply.includes('[API Error]') || aiReply.includes('quota') || aiReply.includes('429'))) {
+                        
+                        window.printLog('ERR', 'API Quota/Error Detected!');
+                        
+                        // ড্যাশবোর্ডে লাল অ্যালার্ট পাঠানো এবং রাউটার ফ্রি করা
+                        if (window.Dashboard && window.Dashboard.triggerError) {
+                            window.Dashboard.triggerError('Gemini API', 'Quota Exceeded or Connection Error. Please wait a minute.', aiReply);
+                            window.Dashboard.updateModuleState('router', 'ready'); 
+                            window.Dashboard.updateWorkflow('wf-user'); 
+                        }
+
+                        // চ্যাট বক্সে হিজিবিজি না দেখিয়ে মানুষের ভাষার মেসেজ
+                        return { 
+                            status: 'success', 
+                            data: 'দুঃখিত, গুগলের সার্ভারে এই মুহূর্তে একটু চাপ যাচ্ছে (Quota Overload)। দয়া করে ১ মিনিট পর আবার চেষ্টা করুন।' 
+                        };
+                    }
+
+                    // কোনো এরর না থাকলে স্বাভাবিক উত্তর যাবে
+                    return { status: 'success', data: aiReply };
+
                 } else {
                     return { status: 'error', message: result.error || result.message || 'API Error' };
                 }
             } catch (e) {
-                // যদি JSON না হয়ে HTML আসে, তবে এরর ধরবে
                 window.printLog('ERR', `API Gateway: HTML response received.`);
                 return { status: 'error', message: 'সার্ভার থেকে সঠিক ডেটা আসেনি (Wrong Endpoint)' };
             }
