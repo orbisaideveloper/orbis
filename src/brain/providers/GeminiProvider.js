@@ -45,7 +45,7 @@ export class GeminiProvider {
 
       // জেমিনির কাছে মেমোরি সহ সম্পূর্ণ প্যাকেজ পাঠানো হচ্ছে
       const response = await this.ai.models.generateContent({
-        model: 'gemini-3.5-flash', // 🟢 আপনার নির্দেশমতো সঠিক মডেলটিই রাখা হলো
+        model: 'gemini-3.5-flash', 
         contents: chatContents, 
       });
       
@@ -55,8 +55,8 @@ export class GeminiProvider {
       // ট্র্যাকিং এবং ডেভেলপারদের জন্য আসল এররটা ব্যাকগ্রাউন্ডে প্রিন্ট হবে
       console.error(`[GeminiProvider Internal Error]:`, error);
       
-      // 🟢 FIX: এখন থেকে আসল এরর মেসেজটাই স্ক্রিনে দেখাবে, যাতে ঠিক কী ভুল সেটা সাথে সাথে ধরা যায়
-      return `[API Error]: জেমিনির সাথে কানেক্ট করা যাচ্ছে না। কারণ: ${error.message}`;
+      // 🟢 🚨 MASTER FIX: এরর আর গিলে ফেলা হবে না। সরাসরি থ্রো (Throw) করা হলো যাতে ব্রেইন এবং সেন্ট্রাল ড্যাশবোর্ড ট্র্যাকার এটা ধরতে পারে।
+      throw error;
     }
   }
 }
