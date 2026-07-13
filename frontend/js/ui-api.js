@@ -1,5 +1,29 @@
 // js/ui-api.js - Frontend API Gateway
 window.APIGateway = {
+    // ==========================================
+    // 🟢 NEW: সার্ভার থেকে পুরনো চ্যাট (Memory) টেনে আনার ফাংশন
+    // ==========================================
+    fetchHistory: async function(sessionId = 'default_user') {
+        window.printLog('INFO', `API: Fetching chat history...`);
+        try {
+            // আমাদের নতুন তৈরি করা রাস্তায় রিকোয়েস্ট যাচ্ছে
+            const response = await fetch(`/api/history?sessionId=${sessionId}`);
+            const result = await response.json();
+            
+            if (response.ok && result.success) {
+                return { status: 'success', data: result.history };
+            } else {
+                return { status: 'error', message: result.error || 'Failed to fetch history' };
+            }
+        } catch (error) {
+            window.printLog('ERR', `API Gateway (History): ${error.message}`);
+            return { status: 'error', message: error.message };
+        }
+    },
+
+    // ==========================================
+    // (আগের কোড) চ্যাট মেসেজ পাঠানোর ফাংশন
+    // ==========================================
     call: async function(endpoint, data) {
         window.printLog('INFO', `API: Calling backend (/api/chat)...`);
         

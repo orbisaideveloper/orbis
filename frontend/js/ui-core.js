@@ -20,6 +20,27 @@ window.toggleSidebar = function() {
     }
 };
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     window.printLog('OK', 'Core Engine Initialized.');
+
+    // ==========================================
+    // 🟢 NEW: পেজ লোড হলেই মেমোরি থেকে ডেটা টানা হচ্ছে
+    // ==========================================
+    if (window.APIGateway && window.APIGateway.fetchHistory) {
+        window.printLog('INFO', 'System: Loading permanent memory from Supabase...');
+        
+        const response = await window.APIGateway.fetchHistory('default_user');
+        
+        if (response.status === 'success' && response.data && response.data.length > 0) {
+            window.printLog('OK', `System: Found ${response.data.length} previous messages.`);
+            
+            // ⚠️ এখানেই মেসেজগুলো চ্যাটবক্সে প্রিন্ট করার লজিক বসবে
+            // যা আমরা ui-chat.js ফাইলে পাব।
+            if (window.renderHistoryMessages) {
+                window.renderHistoryMessages(response.data);
+            }
+        } else {
+            window.printLog('INFO', 'System: No previous memory found. Starting fresh.');
+        }
+    }
 });

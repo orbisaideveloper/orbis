@@ -24,3 +24,21 @@ window.updateChatUI = function(sender, message) {
     chatBox.appendChild(msgDiv);
     chatBox.scrollTop = chatBox.scrollHeight;
 };
+
+// ==========================================
+// 🟢 NEW: পেজ রিলোড দিলে মেমোরি প্রিন্ট করার ফাংশন
+// ==========================================
+window.renderHistoryMessages = function(historyArray) {
+    if (!historyArray || !Array.isArray(historyArray)) return;
+    
+    window.printLog('INFO', 'UI: Rendering chat history to screen...');
+    
+    // ইতিহাস লুপ করে স্ক্রিনে বাবল হিসেবে দেখানো হচ্ছে
+    historyArray.forEach(item => {
+        // ডেটাবেস থেকে পাওয়া role অনুযায়ী নাম সেট করা হচ্ছে
+        const sender = item.role === 'user' ? 'YOU' : 'ORBIS';
+        const messageText = item.content || item.message; // সেফটি চেক
+        
+        window.updateChatUI(sender, messageText);
+    });
+};
