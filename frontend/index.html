@@ -20,20 +20,17 @@
     </header>
 
     <div class="main-layout">
-        <!-- 🚀 PHASE 6B: THE ENGINEERING COCKPIT -->
         <aside class="telemetry-sidebar cockpit-mode" id="dev-sidebar">
             <div class="cockpit-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h3 style="margin: 0; font-size: 0.9rem; color: var(--navy-blue);">🛠️ ENGINEERING COCKPIT</h3>
                 <button onclick="toggleSidebar()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--saffron); font-weight:bold;">×</button>
             </div>
 
-            <!-- 🚨 ERROR CENTER -->
             <div class="panel error-center" id="cockpit-error-center" style="display:none; border-color: #ff4d4d; background: #fff0f0;">
                 <div class="panel-header" style="color: #ff4d4d; font-weight: bold;">🚨 CRITICAL ALERT</div>
                 <div id="error-display-box" style="font-size: 0.75rem; color: #d32f2f; padding-top: 5px; word-wrap: break-word;">--</div>
             </div>
 
-            <!-- 🌐 SYSTEM & NETWORK -->
             <div class="panel">
                 <div class="panel-header">🌐 SYSTEM & NETWORK</div>
                 <div class="data-grid">
@@ -44,7 +41,6 @@
                 </div>
             </div>
 
-            <!-- ⚡ WORKFLOW PATH -->
             <div class="panel">
                 <div class="panel-header">⚡ EXECUTION PATH</div>
                 <div class="workflow-path">
@@ -55,7 +51,6 @@
                 </div>
             </div>
 
-            <!-- 🤖 PROVIDERS -->
             <div class="panel">
                 <div class="panel-header">🤖 PROVIDERS & API</div>
                 <div class="data-grid">
@@ -66,7 +61,6 @@
                 </div>
             </div>
 
-            <!-- 🧠 MEMORY & ROUTER -->
             <div class="panel">
                 <div class="panel-header">🧠 MEMORY & EVENT BUS</div>
                 <div class="data-grid">
@@ -77,7 +71,6 @@
                 </div>
             </div>
 
-            <!-- 🧩 MODULE HEALTH -->
             <div class="panel">
                 <div class="panel-header">🧩 MODULE HEALTH</div>
                 <div class="module-grid" style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px;">
@@ -88,7 +81,6 @@
                 </div>
             </div>
 
-            <!-- 📜 LIVE LOGS & FILTERS -->
             <div class="panel" style="flex:1; display:flex; flex-direction:column; min-height: 200px;">
                 <div class="panel-header" style="display: flex; justify-content: space-between;">
                     <span>📜 LIVE LOGS</span>
@@ -108,7 +100,6 @@
             </div>
         </aside>
 
-        <!-- CHAT SECTION -->
         <main class="chat-section">
             <div class="chat-display" id="chat-box"></div>
             <div class="input-dock">
@@ -122,7 +113,6 @@
         </main>
     </div>
 
-    <!-- CORE SCRIPTS -->
     <script src="js/ui-core.js"></script>
     <script src="js/ui-events.js"></script>
     <script src="js/ui-api.js"></script>
@@ -133,7 +123,6 @@
     <script src="js/ui-chat.js"></script>
     <script src="js/ui-voice.js"></script>
     
-    <!-- 🚀 PHASE 6B: NEW MONITORING MODULES -->
     <script src="js/ui-router-monitor.js"></script>
     <script src="js/ui-provider-monitor.js"></script>
     <script src="js/ui-memory-monitor.js"></script>
