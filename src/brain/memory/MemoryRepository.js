@@ -1,8 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
+import LZString from 'lz-string'; // 🟢 কমপ্রেশন লাইব্রেরি
 
 /**
- * MemoryRepository: Handles persistent storage operations (e.g., Supabase).
- * Keeps the database logic strictly isolated from the core engine.
+ * MemoryRepository: Handles persistent storage operations.
+ * Updated: Phase 7.8 - Added LZ-String Compression for 512MB optimization.
  */
 export class MemoryRepository {
   constructor(dbClient = null) {
@@ -15,20 +16,32 @@ export class MemoryRepository {
     }
   }
 
+  // কম্প্রেশন হেল্পার
+  _compress(data) { return LZString.compressToUTF16(JSON.stringify(data)); }
+  _decompress(str) { 
+      try { return JSON.parse(LZString.decompressFromUTF16(str)); } 
+      catch(e) { return str; } 
+  }
+
   // =======================================================
-  // 🧠 KEY-VALUE STORAGE (For Core Data & Projects)
+  // 🧠 KEY-VALUE STORAGE (Compressed)
   // =======================================================
   async save(category, key, value) {
     if (!this.db) return false;
     try {
       const { error } = await this.db
         .from('orbis_memory')
-        .upsert({ category, memory_key: key, memory_value: value, updated_at: new Date() });
+        .upsert({ 
+            category, 
+            memory_key: key, 
+            memory_value: this._compress(value), // 🟢 কম্প্রেসড
+            updated_at: new Date() 
+        });
       
       if (error) throw error;
       return true;
     } catch (err) {
-      console.error(`[MemoryRepository] Error saving ${category} memory:`, err.message);
+      console.error(`[MemoryRepository] Error saving ${category}:`, err.message);
       return false;
     }
   }
@@ -44,23 +57,25 @@ export class MemoryRepository {
         .single();
         
       if (error || !data) return null;
-      return data.memory_value;
+      return this._decompress(data.memory_value); // 🟢 ডিকম্প্রেসড
     } catch (err) {
       return null;
     }
   }
 
   // =======================================================
-  // 💬 CHAT HISTORY STORAGE (For Permanent Conversations)
+  // 💬 CHAT HISTORY STORAGE (Compressed)
   // =======================================================
   async saveConversationMessage(sessionId, role, content) {
     if (!this.db) return false;
     try {
       const { error } = await this.db
         .from('chat_history')
-        .insert([
-          { session_id: sessionId, role: role, content: content }
-        ]);
+        .insert([{ 
+            session_id: sessionId, 
+            role: role, 
+            content: this._compress(content) // 🟢 কম্প্রেসড
+        }]);
       
       if (error) throw error;
       return true;
@@ -85,8 +100,8 @@ export class MemoryRepository {
 
       return data.reverse().map(row => ({
          role: row.role,
-         message: row.content,
-         content: row.content,
+         message: this._decompress(row.content), // 🟢 ডিকম্প্রেসড
+         content: this._decompress(row.content),
          created_at: row.created_at 
       }));
     } catch (err) {
@@ -96,9 +111,8 @@ export class MemoryRepository {
   }
 
   // =======================================================
-  // 🚀 PHASE 6C: COGNITIVE MEMORY (Vector Search & Store)
+  // 🚀 COGNITIVE MEMORY (Vector - No compression on embeddings)
   // =======================================================
-  
   async saveSemanticMemory(sessionId, userInput, aiResponse, embeddingArray) {
     if (!this.db) return false;
     try {
@@ -110,14 +124,8 @@ export class MemoryRepository {
             ai_response: aiResponse, 
             embedding: embeddingArray 
         }]);
-      
-      if (error) throw error;
-      console.log("[MemoryRepository] 🧠 Cognitive Memory Saved.");
-      return true;
-    } catch (err) {
-      console.error("[MemoryRepository] Semantic save error:", err.message);
-      return false;
-    }
+      return !error;
+    } catch (err) { return false; }
   }
 
   async searchSemanticMemory(queryEmbedding, threshold = 0.75, matchCount = 3) {
@@ -128,12 +136,7 @@ export class MemoryRepository {
         match_threshold: threshold,
         match_count: matchCount
       });
-      
-      if (error) throw error;
       return data || [];
-    } catch (err) {
-      console.error("[MemoryRepository] Semantic search error:", err.message);
-      return [];
-    }
+    } catch (err) { return []; }
   }
 }

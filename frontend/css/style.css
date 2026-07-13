@@ -9,14 +9,11 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
 
-/* 🔒 FIXED FOR MOBILE VIEWPORT */
 html, body { 
     position: fixed; 
     top: 0; bottom: 0; left: 0; right: 0;
-    width: 100%; 
-    height: 100%; 
+    width: 100%; height: 100%; 
     overflow: hidden; 
-    margin: 0;
     background: var(--white-off); 
     color: var(--navy-blue); 
     display: flex; 
@@ -24,101 +21,49 @@ html, body {
 }
 
 /* Top Nav */
-.top-nav { background: var(--white); padding: 12px 20px; border-bottom: 1px solid var(--border); border-top: 4px solid var(--saffron); display: flex; justify-content: space-between; align-items: center; z-index: 20; flex-shrink: 0; height: 50px;}
+.top-nav { background: var(--white); padding: 12px 20px; border-bottom: 1px solid var(--border); border-top: 4px solid var(--saffron); display: flex; justify-content: space-between; align-items: center; z-index: 20; height: 50px; flex-shrink: 0;}
 .brand { font-weight: 800; font-size: 1.2rem; color: var(--navy-blue); display: flex; align-items: center; gap: 8px;}
-.mobile-menu-btn { background:none; border:none; font-size:1.2rem; cursor:pointer; margin-right:10px; color:var(--navy-blue); }
-.sys-badges { font-size: 0.75rem; font-weight: 700; color: var(--navy-blue); display: flex; align-items: center; gap: 8px;}
+.mobile-menu-btn { background:none; border:none; font-size:1.2rem; cursor:pointer; color:var(--navy-blue); }
 
-.status-glow { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
-.online { background-color: var(--green); box-shadow: 0 0 8px var(--green); }
-.offline { background-color: var(--saffron); box-shadow: 0 0 8px var(--saffron); }
-
-/* Main Layout Grid */
+/* Main Layout */
 .main-layout { display: flex; flex: 1; width: 100vw; height: calc(100vh - 50px); overflow: hidden; }
 
-/* 🛠️ FIX: Telemetry Sidebar scrolling & width */
-.telemetry-sidebar { width: 350px; max-width: 90vw; background: var(--white-off); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 15px; gap: 15px; flex-shrink: 0; height: 100%; overflow-y: auto; overflow-x: hidden; }
-.panel { background: var(--white); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; flex-shrink: 0;}
-.panel-header { background: var(--white-off); padding: 10px 12px; font-size: 0.75rem; font-weight: 700; color: var(--navy-blue); border-bottom: 1px solid var(--border); text-transform: uppercase;}
-.data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); }
-.data-cell { background: var(--white); padding: 10px; display: flex; flex-direction: column; gap: 4px; }
-.data-label { font-size: 0.65rem; color: var(--navy-blue); font-weight: 600; text-transform: uppercase; opacity: 0.8;}
-.data-value { font-size: 0.85rem; font-weight: 700; font-family: monospace; color: var(--navy-blue); word-break: break-all;} 
+/* 🛠️ Sidebar updated for Logbook */
+.telemetry-sidebar { width: 350px; max-width: 90vw; background: var(--white-off); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 10px; gap: 10px; flex-shrink: 0; height: 100%; overflow-y: auto; }
+.panel { background: var(--white); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; cursor: pointer; transition: 0.2s;}
+.panel:hover { border-color: var(--saffron); }
+.panel-header { background: var(--white-off); padding: 8px 12px; font-size: 0.7rem; font-weight: 700; color: var(--navy-blue); border-bottom: 1px solid var(--border); }
 
-/* 🚀 COCKPIT COMPONENTS (Fixed wrapping for mobile) */
-.workflow-path { padding: 10px 12px; font-size: 0.75rem; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; background: var(--white); color: var(--gray); font-family: monospace; }
-.wf-step { padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border); white-space: nowrap; margin-bottom: 4px;}
-.wf-step.active { background: var(--navy-blue); color: var(--white); border-color: var(--navy-blue); font-weight: bold; }
-
-.module-grid { padding: 0 10px 10px 10px; display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px;}
-.mod-pill { font-size: 0.65rem; padding: 3px 8px; border-radius: 12px; font-weight: bold; font-family: monospace; border: 1px solid; white-space: nowrap; margin-bottom: 4px;}
-.mod-pill.ready { background: var(--green-light); color: var(--green); border-color: var(--green); }
-.mod-pill.busy { background: #fffbeb; color: #b45309; border-color: #fbbf24; }
-.mod-pill.offline { background: #f3f4f6; color: var(--gray); border-color: #d1d5db; }
-.mod-pill.error { background: #fef2f2; color: var(--red); border-color: var(--red); }
-.mod-badge { padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; border: 1px solid; white-space: nowrap;}
-
-.filter-badge { padding: 2px 8px; border-radius: 12px; border: 1px solid var(--border); cursor: pointer; color: var(--navy-blue); font-weight: bold; white-space: nowrap;}
-.filter-badge.active { background: var(--navy-blue); color: var(--white); }
-
-/* Terminal */
-.terminal { flex: 1; background: var(--navy-blue); color: var(--green); font-family: monospace; font-size: 0.75rem; padding: 12px; overflow-y: auto; min-height: 200px; max-height: 400px; }
-.log-line { border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px; margin-bottom: 4px; word-wrap: break-word; overflow-wrap: break-word; }
+/* 📜 Terminal / Logbook Fixed for Large View */
+.terminal { 
+    flex: 1; 
+    background: var(--navy-blue); 
+    color: var(--green); 
+    font-family: monospace; 
+    font-size: 0.75rem; 
+    padding: 12px; 
+    overflow-y: auto; 
+    min-height: 350px; /* লগবুক বড় করা হলো */
+    max-height: 60vh; 
+}
+.log-line { border-bottom: 1px solid rgba(255,255,255,0.1); padding: 2px 0; word-wrap: break-word; }
 
 /* Chat Section */
-.chat-section { flex: 1; display: flex; flex-direction: column; background: var(--white); height: 100%; min-width: 0; overflow: hidden; position: relative;}
-.chat-display { flex: 1; padding: 20px; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; gap: 16px; background: var(--white); width: 100%; }
+.chat-section { flex: 1; display: flex; flex-direction: column; background: var(--white); height: 100%; position: relative;}
+.chat-display { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
 
-/* 🟢 FIX: CHAT BUBBLE OVERFLOW */
-.msg-bubble { 
-    max-width: 85%; 
-    padding: 12px 16px; 
-    border-radius: 16px; 
-    font-size: 0.95rem; 
-    line-height: 1.5; 
-    color: var(--navy-blue); 
-    position: relative; 
-    word-wrap: break-word;       /* লম্বা শব্দ ভেঙে দেবে */
-    overflow-wrap: break-word;   /* বক্সের বাইরে যেতে দেবে না */
-    white-space: pre-wrap;       /* লাইন ব্রেক ঠিক রাখবে */
-}
-.msg-user { align-self: flex-end; background: var(--saffron-light); border: 1px solid var(--saffron); border-bottom-right-radius: 4px; }
-.msg-ai { align-self: flex-start; background: var(--green-light); border: 1px solid var(--green); border-bottom-left-radius: 4px; }
-.msg-label { display: block; margin-bottom: 6px; font-size: 0.65rem; font-weight: bold; text-transform: uppercase; opacity: 0.6; }
-
-/* TimeStamp inside chat bubbles */
-.msg-time { display: block; text-align: right; font-size: 0.6rem; margin-top: 5px; opacity: 0.5; font-weight: bold; }
+/* Chat Bubbles */
+.msg-bubble { max-width: 85%; padding: 12px 16px; border-radius: 16px; font-size: 0.95rem; line-height: 1.5; color: var(--navy-blue); word-wrap: break-word; white-space: pre-wrap; }
+.msg-user { align-self: flex-end; background: var(--saffron-light); border: 1px solid var(--saffron); }
+.msg-ai { align-self: flex-start; background: var(--green-light); border: 1px solid var(--green); }
 
 /* Input Dock */
-.input-dock { padding: 15px 20px; background: var(--white); border-top: 1px solid var(--border); display: flex; justify-content: center; width: 100%; flex-shrink: 0; }
-.smart-input-box { display: flex; align-items: center; width: 100%; max-width: 800px; background: var(--white-off); border: 1px solid var(--border); border-radius: 30px; padding: 6px 8px; gap: 6px; }
-.smart-input-box:focus-within { background: var(--white); border-color: var(--green); box-shadow: 0 4px 12px rgba(19, 136, 8, 0.1); }
+.input-dock { padding: 15px; border-top: 1px solid var(--border); display: flex; justify-content: center; }
+.smart-input-box { display: flex; align-items: center; width: 100%; max-width: 800px; background: var(--white-off); border: 1px solid var(--border); border-radius: 30px; padding: 6px 12px; }
+#prompt-box { flex: 1; border: none; background: transparent; outline: none; padding: 8px; font-size: 1rem; }
 
-#prompt-box { flex: 1; min-width: 0; border: none; background: transparent; outline: none; padding: 8px; font-size: 1rem; color: var(--navy-blue);}
-.btn-icon { background: transparent; border: none; font-size: 1.1rem; color: var(--navy-blue); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; flex-shrink: 0; display: flex; justify-content: center; align-items: center; opacity: 0.7;}
-.btn-icon:hover { background: var(--border); opacity: 1;}
-.lang-selector { border: none; background: transparent; font-weight: 700; color: var(--navy-blue); font-size: 0.8rem; outline: none; flex-shrink: 0; cursor: pointer;}
-
-.btn-send { background: var(--green); color: var(--white); border: none; width: 38px; height: 38px; border-radius: 50%; cursor: pointer; flex-shrink: 0; display: flex; justify-content: center; align-items: center; font-size: 1rem; transition: 0.2s;}
-.btn-send:hover { background: #0f6e06; }
-.btn-send:disabled { background: var(--border); color: var(--navy-blue); cursor: not-allowed; }
-
-.mic-active { color: var(--saffron) !important; background: var(--saffron-light); animation: pulse 1.5s infinite; }
-@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
-
-/* 📱 Mobile Adjustments */
+/* Mobile Adjustments */
 @media (max-width: 900px) {
-    .main-layout { height: calc(100vh - 50px); }
-    .telemetry-sidebar { 
-        display: none; 
-        position: absolute; 
-        z-index: 100; 
-        box-shadow: 5px 0 15px rgba(0,0,0,0.1); 
-        width: 85vw; /* মোবাইলের স্ক্রিনের সাথে অ্যাডজাস্ট হবে */
-        max-width: 350px;
-        height: calc(100vh - 50px); 
-        overflow-y: auto;
-        background: var(--white-off);
-    }
-    .input-dock { padding: 10px; }
+    .telemetry-sidebar { display: none; position: absolute; z-index: 100; width: 90vw; height: calc(100vh - 50px); }
+    .telemetry-sidebar.active { display: flex; }
 }
