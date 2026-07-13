@@ -16,17 +16,32 @@ window.dispatchToAI = function() {
     promptBox.value = '';
 };
 
-window.updateChatUI = function(sender, message) {
+// 🟢 আপডেটেড: এখন সে ডেটাবেসের পুরনো সময় (timestamp) রিসিভ করতে পারবে
+window.updateChatUI = function(sender, message, timestamp = null) {
     const chatBox = document.getElementById('chat-box');
     const msgDiv = document.createElement('div');
+    
+    let timeString = '';
+    
+    // যদি ডেটাবেস থেকে পুরনো সময় আসে, সেটা কনভার্ট করবে। নাহলে বর্তমান সময় নেবে।
+    if (timestamp) {
+        const dateObj = new Date(timestamp);
+        timeString = dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    } else {
+        timeString = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    }
+
     msgDiv.className = `msg-bubble ${sender === 'YOU' ? 'msg-user' : 'msg-ai'}`;
-    msgDiv.innerHTML = `<span class="msg-label">${sender}</span>${message}`;
+    
+    // মেসেজের শেষে টাইমস্ট্যাম্পের স্প্যান যুক্ত করা হলো
+    msgDiv.innerHTML = `<span class="msg-label">${sender}</span>${message}<span class="msg-time">${timeString}</span>`;
+    
     chatBox.appendChild(msgDiv);
     chatBox.scrollTop = chatBox.scrollHeight;
 };
 
 // ==========================================
-// 🟢 NEW: পেজ রিলোড দিলে মেমোরি প্রিন্ট করার ফাংশন
+// পেজ রিলোড দিলে মেমোরি প্রিন্ট করার ফাংশন
 // ==========================================
 window.renderHistoryMessages = function(historyArray) {
     if (!historyArray || !Array.isArray(historyArray)) return;
@@ -35,10 +50,12 @@ window.renderHistoryMessages = function(historyArray) {
     
     // ইতিহাস লুপ করে স্ক্রিনে বাবল হিসেবে দেখানো হচ্ছে
     historyArray.forEach(item => {
-        // ডেটাবেস থেকে পাওয়া role অনুযায়ী নাম সেট করা হচ্ছে
         const sender = item.role === 'user' ? 'YOU' : 'ORBIS';
-        const messageText = item.content || item.message; // সেফটি চেক
+        const messageText = item.content || item.message; 
         
-        window.updateChatUI(sender, messageText);
+        // 🟢 ডেটাবেসের আসল সময়টা পাঠানো হচ্ছে
+        const dbTime = item.created_at; 
+        
+        window.updateChatUI(sender, messageText, dbTime);
     });
 };

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ORBIS Core Engine</title>
+    <title>ORBIS Engineering Cockpit</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -20,25 +20,95 @@
     </header>
 
     <div class="main-layout">
-        <aside class="telemetry-sidebar" id="dev-sidebar">
-            <div style="text-align: right; margin-bottom: -10px;">
+        <!-- 🚀 PHASE 6B: THE ENGINEERING COCKPIT -->
+        <aside class="telemetry-sidebar cockpit-mode" id="dev-sidebar">
+            <div class="cockpit-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="margin: 0; font-size: 0.9rem; color: var(--navy-blue);">🛠️ ENGINEERING COCKPIT</h3>
                 <button onclick="toggleSidebar()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--saffron); font-weight:bold;">×</button>
             </div>
+
+            <!-- 🚨 ERROR CENTER -->
+            <div class="panel error-center" id="cockpit-error-center" style="display:none; border-color: #ff4d4d; background: #fff0f0;">
+                <div class="panel-header" style="color: #ff4d4d; font-weight: bold;">🚨 CRITICAL ALERT</div>
+                <div id="error-display-box" style="font-size: 0.75rem; color: #d32f2f; padding-top: 5px; word-wrap: break-word;">--</div>
+            </div>
+
+            <!-- 🌐 SYSTEM & NETWORK -->
             <div class="panel">
-                <div class="panel-header">⚙️ System Telemetry</div>
+                <div class="panel-header">🌐 SYSTEM & NETWORK</div>
                 <div class="data-grid">
-                    <div class="data-cell"><span class="data-label">API Ping</span><span class="data-value" id="tel-ping">-- ms</span></div>
-                    <div class="data-cell"><span class="data-label">Uptime</span><span class="data-value" id="tel-uptime">-- s</span></div>
-                    <div class="data-cell"><span class="data-label">RAM Usage</span><span class="data-value" id="tel-ram">-- MB</span></div>
-                    <div class="data-cell" style="grid-column: span 2;"><span class="data-label">Active Workflow</span><span class="data-value" id="tel-wf" style="font-size:0.7rem; background:#f3e8ff; padding:2px 6px; border-radius:4px; color:#7e22ce;">IDLE</span></div>
+                    <div class="data-cell"><span class="data-label">Build</span><span class="data-value" id="sys-env">PROD v5.0</span></div>
+                    <div class="data-cell"><span class="data-label">Uptime</span><span class="data-value" id="sys-uptime">0 s</span></div>
+                    <div class="data-cell"><span class="data-label">API Ping</span><span class="data-value" id="net-ping">-- ms</span></div>
+                    <div class="data-cell"><span class="data-label">RAM Usage</span><span class="data-value" id="sys-ram">-- MB</span></div>
                 </div>
             </div>
-            <div class="panel" style="flex:1;">
-                <div class="panel-header">📜 RUNTIME LOGS</div>
-                <div class="terminal" id="log-box"></div>
+
+            <!-- ⚡ WORKFLOW PATH -->
+            <div class="panel">
+                <div class="panel-header">⚡ EXECUTION PATH</div>
+                <div class="workflow-path">
+                    <span id="wf-user" class="wf-step">User</span> ➔
+                    <span id="wf-router" class="wf-step">Router</span> ➔
+                    <span id="wf-core" class="wf-step">Core</span> ➔
+                    <span id="wf-provider" class="wf-step">Provider</span>
+                </div>
+            </div>
+
+            <!-- 🤖 PROVIDERS -->
+            <div class="panel">
+                <div class="panel-header">🤖 PROVIDERS & API</div>
+                <div class="data-grid">
+                    <div class="data-cell"><span class="data-label">Gemini Status</span><span class="data-value mod-badge ready" id="prov-gemini-status">READY</span></div>
+                    <div class="data-cell"><span class="data-label">Latency</span><span class="data-value" id="prov-gemini-latency">-- ms</span></div>
+                    <div class="data-cell"><span class="data-label">Rate Limit</span><span class="data-value" id="api-rate-limit">OK</span></div>
+                    <div class="data-cell"><span class="data-label">Retry Timer</span><span class="data-value" id="api-retry">--</span></div>
+                </div>
+            </div>
+
+            <!-- 🧠 MEMORY & ROUTER -->
+            <div class="panel">
+                <div class="panel-header">🧠 MEMORY & EVENT BUS</div>
+                <div class="data-grid">
+                    <div class="data-cell"><span class="data-label">Memory Sync</span><span class="data-value mod-badge ready" id="mem-status">ONLINE</span></div>
+                    <div class="data-cell"><span class="data-label">Nodes</span><span class="data-value" id="mem-nodes">0</span></div>
+                    <div class="data-cell"><span class="data-label">Last Route</span><span class="data-value" id="router-last">--</span></div>
+                    <div class="data-cell"><span class="data-label">Queue Size</span><span class="data-value" id="router-queue">0</span></div>
+                </div>
+            </div>
+
+            <!-- 🧩 MODULE HEALTH -->
+            <div class="panel">
+                <div class="panel-header">🧩 MODULE HEALTH</div>
+                <div class="module-grid" style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px;">
+                    <span class="mod-pill ready" id="mod-router">Router</span>
+                    <span class="mod-pill ready" id="mod-memory">Memory</span>
+                    <span class="mod-pill ready" id="mod-voice">Voice</span>
+                    <span class="mod-pill ready" id="mod-dashboard">Dashboard</span>
+                </div>
+            </div>
+
+            <!-- 📜 LIVE LOGS & FILTERS -->
+            <div class="panel" style="flex:1; display:flex; flex-direction:column; min-height: 200px;">
+                <div class="panel-header" style="display: flex; justify-content: space-between;">
+                    <span>📜 LIVE LOGS</span>
+                    <div class="log-controls">
+                        <button id="log-pause-btn" style="font-size: 0.6rem; cursor:pointer;">⏸</button>
+                        <button onclick="document.getElementById('log-box').innerHTML=''" style="font-size: 0.6rem; cursor:pointer;">🗑</button>
+                    </div>
+                </div>
+                <div class="log-filters" style="display: flex; gap: 5px; margin: 5px 0; overflow-x: auto; font-size: 0.65rem;">
+                    <span class="filter-badge active" data-filter="ALL">ALL</span>
+                    <span class="filter-badge" data-filter="INFO">INFO</span>
+                    <span class="filter-badge" data-filter="ERR">ERR</span>
+                    <span class="filter-badge" data-filter="PROV">PROV</span>
+                    <span class="filter-badge" data-filter="MEM">MEM</span>
+                </div>
+                <div class="terminal" id="log-box" style="flex:1; overflow-y: auto;"></div>
             </div>
         </aside>
 
+        <!-- CHAT SECTION -->
         <main class="chat-section">
             <div class="chat-display" id="chat-box"></div>
             <div class="input-dock">
@@ -52,6 +122,7 @@
         </main>
     </div>
 
+    <!-- CORE SCRIPTS -->
     <script src="js/ui-core.js"></script>
     <script src="js/ui-events.js"></script>
     <script src="js/ui-api.js"></script>
@@ -61,5 +132,14 @@
     <script src="js/ui-telemetry.js"></script>
     <script src="js/ui-chat.js"></script>
     <script src="js/ui-voice.js"></script>
+    
+    <!-- 🚀 PHASE 6B: NEW MONITORING MODULES -->
+    <script src="js/ui-router-monitor.js"></script>
+    <script src="js/ui-provider-monitor.js"></script>
+    <script src="js/ui-memory-monitor.js"></script>
+    <script src="js/ui-performance.js"></script>
+    <script src="js/ui-errors.js"></script>
+    <script src="js/ui-network.js"></script>
+    <script src="js/ui-workflow.js"></script>
 </body>
 </html>
