@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { addLog } from '../telemetry.js'; // 🟢 নতুন: লগ বাস্কেট ইমপোর্ট করা হলো
+import { addLog } from '../telemetry.js'; 
 
 export class ExecutionTracer {
     static generateTrackId() {
@@ -22,7 +22,8 @@ export class ExecutionTracer {
                         const enterMsg = `[${trackId}] Entered: ${moduleName} ➔ ${propKey}()`;
                         
                         console.log(`[TRACE] 🟢 ${enterMsg}`);
-                        addLog('INFO', enterMsg); // 🟢 বাস্কেটে মেসেজ পাঠানো হলো
+                        // এখানে দুটি আর্গুমেন্ট পাঠানো হচ্ছে (level, message)
+                        addLog('INFO', enterMsg); 
 
                         try {
                             const result = await originalMethod.apply(this, args);
@@ -30,7 +31,7 @@ export class ExecutionTracer {
                             const successMsg = `[${trackId}] Success: ${moduleName} ➔ ${propKey}() [${duration}ms]`;
                             
                             console.log(`[TRACE] ✅ ${successMsg}`);
-                            addLog('OK', successMsg); // 🟢 বাস্কেটে মেসেজ পাঠানো হলো
+                            addLog('OK', successMsg); 
                             return result;
                         } catch (error) {
                             const duration = Date.now() - startTime;
@@ -38,7 +39,7 @@ export class ExecutionTracer {
                             
                             console.log(`[TRACE] ❌ ${failMsg}`);
                             console.error(`[TRACE] 🛑 [${trackId}] Error Details:`, error.message);
-                            addLog('ERROR', failMsg); // 🟢 বাস্কেটে মেসেজ পাঠানো হলো
+                            addLog('ERROR', failMsg); 
                             throw error;
                         }
                     };
