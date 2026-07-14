@@ -1,6 +1,6 @@
 // frontend/js/ui-chat.js
 /**
- * UI Chat Module: Fixed Routing and API Gateway Logic
+ * UI Chat Module: Direct Fetch API Integration (Bypassing Gateways)
  */
 
 window.ChatStateLock = {
@@ -16,7 +16,7 @@ window.dispatchToAI = async function() {
 
     const now = Date.now();
     if (msg === window.ChatStateLock.lastUserPrompt && (now - window.ChatStateLock.lastTimestamp < 500)) {
-        return;
+        return; // Anti-Loop
     }
 
     window.ChatStateLock.lastUserPrompt = msg;
@@ -27,35 +27,36 @@ window.dispatchToAI = async function() {
     window.updateChatUI('YOU', msg);
     promptBox.value = ''; 
 
-    // ২. ডিরেক্ট API গেটওয়ে কল (রাউটার বাইপাস করা হলো যাতে কোনো ব্লকেজ না হয়)
-    if (window.APIGateway && typeof window.APIGateway.call === 'function') {
-        try {
-            const apiResult = await window.APIGateway.call('/api/chat', { prompt: msg });
-            
-            // টেলিমেট্রি সিঙ্ক
-            if (apiResult && apiResult.telemetry) {
-                window.globalEventBus?.emit('TelemetryUpdated', apiResult.telemetry);
-            }
+    // ২. ডিরেক্ট Fetch API দিয়ে সার্ভারে মেসেজ পাঠানো (কোনো Gateway লাগবে না)
+    try {
+        const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ prompt: msg })
+        });
 
-            if (apiResult && (apiResult.success || apiResult.status === 'success')) {
-                // 🟢 রিপ্লাই ধরার লজিকটি আরও রবাস্ট করা হলো
-                const reply = apiResult.reply || apiResult.response || apiResult.data || apiResult.message;
-                
-                if (reply) {
-                    window.updateChatUI('ORBIS', reply);
-                } else {
-                    window.updateChatUI('SYSTEM_ERROR', `সার্ভার রেসপন্স দিয়েছে কিন্তু টেক্সট খুঁজে পায়নি।`);
-                }
-            } else {
-                window.updateChatUI('SYSTEM_ERROR', `যোগাযোগ ব্যর্থ: ${apiResult?.error || 'Unknown Error'}`);
-            }
-        } catch (err) {
-            window.updateChatUI('SYSTEM_ERROR', `ক্রিটিক্যাল এরর: ${err.message}`);
-        } finally {
-            window.ChatStateLock.isProcessing = false;
+        const apiResult = await response.json();
+        
+        // টেলিমেট্রি সিঙ্ক
+        if (apiResult && apiResult.telemetry) {
+            window.globalEventBus?.emit('TelemetryUpdated', apiResult.telemetry);
         }
-    } else {
-        window.updateChatUI('SYSTEM_ERROR', 'API Gateway Missing. মেসেজ পাঠানো যাচ্ছে না।');
+
+        if (response.ok && (apiResult.success || apiResult.status === 'success')) {
+            const reply = apiResult.reply || apiResult.response || apiResult.data || apiResult.message;
+            if (reply) {
+                window.updateChatUI('ORBIS', reply);
+            } else {
+                window.updateChatUI('SYSTEM_ERROR', `সার্ভার রেসপন্স দিয়েছে কিন্তু টেক্সট খুঁজে পায়নি।`);
+            }
+        } else {
+            window.updateChatUI('SYSTEM_ERROR', `সার্ভার এরর: ${apiResult?.error || response.statusText}`);
+        }
+    } catch (err) {
+        window.updateChatUI('SYSTEM_ERROR', `নেটওয়ার্ক এরর: সার্ভারের সাথে যোগাযোগ করা যাচ্ছে না।`);
+    } finally {
         window.ChatStateLock.isProcessing = false;
     }
 };
@@ -103,15 +104,17 @@ window.renderHistoryMessages = function(historyArray) {
 
 if (!window.ChatUIInitialized) {
     document.addEventListener('DOMContentLoaded', async () => {
-        if (window.APIGateway && window.APIGateway.fetchHistory) {
-            try {
-                const response = await window.APIGateway.fetchHistory('default_user');
-                if (response && (response.status === 'success' || response.success) && response.data) {
-                    window.renderHistoryMessages(response.data);
+        // ডিরেক্ট ফেচ দিয়ে হিস্ট্রি রিকভারি
+        try {
+            const response = await fetch('/api/history?user=default_user');
+            if (response.ok) {
+                const result = await response.json();
+                if (result && (result.status === 'success' || result.success) && result.data) {
+                    window.renderHistoryMessages(result.data);
                 }
-            } catch (err) {
-                console.error(`Memory Recovery Failed: ${err.message}`);
             }
+        } catch (err) {
+            console.error(`Memory Recovery Failed: ${err.message}`);
         }
     });
     window.ChatUIInitialized = true; 
