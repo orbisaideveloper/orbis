@@ -1,8 +1,7 @@
 // frontend/js/ui-dashboard.js
 /**
- * UI Dashboard Module: Manages engineering cockpit telemetry tracking, 
- * active process visualization, and automated diagnostics mapping.
- * * PHASE 9.2: LocalStorage Logs, Live Dependency Tree, Touch Force Close
+ * UI Dashboard Module
+ * * PHASE 10.0: Ultimate Cache Buster & Force Touch Close
  */
 window.Dashboard = {
     startTime: Date.now(),
@@ -25,13 +24,19 @@ window.Dashboard = {
         }, 1000);
     },
 
-    // 🟢 ১. ফোর্স টাচ ক্লোজ: গ্লাস লেয়ার (Overlay) এর ওপর শক্তিশালী কন্ট্রোল
+    // 🟢 গ্যারান্টেড টাচ ক্লোজ লজিক (যেকোনো মূল্যে ড্যাশবোর্ড বন্ধ করবে)
     setupOutsideClickToClose: function() {
         const overlay = document.getElementById('dashboard-overlay');
         if (overlay) {
             ['click', 'touchstart'].forEach(evt => {
                 overlay.addEventListener(evt, (e) => {
-                    e.preventDefault(); // টাচ মিস হওয়া বন্ধ করবে
+                    e.preventDefault(); 
+                    
+                    // Force Hide Commands
+                    const sidebar = document.getElementById('dev-sidebar');
+                    if (sidebar) sidebar.style.display = 'none';
+                    overlay.style.display = 'none';
+                    
                     if (typeof window.toggleSidebar === 'function') {
                         window.toggleSidebar();
                     } else if (typeof toggleSidebar === 'function') {
@@ -59,7 +64,6 @@ window.Dashboard = {
         });
     },
 
-    // 🟢 ২. পার্মানেন্ট লগবুক: LocalStorage এবং কালার কোডিং লজিক
     syncAndRenderLogs: function(serverLogs) {
         if (!serverLogs || !Array.isArray(serverLogs)) return;
         
@@ -67,30 +71,28 @@ window.Dashboard = {
         
         serverLogs.forEach(log => {
             let logStr = `[${log.time}] [${log.level}]: ${log.message}`;
-            // ডুপ্লিকেট চেক (যাতে একই লগ বারবার না আসে)
             let isDuplicate = localLogs.slice(-20).some(l => l.includes(log.time) && l.includes(log.message));
             if (!isDuplicate) {
                 localLogs.push(logStr);
             }
         });
         
-        // ১০০ লগের রোলিং উইন্ডো (১০১ হলে প্রথমটা ডিলিট হবে)
         if (localLogs.length > 100) localLogs = localLogs.slice(localLogs.length - 100);
         localStorage.setItem('orbis_logs', JSON.stringify(localLogs));
         
         const logBox = document.getElementById('log-box');
         if (logBox) {
             logBox.innerHTML = localLogs.map(logStr => {
-                let color = '#f8fafc'; // ডিফল্ট সাদা
-                if (logStr.includes('[ERR]') || logStr.includes('FAILED') || logStr.includes('503')) color = '#ef4444'; // লাল
-                else if (logStr.includes('[WARN]') || logStr.includes('HIGH')) color = '#facc15'; // হলুদ
-                else if (logStr.includes('[OK]') || logStr.includes('ONLINE') || logStr.includes('Success')) color = '#10b981'; // সবুজ
-                else if (logStr.includes('[INFO]')) color = '#38bdf8'; // নীল
+                let color = '#f8fafc'; 
+                if (logStr.includes('[ERR]') || logStr.includes('FAILED') || logStr.includes('503')) color = '#ef4444'; 
+                else if (logStr.includes('[WARN]') || logStr.includes('HIGH')) color = '#facc15'; 
+                else if (logStr.includes('[OK]') || logStr.includes('ONLINE') || logStr.includes('Success')) color = '#10b981'; 
+                else if (logStr.includes('[INFO]')) color = '#38bdf8'; 
                 
                 return `<div style="color:${color}; padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.05);">${logStr}</div>`;
             }).join('');
             
-            logBox.scrollTop = logBox.scrollHeight; // স্ক্রল সবসময় নিচে রাখবে
+            logBox.scrollTop = logBox.scrollHeight; 
         }
     },
 
@@ -98,10 +100,8 @@ window.Dashboard = {
         if (!telemetry) return;
         this.latestTelemetrySnapshot = telemetry; 
 
-        // লগ সিঙ্ক
         if (telemetry.logs) this.syncAndRenderLogs(telemetry.logs);
 
-        // অরিজিনাল টেলিমেট্রি
         if(telemetry.apiPing) {
             const el = document.getElementById('net-ping');
             if(el) el.innerText = `${telemetry.apiPing} ms`;
@@ -111,15 +111,13 @@ window.Dashboard = {
             if(el) el.innerText = `${telemetry.ramUsage} MB`;
         }
 
-        // 🟢 ৩. খাঁচায় প্রাণ: নতুন প্যানেলগুলোর লাইভ ডেটা আপডেট
         if (telemetry.engineering_inspector) {
             const req = telemetry.engineering_inspector.active_requests || 0;
             document.getElementById('ui-insp-req').innerText = req;
             document.getElementById('ui-insp-load').innerText = telemetry.engineering_inspector.load_status || 'LOW';
             document.getElementById('ui-insp-load').style.color = telemetry.engineering_inspector.load_status === 'HIGH' ? '#facc15' : '#10b981';
             
-            // ইকোনমি: টোকেন ক্যালকুলেশন (এস্টিমেটেড)
-            document.getElementById('token-used').innerText = req * 154; // Avg token per req
+            document.getElementById('token-used').innerText = req * 154; 
             document.getElementById('token-cost').innerText = '$' + ((req * 154) * 0.00005).toFixed(4);
         }
 
@@ -128,33 +126,34 @@ window.Dashboard = {
             document.getElementById('ui-insp-prov').style.color = telemetry.provider_monitor.status === 'OFFLINE' ? '#ef4444' : '#10b981';
         }
 
-        // ল্যাটেন্সি সিমুলেশন (DB Speed)
         if (telemetry.latency || telemetry.apiPing) {
             const basePing = telemetry.apiPing || telemetry.latency || 45;
             document.getElementById('db-read-ping').innerText = Math.max(12, basePing - 15) + ' ms';
             document.getElementById('db-write-ping').innerText = (basePing + 10) + ' ms';
         }
 
-        // 🟢 মাস্টারস্ট্রোক: লাইভ ভিজ্যুয়াল ডিপেনডেন্সি ট্রি
+        // 🟢 শক্তিশালী ডিপেনডেন্সি ট্রি লজিক
         const treeCanvas = document.getElementById('dependency-tree-canvas');
         if (treeCanvas) {
             const activeBus = telemetry.lastRoute || 'CORE_ROUTER';
-            const status = telemetry.provider_monitor?.status || 'ONLINE';
+            const status = (telemetry.provider_monitor && telemetry.provider_monitor.status) || 'ONLINE';
             
             let treeHTML = `<div style="text-align:left; padding-left: 20px;">`;
             treeHTML += `<div style="color: #38bdf8; margin-bottom:4px;">[⚙️] BrainController.js</div>`;
             treeHTML += `<div style="border-left: 1px solid #475569; margin-left: 10px; padding-left: 10px;">`;
             
-            if (activeBus.includes('Local') || status === 'OFFLINE') {
+            if (activeBus.includes('Local') || status === 'OFFLINE' || status === 'ERROR' || status === '503') {
                 treeHTML += `<div style="color: #10b981; margin-bottom:4px;"> ├── [🧠] LocalNLPEngine (ACTIVE)</div>`;
                 treeHTML += `<div style="color: #64748b;"> └── [🌐] GeminiProvider (STANDBY)</div>`;
             } else {
                 treeHTML += `<div style="color: #64748b; margin-bottom:4px;"> ├── [🧠] LocalNLPEngine (BYPASS)</div>`;
                 treeHTML += `<div style="color: #10b981;"> └── [🌐] GeminiProvider (ACTIVE)</div>`;
-                if (status === 'ERROR' || status === '503') {
-                    treeHTML += `<div style="color: #ef4444; margin-top:4px; font-weight:bold; animation: blinker 1s infinite;"> &nbsp;&nbsp;&nbsp;&nbsp; ⚠️ API_FAULT_DETECTED</div>`;
-                }
             }
+
+            if (status === 'ERROR' || status === '503' || activeBus.includes('Fallback')) {
+                 treeHTML += `<div style="color: #ef4444; margin-top:4px; font-weight:bold; animation: blinker 1s infinite;"> &nbsp;&nbsp;&nbsp;&nbsp; ⚠️ API_FAULT_DETECTED</div>`;
+            }
+
             treeHTML += `</div></div>`;
             treeCanvas.innerHTML = treeHTML;
         }
@@ -190,7 +189,6 @@ window.Dashboard = {
         panels.forEach(panel => {
             panel.classList.add('has-click-listener');
             panel.addEventListener('click', (e) => {
-                // Ignore clicks on specific inner elements
                 if(e.target.closest('.log-controls') || e.target.closest('.filter-badge') || e.target.closest('input') || e.target.closest('button')) return;
                 
                 const header = panel.querySelector('.panel-header')?.innerText.trim() || 'System Details';
