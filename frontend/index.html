@@ -4,16 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ORBIS Engineering Cockpit (Live X-Ray)</title>
-    <link rel="stylesheet" href="css/style.css?v=9.1">
+    <link rel="stylesheet" href="css/style.css?v=9.2">
     <style>
-        /* 🟢 ককপিট আর্কিটেকচার এক্সপ্যানশন লাইভ স্টাইলস */
         .wf-step { transition: all 0.3s ease; padding: 2px 6px; border-radius: 4px; }
         .wf-active { background: #00e676 !important; color: #000 !important; font-weight: bold; box-shadow: 0 0 10px #00e676; }
         .wf-error { background: #ff4d4d !important; color: #fff !important; font-weight: bold; animation: blinker 1s linear infinite; }
         .live-node-item { font-size: 0.7rem; background: rgba(0,0,0,0.05); padding: 4px; border-left: 3px solid var(--navy-blue); margin-bottom: 4px; border-radius: 2px; }
         @keyframes blinker { 50% { opacity: 0.5; } }
         
-        /* 🟢 X-Ray ও সাইড-বাই-সাইড প্যানেল স্টাইলস */
         .xray-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 5px; }
         .xray-card { background: #f8fafc; border: 1px solid #e2e8f0; padding: 6px; border-radius: 4px; font-size: 0.65rem; font-family: monospace; }
         .xray-status { float: right; font-weight: bold; }
@@ -21,7 +19,6 @@
         .side-by-side-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
         .side-by-side-row span { color: #64748b; }
         
-        /* 🟢 🚨 মোবাইল টাচ ফিক্স: ব্যাকগ্রাউন্ড গ্লাস ওভারলে */
         .sidebar-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.3); z-index: 998; backdrop-filter: blur(1px);
@@ -123,14 +120,14 @@
                     <div style="display: flex; justify-content: space-between; font-size: 0.65rem; font-weight: bold; margin-bottom: 4px; color: var(--navy-blue);">
                         <span>🧠 DYNAMIC MEMORY DEPTH:</span> <span id="depth-val" style="color: #10b981;">MAX (100%)</span>
                     </div>
-                    <input type="range" min="1" max="100" value="100" style="width: 100%; cursor: pointer;">
+                    <input type="range" id="memory-depth-slider" min="1" max="100" value="100" style="width: 100%; cursor: pointer;" oninput="document.getElementById('depth-val').innerText = this.value == 100 ? 'MAX (100%)' : this.value + '%'; document.getElementById('depth-val').style.color = this.value < 50 ? '#ef4444' : (this.value < 80 ? '#facc15' : '#10b981');">
                 </div>
             </div>
 
             <div class="panel" style="border-left: 4px solid #8b5cf6;">
                 <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center;">
                     <span>🧬 VISUAL DEPENDENCY TREE</span>
-                    <button title="Emergency Flush" style="background: #ef4444; color: white; border: none; border-radius: 4px; font-size: 0.6rem; cursor: pointer; padding: 3px 8px; font-weight: bold;">FLUSH</button>
+                    <button title="Emergency Flush" onclick="localStorage.removeItem('orbis_logs'); document.getElementById('log-box').innerHTML=''; if(window.printLog) window.printLog('WARN', 'SYSTEM FLUSH: Memory and Logs Cleared');" style="background: #ef4444; color: white; border: none; border-radius: 4px; font-size: 0.6rem; cursor: pointer; padding: 3px 8px; font-weight: bold;">FLUSH</button>
                 </div>
                 <div id="dependency-tree-canvas" style="background: #1e293b; border-radius: 6px; padding: 15px; margin-top: 10px; text-align: center; color: #94a3b8; font-size: 0.7rem; font-family: monospace; border: 1px dashed #475569;">
                     [ Engine Initializing... ]<br><span style="font-size: 0.6rem; color: #64748b;">Awaiting telemetry sync</span>
@@ -192,7 +189,7 @@
             if(window.updateXRay) window.updateXRay(data);
         });
 
-        // 🟢 মোবাইল গ্লাস ওভারলে সিঙ্ক (ড্যাশবোর্ড খুললে গ্লাস আসবে, বন্ধ করলে চলে যাবে)
+        // মোবাইল গ্লাস ওভারলে সিঙ্ক (ড্যাশবোর্ড খুললে গ্লাস আসবে, বন্ধ করলে চলে যাবে)
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 if (mutation.attributeName === 'style') {
@@ -209,10 +206,10 @@
         if(sidebarEl) observer.observe(sidebarEl, { attributes: true });
     </script>
 
-    <script src="js/ui-core.js?v=9.1"></script>
-    <script src="js/ui-dashboard.js?v=9.1"></script>
-    <script src="js/ui-telemetry.js?v=9.1"></script>
-    <script src="js/ui-chat.js?v=9.1"></script>
-    <script src="js/ui-voice.js?v=9.1"></script>
+    <script src="js/ui-core.js?v=9.2"></script>
+    <script src="js/ui-dashboard.js?v=9.2"></script>
+    <script src="js/ui-telemetry.js?v=9.2"></script>
+    <script src="js/ui-chat.js?v=9.2"></script>
+    <script src="js/ui-voice.js?v=9.2"></script>
 </body>
 </html>
