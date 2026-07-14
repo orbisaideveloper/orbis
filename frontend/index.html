@@ -6,16 +6,27 @@
     <title>ORBIS Engineering Cockpit (Live X-Ray)</title>
     <link rel="stylesheet" href="css/style.css?v=9.1">
     <style>
-        /* ককপিট আর্কিটেকচার এক্সপ্যানশন লাইভ স্টাইলস */
+        /* 🟢 ককপিট আর্কিটেকচার এক্সপ্যানশন লাইভ স্টাইলস */
         .wf-step { transition: all 0.3s ease; padding: 2px 6px; border-radius: 4px; }
         .wf-active { background: #00e676 !important; color: #000 !important; font-weight: bold; box-shadow: 0 0 10px #00e676; }
         .wf-error { background: #ff4d4d !important; color: #fff !important; font-weight: bold; animation: blinker 1s linear infinite; }
         .live-node-item { font-size: 0.7rem; background: rgba(0,0,0,0.05); padding: 4px; border-left: 3px solid var(--navy-blue); margin-bottom: 4px; border-radius: 2px; }
         @keyframes blinker { 50% { opacity: 0.5; } }
-        /* X-Ray Styles */
+        
+        /* 🟢 X-Ray ও সাইড-বাই-সাইড প্যানেল স্টাইলস */
         .xray-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 5px; }
         .xray-card { background: #f8fafc; border: 1px solid #e2e8f0; padding: 6px; border-radius: 4px; font-size: 0.65rem; font-family: monospace; }
         .xray-status { float: right; font-weight: bold; }
+        
+        .side-by-side-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .side-by-side-row span { color: #64748b; }
+        
+        /* 🟢 🚨 মোবাইল টাচ ফিক্স: ব্যাকগ্রাউন্ড গ্লাস ওভারলে */
+        .sidebar-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.3); z-index: 998; backdrop-filter: blur(1px);
+        }
+        .telemetry-sidebar { z-index: 999 !important; position: relative; }
     </style>
 </head>
 <body>
@@ -32,6 +43,8 @@
     </header>
 
     <div class="main-layout">
+        <div id="dashboard-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
         <aside class="telemetry-sidebar cockpit-mode" id="dev-sidebar" style="width: 380px; display: flex; flex-direction: column; gap: 10px;">
             <div class="cockpit-header" style="display: flex; justify-content: space-between; align-items: center;">
                 <h3 style="margin: 0; font-size: 0.9rem; color: var(--navy-blue); font-weight: 800;">🛠️ DIAGNOSTIC COCKPIT v9.0</h3>
@@ -56,6 +69,28 @@
                 </div>
             </div>
 
+            <div class="panel" id="fixed-engineering-panels">
+                <div class="panel-header" style="color: var(--navy-blue);">🚀 CORE DIAGNOSTICS</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 8px;">
+                        <div style="font-size: 0.65rem; font-weight: bold; color: var(--navy-blue); border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 6px;">🔍 INSPECTOR</div>
+                        <div style="font-size: 0.65rem; font-family: monospace; display: flex; flex-direction: column;">
+                            <div class="side-by-side-row"><span>REQ:</span> <strong id="ui-insp-req">0</strong></div>
+                            <div class="side-by-side-row"><span>LOAD:</span> <strong id="ui-insp-load" style="color: #eab308;">--</strong></div>
+                            <div class="side-by-side-row"><span>PROV:</span> <strong id="ui-insp-prov" style="color: #10b981;">--</strong></div>
+                        </div>
+                    </div>
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 8px;">
+                        <div style="font-size: 0.65rem; font-weight: bold; color: var(--navy-blue); border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 6px;">🩺 MEMORY HEALTH</div>
+                        <div style="font-size: 0.65rem; font-family: monospace; display: flex; flex-direction: column;">
+                            <div class="side-by-side-row"><span>STATE:</span> <strong id="ui-mem-status" style="color: #10b981;">--</strong></div>
+                            <div class="side-by-side-row"><span>CACHE:</span> <strong id="ui-mem-cache">--</strong></div>
+                            <div class="side-by-side-row"><span>SYNC:</span> <strong id="ui-mem-sync" style="color: #10b981;">OK</strong></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="panel">
                 <div class="panel-header">🌐 HARDWARE TELEMETRY</div>
                 <div class="data-grid">
@@ -63,6 +98,42 @@
                     <div class="data-cell"><span class="data-label">Uptime</span><span class="data-value" id="sys-uptime">0 s</span></div>
                     <div class="data-cell"><span class="data-label">Ping</span><span class="data-value" id="net-ping">-- ms</span></div>
                     <div class="data-cell"><span class="data-label">RAM</span><span class="data-value" id="sys-ram">-- MB</span></div>
+                </div>
+            </div>
+
+            <div class="panel" style="border-left: 3px solid #3b82f6;">
+                <div class="panel-header">💰 ECONOMY & DB LATENCY</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 8px;">
+                        <div style="font-size: 0.65rem; font-weight: bold; color: var(--navy-blue); border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 6px;">🪙 AI TOKENS</div>
+                        <div style="font-size: 0.65rem; font-family: monospace; display: flex; flex-direction: column;">
+                            <div class="side-by-side-row"><span>USED:</span> <strong id="token-used">0</strong></div>
+                            <div class="side-by-side-row"><span>COST:</span> <strong id="token-cost" style="color: #ef4444;">$0.00</strong></div>
+                        </div>
+                    </div>
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 8px;">
+                        <div style="font-size: 0.65rem; font-weight: bold; color: var(--navy-blue); border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 6px;">⚡ DB SPEED</div>
+                        <div style="font-size: 0.65rem; font-family: monospace; display: flex; flex-direction: column;">
+                            <div class="side-by-side-row"><span>READ:</span> <strong id="db-read-ping">-- ms</strong></div>
+                            <div class="side-by-side-row"><span>WRITE:</span> <strong id="db-write-ping">-- ms</strong></div>
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #e2e8f0;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.65rem; font-weight: bold; margin-bottom: 4px; color: var(--navy-blue);">
+                        <span>🧠 DYNAMIC MEMORY DEPTH:</span> <span id="depth-val" style="color: #10b981;">MAX (100%)</span>
+                    </div>
+                    <input type="range" min="1" max="100" value="100" style="width: 100%; cursor: pointer;">
+                </div>
+            </div>
+
+            <div class="panel" style="border-left: 4px solid #8b5cf6;">
+                <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>🧬 VISUAL DEPENDENCY TREE</span>
+                    <button title="Emergency Flush" style="background: #ef4444; color: white; border: none; border-radius: 4px; font-size: 0.6rem; cursor: pointer; padding: 3px 8px; font-weight: bold;">FLUSH</button>
+                </div>
+                <div id="dependency-tree-canvas" style="background: #1e293b; border-radius: 6px; padding: 15px; margin-top: 10px; text-align: center; color: #94a3b8; font-size: 0.7rem; font-family: monospace; border: 1px dashed #475569;">
+                    [ Engine Initializing... ]<br><span style="font-size: 0.6rem; color: #64748b;">Awaiting telemetry sync</span>
                 </div>
             </div>
 
@@ -112,7 +183,7 @@
 
     <script>
         // X-Ray ও telemetry সিঙ্ক লজিক
-        window.globalEventBus.on('TelemetryUpdated', (data) => {
+        window.globalEventBus?.on('TelemetryUpdated', (data) => {
             if (data.ramUsage) document.getElementById('sys-ram').innerText = data.ramUsage + ' MB';
             if (data.latency) document.getElementById('prov-gemini-latency')?.innerText = data.latency + ' ms';
             if (data.memoryNodes) document.getElementById('mem-nodes').innerText = data.memoryNodes;
@@ -120,6 +191,22 @@
             // X-Ray আপডেট
             if(window.updateXRay) window.updateXRay(data);
         });
+
+        // 🟢 মোবাইল গ্লাস ওভারলে সিঙ্ক (ড্যাশবোর্ড খুললে গ্লাস আসবে, বন্ধ করলে চলে যাবে)
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.attributeName === 'style') {
+                    const sidebar = document.getElementById('dev-sidebar');
+                    const overlay = document.getElementById('dashboard-overlay');
+                    if(sidebar && overlay) {
+                        const isOpen = sidebar.style.display !== 'none' && sidebar.offsetWidth > 0;
+                        overlay.style.display = isOpen ? 'block' : 'none';
+                    }
+                }
+            });
+        });
+        const sidebarEl = document.getElementById('dev-sidebar');
+        if(sidebarEl) observer.observe(sidebarEl, { attributes: true });
     </script>
 
     <script src="js/ui-core.js?v=9.1"></script>
