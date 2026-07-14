@@ -1,7 +1,8 @@
 // frontend/js/ui-dashboard.js
 /**
  * UI Dashboard Module
- * * PHASE 10.0: Ultimate Cache Buster & Force Touch Close
+ * * PHASE 10.1: Master-Slave Architecture (Slave Node)
+ * This file ONLY handles UI updates and receives data from ui-telemetry.js
  */
 window.Dashboard = {
     startTime: Date.now(),
@@ -11,8 +12,6 @@ window.Dashboard = {
     init: function() {
         this.startUptimeCounter();
         this.setupCardInteractions();
-        this.setupLogFilters();
-        this.initLiveTelemetryLoop(); 
         this.setupOutsideClickToClose(); 
         window.printLog('OK', 'Dashboard Diagnostic System Live.');
     },
@@ -24,15 +23,13 @@ window.Dashboard = {
         }, 1000);
     },
 
-    // 🟢 গ্যারান্টেড টাচ ক্লোজ লজিক (যেকোনো মূল্যে ড্যাশবোর্ড বন্ধ করবে)
+    // 🟢 গ্যারান্টেড টাচ ক্লোজ লজিক
     setupOutsideClickToClose: function() {
         const overlay = document.getElementById('dashboard-overlay');
         if (overlay) {
             ['click', 'touchstart'].forEach(evt => {
                 overlay.addEventListener(evt, (e) => {
                     e.preventDefault(); 
-                    
-                    // Force Hide Commands
                     const sidebar = document.getElementById('dev-sidebar');
                     if (sidebar) sidebar.style.display = 'none';
                     overlay.style.display = 'none';
@@ -47,23 +44,7 @@ window.Dashboard = {
         }
     },
 
-    initLiveTelemetryLoop: function() {
-        setInterval(async () => {
-            try {
-                const response = await fetch('/api/telemetry');
-                const result = await response.json();
-                if(response.ok && result.success) {
-                    this.updateCockpitUI(result.telemetry);
-                }
-            } catch(e) {}
-        }, 5000);
-
-        window.globalEventBus?.on('MemoryRestored', (history) => {
-            const nodeEl = document.getElementById('telemetry-nodes') || document.getElementById('mem-nodes');
-            if(nodeEl && history) nodeEl.innerText = history.length;
-        });
-    },
-
+    // 🟢 পার্মানেন্ট লগবুক: LocalStorage এবং কালার কোডিং লজিক
     syncAndRenderLogs: function(serverLogs) {
         if (!serverLogs || !Array.isArray(serverLogs)) return;
         
@@ -96,6 +77,7 @@ window.Dashboard = {
         }
     },
 
+    // 🟢 এই ফাংশনটি এখন মাস্টার (ui-telemetry.js) থেকে কল হবে
     updateCockpitUI: function(telemetry) {
         if (!telemetry) return;
         this.latestTelemetrySnapshot = telemetry; 
@@ -198,39 +180,4 @@ window.Dashboard = {
                 if (header.includes('LOGS')) {
                     rawDataObj = document.querySelector('.terminal')?.innerText || "Log stream empty.";
                 } else if (this.latestTelemetrySnapshot) {
-                    if (header.includes('INSPECTOR') || header.includes('DIAGNOSTICS')) rawDataObj = this.latestTelemetrySnapshot.engineering_inspector || this.latestTelemetrySnapshot.memory_health;
-                    else if (header.includes('TELEMETRY')) rawDataObj = { Ping: this.latestTelemetrySnapshot.apiPing, RAM: this.latestTelemetrySnapshot.ramUsage };
-                }
-
-                const cleanTextToCopy = this.formatHumanText(rawDataObj);
-
-                const extraTools = `
-                    <div style="${header.includes('LOGS') ? '' : 'margin-top:15px; border-top:1px dashed #ccc; padding-top:15px;'}">
-                        <textarea class="copy-log-area" style="width:100%; height:160px; font-family:monospace; font-size:0.8rem; background:#f8fafc; padding:12px; border:1px solid #cbd5e1; border-radius:6px; margin-bottom:12px; color:#334155; line-height:1.5;" readonly>${cleanTextToCopy}</textarea>
-                        <button onclick="navigator.clipboard.writeText(this.previousElementSibling.value); this.innerText='✅ COPIED SUCCESSFULLY!'; this.style.background='#10b981';" style="width:100%; padding:12px; background:#1e3a8a; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer; transition:0.3s;">📋 COPY FULL DATA</button>
-                    </div>
-                `;
-                
-                this.showMinimalModal(header, originalContent + extraTools);
-            });
-        });
-    },
-
-    showMinimalModal: function(title, content) {
-        const modal = document.createElement('div');
-        modal.className = 'orbis-modal'; 
-        modal.style = "position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); width:92%; max-width:500px; max-height:85vh; background:white; z-index:99999; border:1px solid #e2e8f0; padding:20px; border-radius:12px; overflow-y:auto; box-shadow:0 15px 50px rgba(0,0,0,0.5); display:flex; flex-direction:column;";
-        modal.innerHTML = `
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #e2e8f0; padding-bottom:12px;">
-                <h3 style="color:#1e3a8a; margin:0; font-size:1rem; font-weight:bold;">${title}</h3>
-                <button onclick="this.parentElement.parentElement.remove()" style="background:none; border:none; font-size:1.5rem; color:#ef4444; cursor:pointer; font-weight:bold; line-height:1;">×</button>
-            </div>
-            <div style="flex:1;">${content}</div>
-        `;
-        document.body.appendChild(modal);
-    }
-};
-
-document.addEventListener('DOMContentLoaded', () => {
-    window.Dashboard.init();
-});
+                    if (header.includes('INSPECTOR') || header.includes('DIAGNOSTICS')) rawDataObj = this.latestTelemetrySnapshot.

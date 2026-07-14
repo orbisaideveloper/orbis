@@ -1,4 +1,8 @@
 // frontend/js/ui-telemetry.js - System X-Ray Core Scanner
+/**
+ * * PHASE 10.1: Master-Slave Architecture (Master Node)
+ * This file fetches data and distributes it to the UI Dashboard.
+ */
 let isXRayFetching = false;
 
 window.syncXRayData = function(data, computedPing = 8) {
@@ -55,26 +59,7 @@ window.syncXRayData = function(data, computedPing = 8) {
     }
 };
 
-// লাইভ টার্মিনাল লগ রেন্ডারার
-function renderTerminalLogs(logs) {
-    const logBox = document.getElementById('log-box');
-    if (!logBox || !logs) return;
-
-    logBox.innerHTML = '';
-    logs.forEach(log => {
-        const line = document.createElement('div');
-        line.style.marginBottom = '3px';
-        const level = log.level || log.type || 'INFO';
-        const msg = log.message || log.msg || '';
-        
-        line.style.color = level === 'ERR' || level === 'ERROR' ? '#ff4d4d' : level === 'OK' ? '#00e676' : '#64b5f6';
-        line.innerText = `[${log.time}] [${level}]: ${msg}`;
-        logBox.appendChild(line);
-    });
-    logBox.scrollTop = logBox.scrollHeight;
-}
-
-// প্রতি ২ সেকেন্ড পর পর ব্যাকএন্ড থেকে সোর্স রিপোর্ট স্ক্যান করার অটো লুপ
+// 🟢 প্রতি ৩ সেকেন্ড পর পর ব্যাকএন্ড থেকে ডেটা আনার মাস্টার লুপ
 setInterval(async () => {
     if (isXRayFetching) return;
     isXRayFetching = true;
@@ -86,12 +71,20 @@ setInterval(async () => {
             const result = await response.json();
             const computedPing = Date.now() - start;
 
-            // ডেটা ডিরেক্টলি বা result.telemetry এর মাধ্যমে রিসিভ করা
             const telemetryData = result.telemetry || result;
             
             if (telemetryData) {
+                // ১. নিজের কাজ (X-Ray আপডেট)
                 window.syncXRayData(telemetryData, computedPing);
-                if (telemetryData.logs) renderTerminalLogs(telemetryData.logs);
+                
+                // ২. স্লেভ (ui-dashboard.js) কে ডেটা পার্সেল করা
+                telemetryData.apiPing = computedPing; // ড্যাশবোর্ড যেন লাইভ পিং পায়
+                
+                if (window.Dashboard && typeof window.Dashboard.updateCockpitUI === 'function') {
+                    window.Dashboard.updateCockpitUI(telemetryData);
+                } else if (window.globalEventBus) {
+                    window.globalEventBus.emit('TelemetryUpdated', telemetryData);
+                }
             }
         }
     } catch (e) {
@@ -102,11 +95,11 @@ setInterval(async () => {
     } finally {
         isXRayFetching = false;
     }
-}, 2000);
+}, 3000); // 3 সেকেন্ড রিয়েল-টাইম লুপ
 
 if (window.globalEventBus) {
     window.globalEventBus.on('TelemetryUpdated', (data) => {
         window.syncXRayData(data);
     });
 }
-console.log("Ultimate System X-Ray Active.");
+console.log("Ultimate System X-Ray Active (Master Node).");
