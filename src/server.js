@@ -73,7 +73,8 @@ app.get('/api/history', async (req, res) => {
         const history = await brain.memory.getRecentConversations(sessionId, 50); 
         
         logSystemEvent('INFO', 'Memory', `Restored ${history.length} messages for session: ${sessionId}`);
-        res.status(200).json({ success: true, history: history || [] });
+        // 🟢 শুধুমাত্র এই লাইনে 'history:' এর বদলে 'data:' করা হয়েছে ফ্রন্টএন্ডের সাথে মেলাতে
+        res.status(200).json({ success: true, data: history || [] });
     } catch (error) {
         logSystemEvent('ERR', 'Memory', `Failed to fetch history. Reason: ${error.message}`);
         res.status(500).json({ success: false, error: "Failed to load memory", details: error.message });
@@ -138,7 +139,7 @@ app.post('/api/chat', async (req, res) => {
 
 // 🟢 আনক্যাচড এরর হ্যান্ডলার (যাতে কোনো এররের কারণে সার্ভার ক্র্যাশ না করে)
 process.on('unhandledRejection', (reason, promise) => {
-    logSystemEvent('ERR', 'GlobalTracker', `Unhandled Promise Rejection: ${reason}`);
+    logSystemEvent('ERR', 'GlobalTracker', `Unhandled Promise :: ${reason}`);
 });
 
 process.on('uncaughtException', (error) => {
