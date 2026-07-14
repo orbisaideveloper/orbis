@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ORBIS Engineering Cockpit (Live X-Ray)</title>
-    <link rel="stylesheet" href="css/style.css?v=9.01">
+    <link rel="stylesheet" href="css/style.css?v={{APP_VERSION}}">
     <style>
         .wf-step { transition: all 0.3s ease; padding: 2px 6px; border-radius: 4px; }
         .wf-active { background: #00e676 !important; color: #000 !important; font-weight: bold; box-shadow: 0 0 10px #00e676; }
@@ -44,7 +44,7 @@
 
         <aside class="telemetry-sidebar cockpit-mode" id="dev-sidebar" style="width: 380px; display: flex; flex-direction: column; gap: 10px;">
             <div class="cockpit-header" style="display: flex; justify-content: space-between; align-items: center;">
-                <h3 style="margin: 0; font-size: 0.9rem; color: var(--navy-blue); font-weight: 800;">🛠️ DIAGNOSTIC COCKPIT v9.01-DEV</h3>
+                <h3 style="margin: 0; font-size: 0.9rem; color: var(--navy-blue); font-weight: 800;">🛠️ DIAGNOSTIC COCKPIT {{APP_VERSION}}</h3>
                 <button onclick="toggleSidebar()" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:var(--red); font-weight:bold;">×</button>
             </div>
 
@@ -179,17 +179,14 @@
     </div>
 
     <script>
-        // X-Ray ও telemetry সিঙ্ক লজিক
         window.globalEventBus?.on('TelemetryUpdated', (data) => {
             if (data.ramUsage) document.getElementById('sys-ram').innerText = data.ramUsage + ' MB';
             if (data.latency) document.getElementById('prov-gemini-latency')?.innerText = data.latency + ' ms';
             if (data.memoryNodes) document.getElementById('mem-nodes').innerText = data.memoryNodes;
             
-            // X-Ray আপডেট
             if(window.updateXRay) window.updateXRay(data);
         });
 
-        // মোবাইল গ্লাস ওভারলে সিঙ্ক (ড্যাশবোর্ড খুললে গ্লাস আসবে, বন্ধ করলে চলে যাবে)
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 if (mutation.attributeName === 'style') {
@@ -206,10 +203,10 @@
         if(sidebarEl) observer.observe(sidebarEl, { attributes: true });
     </script>
 
-    <script src="js/ui-core.js?v=9.01"></script>
-    <script src="js/ui-dashboard.js?v=9.01"></script>
-    <script src="js/ui-telemetry.js?v=9.01"></script>
-    <script src="js/ui-chat.js?v=9.01"></script>
-    <script src="js/ui-voice.js?v=9.01"></script>
+    <script src="js/ui-core.js?v={{APP_VERSION}}"></script>
+    <script src="js/ui-dashboard.js?v={{APP_VERSION}}"></script>
+    <script src="js/ui-telemetry.js?v={{APP_VERSION}}"></script>
+    <script src="js/ui-chat.js?v={{APP_VERSION}}"></script>
+    <script src="js/ui-voice.js?v={{APP_VERSION}}"></script>
 </body>
 </html>
