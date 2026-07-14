@@ -1,6 +1,8 @@
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs'; // 🟢 ফাইল রিড করার জন্য fs মডিউল যুক্ত করা হলো
+
 // 🟢 আপডেট: addLog যুক্ত করা হয়েছে যাতে ড্যাশবোর্ডের লগবুক ডেটা পায়
 import { getTelemetryData, logRequest, addLog } from './brain/telemetry.js';
 import { BrainController } from './brain/BrainController.js'; 
@@ -40,11 +42,35 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '../frontend')));
 
-app.get('/', (req, res) =>
-    res.sendFile(path.join(__dirname, '../frontend/index.html'))
-);
+// 🟢 ফিক্স: index: false করা হলো, যাতে স্ট্যাটিক ফোল্ডার নিজে থেকে index.html রেন্ডার না করে দেয়
+app.use(express.static(path.join(__dirname, '../frontend'), { index: false }));
+
+// 🟢 ডায়নামিক অটো-ভার্সনিং মাস্টার সুইচ
+const getAppVersion = () => {
+    // Render-এ এনভায়রনমেন্ট ভেরিয়েবল সেট করা থাকলে সেটা নেবে
+    if (process.env.SYSTEM_MODE === 'PRODUCTION') {
+        return process.env.FINAL_VERSION || '10.0-STABLE';
+    }
+    // অটো-জেনারেট DEV ভার্সন (গিটহাবে পুশ করলেই রিস্টার্ট হবে এবং নাম্বার বদলে যাবে)
+    const dynamicHash = Math.floor(1000 + Math.random() * 9000); 
+    return `9.01-DEV-${dynamicHash}`;
+};
+
+// 🟢 index.html ইন্টারসেপ্টর: ফাইল পড়ে ডায়নামিক ভার্সন বসিয়ে পাঠানো
+app.get('/', (req, res) => {
+    const indexPath = path.join(__dirname, '../frontend/index.html');
+    fs.readFile(indexPath, 'utf8', (err, data) => {
+        if (err) {
+            logSystemEvent('ERR', 'Server', 'Failed to load index.html');
+            return res.status(500).send('System Core Error');
+        }
+        // ম্যাজিক ট্যাগটি রিপ্লেস করা হচ্ছে
+        const liveVersion = getAppVersion();
+        const finalHtml = data.replace(/{{APP_VERSION}}/g, liveVersion);
+        res.send(finalHtml);
+    });
+});
 
 // 🟢 ফিক্স: ড্যাশবোর্ডের লাইভ পোলিং লুপের জন্য এন্ডপয়েন্টটি সম্পূর্ণ সচল করা হলো
 app.get('/api/telemetry', (req, res) => {
