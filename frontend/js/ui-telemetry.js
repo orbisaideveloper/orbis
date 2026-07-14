@@ -1,6 +1,6 @@
 // frontend/js/ui-telemetry.js - System X-Ray Core Scanner
 /**
- * * PHASE 10.1: Master-Slave Architecture (Master Node)
+ * * PHASE 10.4: Master Node & X-Ray Precision Fix
  * This file fetches data and distributes it to the UI Dashboard.
  */
 let isXRayFetching = false;
@@ -17,6 +17,7 @@ window.syncXRayData = function(data, computedPing = 8) {
 
     // ২. এক্স-রে ফাইল হেলথ চেকার (প্রতিটা ফাইলের লাইভ সোর্স স্টেট ট্র্যাকার)
     try {
+        // Chat Module Check
         if (typeof window.dispatchToAI === 'function') {
             document.getElementById('st-chat').innerText = "ACTIVE";
             document.getElementById('st-chat').className = "xray-status status-ok";
@@ -24,6 +25,7 @@ window.syncXRayData = function(data, computedPing = 8) {
             throw new Error("ui-chat.js: Critical Ingestion Failure");
         }
 
+        // Voice Module Check
         if (typeof window.startVoiceEngine === 'function') {
             document.getElementById('st-voice').innerText = "READY";
             document.getElementById('st-voice').className = "xray-status status-ok";
@@ -32,7 +34,8 @@ window.syncXRayData = function(data, computedPing = 8) {
             document.getElementById('st-voice').className = "xray-status status-fail";
         }
 
-        if (data.memoryNodes && data.memoryNodes > 0) {
+        // 🟢 DB Module Check Fix (Nodes 0 হলেও ডাটাবেস কানেক্টেড থাকতে পারে)
+        if (data.memoryNodes !== undefined) {
             document.getElementById('st-supabase').innerText = "CONNECTED";
             document.getElementById('st-supabase').className = "xray-status status-ok";
             if (document.getElementById('mem-status')) {
@@ -45,6 +48,18 @@ window.syncXRayData = function(data, computedPing = 8) {
             if (document.getElementById('mem-status')) {
                 document.getElementById('mem-status').innerText = "ERROR";
                 document.getElementById('mem-status').style.color = "#ff4d4d";
+            }
+        }
+
+        // 🟢 Router Module Check Fix (আগে এটি মিসিং ছিল)
+        if (document.getElementById('st-router')) {
+            if (data.lastRoute) {
+                document.getElementById('st-router').innerText = "ACTIVE";
+                document.getElementById('st-router').className = "xray-status status-ok";
+                document.getElementById('st-router').style.color = "#00e676";
+            } else {
+                document.getElementById('st-router').innerText = "STANDBY";
+                document.getElementById('st-router').style.color = "#facc15";
             }
         }
 
@@ -102,4 +117,4 @@ if (window.globalEventBus) {
         window.syncXRayData(data);
     });
 }
-console.log("Ultimate System X-Ray Active (Master Node).");
+console.log("Ultimate System X-Ray Active (Master Node v10.4).");
