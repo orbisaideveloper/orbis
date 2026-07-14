@@ -6,7 +6,7 @@ Document Name    : Module Manager
 Project          : ORBIS
 Category         : Modules Foundation
 Status           : APPROVED
-Version          : 1.0
+Version          : 1.1
 Created On       : 15 July 2026
 Created Time     : IST (Asia/Kolkata)
 Architecture     : LEGO Modular Platform
@@ -23,10 +23,11 @@ Next Document    : M-005_User_Workspace.md
 
 ## 1. PURPOSE
 
-The Module Manager is responsible for discovering, validating, loading,
-activating, updating and managing every ORBIS business module.
+The Module Manager is the central orchestration layer responsible for
+discovering, registering, validating, loading, activating, monitoring,
+updating and removing every business module inside the ORBIS Platform.
 
-It is the central controller of the LEGO Modular Architecture.
+It is the heart of the LEGO Modular Architecture.
 
 ==============================================================================
 
@@ -37,6 +38,8 @@ The Module Manager controls:
 • Module Discovery
 
 • Module Registration
+
+• Module Validation
 
 • Module Installation
 
@@ -50,11 +53,17 @@ The Module Manager controls:
 
 • Module Health Monitoring
 
+• Module Version Control
+
 ==============================================================================
 
 ## 3. MODULE LIFECYCLE
 
 Module Package
+
+↓
+
+Discovery
 
 ↓
 
@@ -74,7 +83,7 @@ Activation
 
 ↓
 
-Available to User
+Ready for Users
 
 ↓
 
@@ -92,7 +101,7 @@ Remove
 
 ## 4. MODULE STATUS
 
-Every module has one status.
+Each module always remains in one state.
 
 AVAILABLE
 
@@ -106,15 +115,17 @@ DISABLED
 
 UPDATE AVAILABLE
 
+MAINTENANCE
+
 ERROR
 
 ==============================================================================
 
 ## 5. MODULE REGISTRY
 
-Every module must register itself before becoming available.
+Every module must register itself.
 
-The registry stores:
+Registry Information
 
 • Module ID
 
@@ -128,55 +139,65 @@ The registry stores:
 
 • Icon
 
-• Required Permissions
+• Owner
 
 • Dependencies
 
+• Permissions
+
+• Current Status
+
 ==============================================================================
 
-## 6. USER ACCESS
+## 6. USER ACCESS VALIDATION
 
-The Module Manager checks:
+Before opening a module, ORBIS validates:
 
-• User Identity
+✓ User Identity
 
-• User Permission
+✓ User Session
 
-• Subscription
+✓ User Permission
 
-• Module Availability
+✓ Subscription Status
 
-Only after successful verification can a module be opened.
+✓ Module Availability
+
+✓ Module Health
+
+Only after successful validation is the module loaded.
 
 ==============================================================================
 
 ## 7. MODULE ISOLATION
 
-Every module remains independent.
+Every module is completely independent.
 
-Business Logic
+Each module owns:
 
-Business Database
+• Business Logic
 
-Reports
+• Business Database
 
-Settings
+• Business APIs
 
-Permissions
+• Reports
 
-must remain inside the module.
+• Settings
+
+• Permissions
 
 ORBIS Core never owns business logic.
 
 ==============================================================================
 
-## 8. MODULE COMMUNICATION
+## 8. MODULE COMMUNICATION POLICY
 
-Modules never communicate directly.
+Modules are NOT allowed to communicate directly.
 
-Communication Flow:
+Approved Communication Flow
 
-Module
+Source Module
 
 ↓
 
@@ -190,38 +211,107 @@ Module Manager
 
 Target Module
 
-This guarantees security and loose coupling.
+Direct module-to-module communication is permanently prohibited.
 
 ==============================================================================
 
-## 9. PLATFORM EXPANSION
+## 9. MODULE LOADING WORKFLOW
 
-Future modules can be added without modifying ORBIS Core.
+User
 
-Examples:
+↓
 
-Agriculture
+Platform Dashboard
 
-Accounting
+↓
 
-Retail
+Select Module
 
-Healthcare
+↓
 
-Education
+Module Manager
 
-Manufacturing
+↓
 
-Analytics
+Permission Validation
 
-Future Modules
+↓
+
+Load Module
+
+↓
+
+Open Workspace
 
 ==============================================================================
 
-## 10. LONG TERM OBJECTIVE
+## 10. MODULE EXPANSION
 
-Build a self-managing module ecosystem where ORBIS Core acts as the
-orchestrator while every business module remains independent.
+Future modules can be connected without modifying ORBIS Core.
+
+Examples
+
+• Farmer Brain
+
+• DigiLedger
+
+• Dairy ERP
+
+• Retail ERP
+
+• Healthcare ERP
+
+• Education ERP
+
+• Manufacturing ERP
+
+• Analytics
+
+• Future Modules
+
+==============================================================================
+
+## 11. FOUNDATION RULES
+
+The following rules are permanently locked.
+
+RULE-01
+
+ORBIS Core remains independent.
+
+RULE-02
+
+Every module is a LEGO component.
+
+RULE-03
+
+Modules never communicate directly.
+
+RULE-04
+
+Every module must register through Module Manager.
+
+RULE-05
+
+Removing one module must never affect another module.
+
+RULE-06
+
+Business logic always stays inside its own module.
+
+RULE-07
+
+Platform services are shared.
+
+Business data is isolated.
+
+==============================================================================
+
+## 12. LONG TERM OBJECTIVE
+
+Build a self-managing module ecosystem where ORBIS Core acts as the AI
+Orchestrator while every business module remains completely independent,
+replaceable and scalable.
 
 ==============================================================================
 
@@ -229,10 +319,11 @@ STATUS
 
 APPROVED
 
-Module Manager Locked
+Module Manager Architecture Locked
 
 Next Document
 
 M-005_User_Workspace.md
 
 ==============================================================================
+END OF DOCUMENT
