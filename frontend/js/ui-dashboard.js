@@ -2,19 +2,19 @@
 /**
  * UI Dashboard Module: Manages engineering cockpit telemetry tracking, 
  * active process visualization, and automated diagnostics mapping.
- * * PHASE 9.1 EXTENSION - Universal Copy Cards, Outside Click Close, Dynamic Panels
+ * * FINAL POLISH - Centered Modals, Human Readable Copy, Robust Mobile Touch Close
  */
 window.Dashboard = {
     startTime: Date.now(),
     lastEventTimestamp: 0,
-    latestTelemetrySnapshot: null, // Stores the latest data for copy/export
+    latestTelemetrySnapshot: null, 
     
     init: function() {
         this.startUptimeCounter();
         this.setupCardInteractions();
         this.setupLogFilters();
         this.initLiveTelemetryLoop(); 
-        this.setupOutsideClickToClose(); // 🟢 NEW: Outside click listener for UX
+        this.setupOutsideClickToClose(); 
         window.printLog('OK', 'Dashboard Diagnostic System Live.');
     },
 
@@ -25,41 +25,33 @@ window.Dashboard = {
         }, 1000);
     },
 
-    // 🟢 🚨 SMART DIAGNOSTIC: Background Click Detector to Close Dashboard
+    // 🟢 🚨 ফিক্স ১: মোবাইলের টাচ ইভেন্ট (touchstart) সাপোর্ট যুক্ত করা হলো
     setupOutsideClickToClose: function() {
-        document.addEventListener('click', (e) => {
-            // Prevent closing if we are interacting with an open pop-up modal
-            if (e.target.closest('.orbis-modal')) return;
-
-            // Find the main cockpit header by text
-            const cockpitHeader = Array.from(document.querySelectorAll('*')).find(el => 
-                el.innerText && (el.innerText.includes('DIAGNOSTIC COCKPIT') || el.textContent.includes('DIAGNOSTIC COCKPIT'))
-            );
-            
-            if (cockpitHeader) {
-                // Find the absolute/fixed wrapper container
-                const mainContainer = cockpitHeader.closest('div[style*="fixed"], div[style*="absolute"]') || cockpitHeader.parentElement.parentElement;
+        ['click', 'touchstart'].forEach(evt => {
+            document.addEventListener(evt, (e) => {
+                const sidebar = document.getElementById('dev-sidebar');
+                if (!sidebar) return;
                 
-                // If the click is completely outside the dashboard wrapper
-                if (mainContainer && !mainContainer.contains(e.target)) {
-                    // Prevent closing if clicking a nav toggle or header button outside
-                    if(e.target.closest('header, nav, button') && !e.target.closest('div[style*="fixed"]')) return;
+                const isOpen = sidebar.style.display !== 'none' && sidebar.offsetWidth > 0;
+                if (!isOpen) return;
+                
+                if (!sidebar.contains(e.target) && 
+                    !e.target.closest('.mobile-menu-btn') && 
+                    !e.target.closest('.orbis-modal')) {
                     
-                    // Find the 'X' button inside the dashboard and trigger its click
-                    const crossBtn = mainContainer.querySelector('button, .text-danger, i');
-                    if (crossBtn && (crossBtn.innerText.includes('×') || crossBtn.innerHTML.includes('times'))) {
-                        crossBtn.click();
+                    if (typeof window.toggleSidebar === 'function') {
+                        window.toggleSidebar();
+                    } else if (typeof toggleSidebar === 'function') {
+                        toggleSidebar();
                     }
                 }
-            }
+            });
         });
     },
 
-    // 🟢 🚨 NEW: Dynamic Injection of Phase 9.1 Telemetry Panels
     injectPhase9Panels: function() {
         if(document.getElementById('phase9-panels-injected')) return;
         
-        // Find CENTRAL LOGS panel to insert the new panels right above it
         const logsPanel = Array.from(document.querySelectorAll('.panel')).find(p => p.innerText.includes('CENTRAL LOGS'));
         if(!logsPanel) return;
         
@@ -88,7 +80,7 @@ window.Dashboard = {
         `;
         
         logsPanel.parentNode.insertBefore(wrapper, logsPanel);
-        this.setupCardInteractions(); // Re-bind clicks for new panels
+        this.setupCardInteractions(); 
     },
 
     initLiveTelemetryLoop: function() {
@@ -99,9 +91,7 @@ window.Dashboard = {
                 if(response.ok && result.success) {
                     this.updateCockpitUI(result.telemetry);
                 }
-            } catch(e) {
-                // Silent bypass
-            }
+            } catch(e) {}
         }, 5000);
 
         window.globalEventBus?.on('MemoryRestored', (history) => {
@@ -112,21 +102,18 @@ window.Dashboard = {
 
     updateCockpitUI: function(telemetry) {
         if (!telemetry) return;
-        this.latestTelemetrySnapshot = telemetry; // Store for export/copy functionality
+        this.latestTelemetrySnapshot = telemetry; 
 
-        // 🟢 Phase 9.1: Auto-generate new panels if engineering data is present
         if (telemetry.engineering_inspector || telemetry.memory_health) {
             this.injectPhase9Panels();
         }
 
-        // 1. Original Updates (Ping, RAM)
         const uiFields = document.querySelectorAll('.panel-body div');
         if(uiFields && uiFields.length >= 4) {
             if(telemetry.apiPing) uiFields[2].innerHTML = `PING<br><strong>${telemetry.apiPing} ms</strong>`;
             if(telemetry.ramUsage) uiFields[3].innerHTML = `RAM<br><strong>${telemetry.ramUsage} MB</strong>`;
         }
 
-        // 2. Original Updates (Execution Bus)
         const pathNodes = document.querySelectorAll('.execution-path span, .panel-body span');
         if(pathNodes && telemetry.lastRoute) {
             pathNodes.forEach(node => {
@@ -140,7 +127,6 @@ window.Dashboard = {
             });
         }
 
-        // 3. 🟢 Phase 9.1 Data Binding
         if (telemetry.engineering_inspector) {
             const reqEl = document.getElementById('ui-insp-req');
             if(reqEl) reqEl.innerText = telemetry.engineering_inspector.active_requests || 0;
@@ -173,8 +159,20 @@ window.Dashboard = {
         return false;
     },
 
+    // 🟢 ফিক্স ৪: JSON কোডকে মানুষের পড়ার মতো সুন্দর টেক্সটে রূপান্তর করার ফাংশন
+    formatHumanText: function(dataObj) {
+        if (!dataObj) return "No data available.";
+        if (typeof dataObj === 'string') return dataObj.replace(/[{}"\[\]]/g, '').trim();
+        
+        let readableText = "";
+        for (let key in dataObj) {
+            let cleanKey = key.replace(/_/g, ' ').toUpperCase();
+            readableText += `▪ ${cleanKey}: ${dataObj[key]}\n`;
+        }
+        return readableText.trim();
+    },
+
     setupCardInteractions: function() {
-        // Find panels that don't have a click listener yet to prevent multiple firings
         const panels = document.querySelectorAll('.panel:not(.has-click-listener)');
         panels.forEach(panel => {
             panel.classList.add('has-click-listener');
@@ -182,25 +180,31 @@ window.Dashboard = {
                 if(e.target.closest('.log-controls') || e.target.closest('.filter-badge')) return;
                 
                 const header = panel.querySelector('.panel-header')?.innerText.trim() || 'System Details';
-                const originalContent = panel.innerHTML; 
                 
-                // 🟢 NEW: Gather raw data for the copy textarea
-                let rawDataText = panel.innerText.replace(header, '').trim();
+                // 🟢 ফিক্স ৩: ডাবল লগ সরানো হলো। লগের ক্ষেত্রে অরিজিনাল কন্টেন্ট আর দেখানো হবে না।
+                let originalContent = header.includes('LOGS') ? '' : panel.innerHTML; 
+                let rawDataObj = panel.innerText.replace(header, '').trim();
                 
                 if (header.includes('LOGS')) {
-                    rawDataText = document.querySelector('.terminal')?.innerText || rawDataText;
+                    rawDataObj = document.querySelector('.terminal')?.innerText || "Log stream empty.";
                 } else if (this.latestTelemetrySnapshot) {
-                    // Extract rich JSON data if available
-                    if (header.includes('INSPECTOR')) rawDataText = JSON.stringify(this.latestTelemetrySnapshot.engineering_inspector, null, 2);
-                    else if (header.includes('HEALTH')) rawDataText = JSON.stringify(this.latestTelemetrySnapshot.memory_health, null, 2);
-                    else if (header.includes('EXECUTION')) rawDataText = JSON.stringify(this.latestTelemetrySnapshot.architecture_analyzer || {status: "Tracking active execution paths"}, null, 2);
+                    if (header.includes('INSPECTOR')) rawDataObj = this.latestTelemetrySnapshot.engineering_inspector;
+                    else if (header.includes('HEALTH')) rawDataObj = this.latestTelemetrySnapshot.memory_health;
+                    else if (header.includes('EXECUTION')) rawDataObj = this.latestTelemetrySnapshot.architecture_analyzer;
+                    else if (header.includes('TELEMETRY')) rawDataObj = {
+                        Build: document.getElementById('sys-env')?.innerText,
+                        Uptime: document.getElementById('sys-uptime')?.innerText,
+                        Ping: this.latestTelemetrySnapshot.apiPing || 'N/A',
+                        RAM: this.latestTelemetrySnapshot.ramUsage || 'N/A'
+                    };
                 }
 
-                // 🟢 NEW: Universal Copy Action block for deep analysis
+                const cleanTextToCopy = this.formatHumanText(rawDataObj);
+
                 const extraTools = `
-                    <div style="margin-top:15px; border-top:1px dashed var(--border, #ccc); padding-top:15px;">
-                        <textarea class="copy-log-area" style="width:100%; height:150px; font-family:monospace; font-size:0.75rem; background:#f8fafc; padding:10px; border:1px solid var(--border, #ccc); border-radius:4px; margin-bottom:10px;" readonly>${rawDataText}</textarea>
-                        <button onclick="navigator.clipboard.writeText(this.previousElementSibling.value); this.innerText='✅ COPIED TO CLIPBOARD!'; this.style.background='var(--green, green)';" style="width:100%; padding:10px; background:var(--navy-blue, #1e3a8a); color:white; border:none; border-radius:4px; font-weight:bold; cursor:pointer; transition:0.3s;">📋 COPY FULL DATA</button>
+                    <div style="${header.includes('LOGS') ? '' : 'margin-top:15px; border-top:1px dashed #ccc; padding-top:15px;'}">
+                        <textarea class="copy-log-area" style="width:100%; height:160px; font-family:monospace; font-size:0.8rem; background:#f8fafc; padding:12px; border:1px solid #cbd5e1; border-radius:6px; margin-bottom:12px; color:#334155; line-height:1.5;" readonly>${cleanTextToCopy}</textarea>
+                        <button onclick="navigator.clipboard.writeText(this.previousElementSibling.value); this.innerText='✅ COPIED SUCCESSFULLY!'; this.style.background='#10b981';" style="width:100%; padding:12px; background:#1e3a8a; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer; transition:0.3s;">📋 COPY FULL DATA</button>
                     </div>
                 `;
                 
@@ -209,45 +213,20 @@ window.Dashboard = {
         });
     },
 
+    // 🟢 ফিক্স ২: পপআপ এখন স্ক্রিনের একদম মাঝখানে (Centered) আসবে
     showMinimalModal: function(title, content) {
         const modal = document.createElement('div');
-        modal.className = 'orbis-modal'; // Added for outside click detection
-        modal.style = "position:fixed; top:5%; left:5%; width:90%; max-height:90vh; background:white; z-index:9999; border:1px solid #ccc; padding:20px; border-radius:8px; overflow-y:auto; box-shadow:0 4px 20px rgba(0,0,0,0.4); display:flex; flex-direction:column;";
+        modal.className = 'orbis-modal'; 
+        modal.style = "position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); width:92%; max-width:500px; max-height:85vh; background:white; z-index:99999; border:1px solid #e2e8f0; padding:20px; border-radius:12px; overflow-y:auto; box-shadow:0 15px 50px rgba(0,0,0,0.5); display:flex; flex-direction:column;";
         modal.innerHTML = `
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid var(--border, #ccc); padding-bottom:10px;">
-                <h3 style="color:var(--navy-blue, #1e3a8a); margin:0;">${title}</h3>
-                <button onclick="this.parentElement.parentElement.remove()" style="background:none; border:none; font-size:1.5rem; color:var(--red, red); cursor:pointer; font-weight:bold;">×</button>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #e2e8f0; padding-bottom:12px;">
+                <h3 style="color:#1e3a8a; margin:0; font-size:1rem; font-weight:bold;">${title}</h3>
+                <button onclick="this.parentElement.parentElement.remove()" style="background:none; border:none; font-size:1.5rem; color:#ef4444; cursor:pointer; font-weight:bold; line-height:1;">×</button>
             </div>
             <div style="flex:1;">${content}</div>
         `;
         document.body.appendChild(modal);
         if(title.includes('LIVE LOGS')) this.setupLogFilters(); 
-    },
-
-    setupLogFilters: function() {
-        const badges = document.querySelectorAll('.filter-badge');
-        badges.forEach(badge => {
-            badge.addEventListener('click', (e) => {
-                badges.forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
-                this.applyLogFilter(e.target.getAttribute('data-filter'));
-            });
-        });
-    },
-
-    applyLogFilter: function(filter) {
-        const logs = document.querySelectorAll('.log-line');
-        logs.forEach(log => {
-            if (filter === 'ALL') {
-                log.style.display = 'block';
-            } else {
-                if (log.innerText.toUpperCase().includes(filter.toUpperCase())) {
-                    log.style.display = 'block';
-                } else {
-                    log.style.display = 'none';
-                }
-            }
-        });
     }
 };
 
