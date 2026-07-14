@@ -1,7 +1,8 @@
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { getTelemetryData, logRequest } from './brain/telemetry.js';
+// 🟢 আপডেট: addLog যুক্ত করা হয়েছে যাতে ড্যাশবোর্ডের লগবুক ডেটা পায়
+import { getTelemetryData, logRequest, addLog } from './brain/telemetry.js';
 import { BrainController } from './brain/BrainController.js'; 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -25,6 +26,11 @@ const logSystemEvent = (level, source, message) => {
     } else {
         console.log(formattedLog);
     }
+    
+    // 🟢 আপডেট: এই লাইনটির জন্যই এখন আপনার ড্যাশবোর্ডের কালো লগবক্স কাজ করবে
+    try {
+        addLog(level, `[${source}] ${message}`);
+    } catch(e) {}
 };
 
 // 🔥 PERMANENT CACHE KILLER

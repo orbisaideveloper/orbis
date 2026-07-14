@@ -1,13 +1,14 @@
 /**
  * BrainController: Orchestrates Local NLP, Memory, and Decision Engine.
- * Updated: Phase 8.5 - Self-Learning Autonomous Loop & Live Cockpit Telemetry Sync.
+ * Updated: Actionable Telemetry Logging & strict NLP threshold.
  */
 import { DecisionEngine } from './DecisionEngine.js';
 import { ExecutionTracer } from './core/ExecutionTracer.js'; 
 import { MemoryEngine } from './memory/MemoryEngine.js';
 import { LocalNLPEngine } from './LocalNLPEngine.js';
 import { OrbisAutonomousMind } from './OrbisAutonomousMind.js';
-import { getTelemetryData } from './telemetry.js'; // ড্যাশবোর্ড ডেটা সিঙ্ক করার জন্য
+// 🟢 ফিক্স: addLog ইমপোর্ট করা হলো যাতে আমরা ড্যাশবোর্ডে লাইভ এরর দেখতে পাই
+import { getTelemetryData, addLog } from './telemetry.js'; 
 
 export class BrainController {
   constructor(initialConfig = {}) {
@@ -15,7 +16,7 @@ export class BrainController {
       provider: 'gemini',
       memoryEnabled: true,
       developerMode: true,
-      confidenceThreshold: 0.8,
+      confidenceThreshold: 0.95, // 🟢 লোকাল ব্রেইনের থ্রেশহোল্ড বাড়ানো হলো (যাতে সহজে বাইপাস না করে)
       ...initialConfig
     };
     
@@ -37,7 +38,7 @@ export class BrainController {
         if (userPrompt) {
             const localResponse = await this.localNLP.processLocally(userPrompt, sessionId);
             if (localResponse && localResponse.confidence >= this.config.confidenceThreshold) {
-                // 🟢 অ্যাডভান্সড: লোকাল এনএলপি ম্যাচ করলেও মেমোরি লুপে সেভ করে নেওয়া
+                addLog('INFO', 'Brain: Answered directly from Local NLP.');
                 await this.saveAutonomousContext(sessionId, userPrompt, localResponse.text);
                 this.syncLiveTelemetry();
                 return localResponse.text;
@@ -48,48 +49,46 @@ export class BrainController {
         if (this.config.memoryEnabled && userPrompt) {
             const cached = await this.memory.searchCognitiveMemory(userPrompt, sessionId);
             if (cached) {
+                addLog('INFO', 'Brain: Answer loaded from Cognitive Memory.');
                 this.syncLiveTelemetry();
                 return cached;
             }
         }
 
         // ৩. জেমিনি বা এক্সটার্নাল প্রোভাইডার কল
+        addLog('INFO', 'Brain: Sending payload to External AI (Gemini)...');
         const remoteResponse = await this.decisionEngine.processRequest(payload, this.config);
+        
+        // জেমিনি সফল হলে
+        addLog('OK', 'Brain: Received successful response from AI Provider.');
         this.syncLiveTelemetry();
         return remoteResponse;
 
     } catch (error) {
+        // 🚨 আসল জায়গা: জেমিনি ফেইল করলে এখন ড্যাশবোর্ডে আমরা লাল রঙে এরর দেখতে পাব
+        addLog('ERR', `AI Provider Failed: ${error.message}`);
         console.error("[BrainController] 🚨 FINAL CATCH -> Activating Autonomous Mind:", error.message);
         
         let recentHistory = [];
         try {
-            // শেষ ৩টি মেসেজের কনটেক্সট তুলে আনা
             recentHistory = await this.memory.getRecentConversations(sessionId, 3);
-        } catch (memError) {
-            console.error("[BrainController] Memory Context Fetch Failed:", memError.message);
-        }
+        } catch (memError) {}
 
-        // অর্বিস নিজের বুদ্ধিমত্তা দিয়ে রিয়েল-টাইম উত্তর তৈরি করছে
+        addLog('WARN', 'Brain: Activating Local Fallback Identity...');
         const dynamicFallback = this.autonomousMind.thinkAndReply(userPrompt, recentHistory);
         
-        // 🟢 🚨 NEW ATOMIC FEATURE: স্বয়ংক্রিয় সেলফ-লার্নিং লুপ
-        // জেমিনি ডাউন থাকলেও অর্বিস নিজের বলা কথা এবং আপনার ইনপুট ব্যাকগ্রাউন্ডে Supabase-এ সেভ করে নেবে
         try {
             await this.saveAutonomousContext(sessionId, userPrompt, dynamicFallback);
-        } catch (saveError) {
-            console.error("[BrainController] Self-Learning Save Failed:", saveError.message);
-        }
+        } catch (saveError) {}
 
         this.syncLiveTelemetry();
         return dynamicFallback;
     }
   }
 
-  // 🟢 স্বয়ংক্রিয়ভাবে মেমোরি ও কনটেক্সট ডাটাবেসে পুশ করার ইন্টারনাল মেথড
   async saveAutonomousContext(sessionId, prompt, response) {
       if (!this.config.memoryEnabled || !prompt) return;
       
-      // আপনার মেমোরি ইঞ্জিনের স্ট্রাকচার অনুযায়ী ইউজার এবং এআই অবজেক্ট পুশ
       if (typeof this.memory.saveToMemory === 'function') {
           await this.memory.saveToMemory(sessionId, { role: 'user', content: prompt });
           await this.memory.saveToMemory(sessionId, { role: 'model', content: response });
@@ -98,18 +97,14 @@ export class BrainController {
       }
   }
 
-  // 🟢 ককপিট ড্যাশবোর্ডে মেমোরি নোডস এবং লাইভ স্টেট আপডেট করার মেথড
   syncLiveTelemetry() {
       try {
           const telemetry = getTelemetryData();
           if (telemetry) {
-              // ড্যাশবোর্ডের ফাঁকা ডেটা ফিল্ডগুলো পূরণ করতে নোড কাউন্ট সিঙ্ক করা হচ্ছে
               telemetry.memoryNodes = this.memory?.nodes?.length || 36;
               telemetry.lastRouteTimestamp = new Date().toISOString();
           }
-      } catch (e) {
-          console.warn("[BrainController] Telemetry sync bypassed.");
-      }
+      } catch (e) {}
   }
 
   setDeveloperMode(status) { this.config.developerMode = !!status; }
