@@ -6,8 +6,9 @@ Document Name    : Identity & Authentication System
 Project          : ORBIS
 Category         : Modules Foundation
 Status           : APPROVED
-Version          : 1.0
+Version          : 1.1
 Created On       : 15 July 2026
+Last Updated     : 15 July 2026
 Created Time     : IST (Asia/Kolkata)
 Architecture     : LEGO Modular Platform
 Project Owner    : Ajay Saha
@@ -21,11 +22,12 @@ Next Document    : M-003_Platform_Dashboard.md
 
 ## 1. PURPOSE
 
-This document defines the Universal Identity and Authentication architecture
+This document defines the Universal Identity and Authentication Architecture
 for the ORBIS Platform.
 
-Every person interacting with any ORBIS module will use one permanent ORBIS
-Identity.
+Every person interacting with any ORBIS module will have one permanent
+ORBIS Identity. Every business module shares the same identity while keeping
+its own business data isolated.
 
 ==============================================================================
 
@@ -39,7 +41,7 @@ One ORBIS Identity
 
 ↓
 
-One ORBIS User ID
+One Permanent ORBIS User ID
 
 ↓
 
@@ -47,27 +49,29 @@ One Universal Profile
 
 ↓
 
-Unlimited Modules
+Unlimited Business Modules
 
 ==============================================================================
 
 ## 3. PRIMARY LOGIN IDENTIFIER
 
-The primary login identifier is:
+Primary Login Identifier
 
 • Mobile Number (Mandatory)
 
-Additional information:
+Additional Profile Information
 
 • Name (Mandatory)
 
 • Email (Optional)
 
+• Profile Photo (Optional)
+
 • Password (Optional)
 
-Future versions:
+Future Authentication Methods
 
-• OTP Login
+• OTP
 
 • Google Login
 
@@ -75,45 +79,54 @@ Future versions:
 
 • Passkey
 
+• Biometric Authentication
+
 ==============================================================================
 
 ## 4. ORBIS USER ID
 
-Every registered user receives one permanent ORBIS User ID.
+Every identity receives one permanent ORBIS User ID.
 
-Characteristics:
+Characteristics
 
-• Generated only once
+• Generated automatically
+
+• Created only once
 
 • Never changes
 
-• Used internally by all modules
-
 • Hidden from normal users
+
+• Shared by every authorized module
 
 ==============================================================================
 
 ## 5. MOBILE NUMBER POLICY
 
-The mobile number is:
+The Mobile Number is the user's primary login identifier.
 
-• Unique
+Rules
 
-• Mandatory
+• Must be unique
 
-• Used for Login
+• Used during Login
 
-• Used for Verification
+• Used during Verification
 
-The mobile number may change in the future.
+• May be updated later
 
-Changing the mobile number never changes the ORBIS User ID.
+Changing the Mobile Number never changes the ORBIS User ID.
 
 ==============================================================================
 
 ## 6. UNIVERSAL CUSTOMER NETWORK
 
-Whenever any module creates a customer:
+Whenever any ORBIS module creates a customer, the platform first checks the
+mobile number.
+
+Flow
+
+Customer Created
 
 ↓
 
@@ -121,17 +134,13 @@ Mobile Number
 
 ↓
 
-Check Existing Identity
+Identity Exists?
 
 ↓
 
-If Exists
+YES → Reuse Existing ORBIS User ID
 
-Use Existing ORBIS User ID
-
-If Not Exists
-
-Create New ORBIS Identity
+NO → Create New ORBIS Identity
 
 This allows every customer to become a future ORBIS user without creating
 duplicate identities.
@@ -140,9 +149,9 @@ duplicate identities.
 
 ## 7. UNIVERSAL PROFILE
 
-Every ORBIS user owns one universal profile.
+Every identity owns one universal profile.
 
-Contains:
+The profile stores
 
 • Name
 
@@ -150,21 +159,26 @@ Contains:
 
 • Email
 
-• Language
-
 • Profile Photo
 
-• Country
+• Language
 
-• Installed Modules
-
-Business data is NOT stored here.
 
 ==============================================================================
 
 ## 8. MODULE CONNECTION
 
-One Identity
+All ORBIS business modules share the same identity layer.
+
+Identity
+
+↓
+
+ORBIS Core
+
+↓
+
+Module Manager
 
 ↓
 
@@ -186,8 +200,9 @@ Retail
 
 Future Modules
 
-Every module shares the same ORBIS Identity while keeping business data
-isolated.
+Identity is shared.
+
+Business Data remains isolated.
 
 ==============================================================================
 
@@ -195,47 +210,257 @@ isolated.
 
 Identity is centralized.
 
-Permissions are decentralized.
+Permissions are module-specific.
 
-Users only access:
+Users can access only:
 
 • Their own profile
 
-• Their authorized modules
+• Their own business records
 
-• Their own business data
+• Their authorized modules
 
 No module can access another module's private business data without explicit
 authorization.
 
 ==============================================================================
 
-## 10. FUTURE EXPANSION
+## 10. IDENTITY LIFECYCLE
 
-Future authentication methods:
+Every ORBIS Identity follows one permanent lifecycle.
+
+Create
+
+↓
+
+Verify
+
+↓
+
+Activate
+
+↓
+
+Update
+
+↓
+
+Suspend
+
+↓
+
+Recover
+
+↓
+
+Archive
+
+--------------------------------------------------------------------
+
+Create
+
+A new ORBIS Identity is created only once.
+
+The system first checks whether the mobile number already exists.
+
+If the identity already exists:
+
+Reuse the existing ORBIS User ID.
+
+If no identity exists:
+
+Create a new ORBIS Identity.
+
+--------------------------------------------------------------------
+
+Verify
+
+The identity must be verified before activation.
+
+Supported verification methods include:
 
 • OTP
 
-• Google
+• Password
 
-• Apple
+• Google Login
 
-• Biometric
+• Apple Login
 
-• Passkey
+• Future Authentication Providers
 
-These methods authenticate the same ORBIS Identity.
+--------------------------------------------------------------------
+
+Activate
+
+After successful verification, the identity becomes ACTIVE.
+
+The user can access all authorized ORBIS modules.
+
+--------------------------------------------------------------------
+
+Update
+
+Users may update:
+
+• Mobile Number
+
+• Email
+
+• Profile Photo
+
+• Language
+
+• Address
+
+• Personal Settings
+
+Updating profile information NEVER changes the ORBIS User ID.
+
+--------------------------------------------------------------------
+
+Suspend
+
+Accounts may be suspended due to:
+
+• User Request
+
+• Security Events
+
+• Administrative Action
+
+Business records always remain preserved.
+
+--------------------------------------------------------------------
+
+Recover
+
+Suspended identities may be recovered after successful verification.
+
+All previously authorized modules become available again.
+
+--------------------------------------------------------------------
+
+Archive
+
+Closed accounts enter Archive mode.
+
+Historical records remain protected according to the ORBIS data retention
+policy.
+
+The ORBIS User ID is never reused.
 
 ==============================================================================
 
-## STATUS
+## 11. FUTURE EXPANSION
+
+Future authentication methods include:
+
+• OTP
+
+• Google Login
+
+• Apple Login
+
+• Microsoft Login
+
+• Passkey
+
+• Face ID
+
+• Fingerprint
+
+• Future Authentication Providers
+
+All authentication methods point to the same ORBIS Identity.
+
+==============================================================================
+
+## 12. IDENTITY PRINCIPLES
+
+RULE-01
+
+One Person
+
+↓
+
+One ORBIS Identity
+
+RULE-02
+
+One Active Mobile Number
+
+↓
+
+One Active Identity
+
+RULE-03
+
+Every Identity owns one permanent ORBIS User ID.
+
+RULE-04
+
+Mobile Numbers may change.
+
+The ORBIS User ID never changes.
+
+RULE-05
+
+Business Modules share Identity only.
+
+Business Data always remains inside its own module.
+
+RULE-06
+
+Identity is centralized.
+
+Permissions are module-specific.
+
+RULE-07
+
+Archived identities are never reassigned to another person.
+
+RULE-08
+
+The ORBIS User ID is permanent for the lifetime of the identity.
+
+==============================================================================
+
+## CHANGELOG
+
+Version 1.1
+
+• Added Identity Lifecycle
+
+• Added Identity Verification Stage
+
+• Added Identity Activation Flow
+
+• Added Mobile Number Update Policy
+
+• Added Account Suspension Policy
+
+• Added Account Recovery Policy
+
+• Added Archive Policy
+
+• Added Permanent Identity Rules
+
+• Improved Universal Customer Network
+
+• Locked Identity Architecture
+
+==============================================================================
+
+STATUS
 
 APPROVED
 
-Identity Architecture Locked
+Identity & Authentication Architecture Locked
 
 Next Document
 
 M-003_Platform_Dashboard.md
 
 ==============================================================================
+END OF DOCUMENT
