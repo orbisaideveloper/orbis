@@ -2,7 +2,7 @@
 /**
  * UI Dashboard Module: Manages engineering cockpit telemetry tracking, 
  * active process visualization, and automated diagnostics mapping.
- * * FINAL POLISH - Centered Modals, Human Readable Copy, Robust Mobile Touch Close
+ * * PHASE 9.2: LocalStorage Logs, Live Dependency Tree, Touch Force Close
  */
 window.Dashboard = {
     startTime: Date.now(),
@@ -25,62 +25,21 @@ window.Dashboard = {
         }, 1000);
     },
 
-    // 🟢 🚨 ফিক্স ১: মোবাইলের টাচ ইভেন্ট (touchstart) সাপোর্ট যুক্ত করা হলো
+    // 🟢 ১. ফোর্স টাচ ক্লোজ: গ্লাস লেয়ার (Overlay) এর ওপর শক্তিশালী কন্ট্রোল
     setupOutsideClickToClose: function() {
-        ['click', 'touchstart'].forEach(evt => {
-            document.addEventListener(evt, (e) => {
-                const sidebar = document.getElementById('dev-sidebar');
-                if (!sidebar) return;
-                
-                const isOpen = sidebar.style.display !== 'none' && sidebar.offsetWidth > 0;
-                if (!isOpen) return;
-                
-                if (!sidebar.contains(e.target) && 
-                    !e.target.closest('.mobile-menu-btn') && 
-                    !e.target.closest('.orbis-modal')) {
-                    
+        const overlay = document.getElementById('dashboard-overlay');
+        if (overlay) {
+            ['click', 'touchstart'].forEach(evt => {
+                overlay.addEventListener(evt, (e) => {
+                    e.preventDefault(); // টাচ মিস হওয়া বন্ধ করবে
                     if (typeof window.toggleSidebar === 'function') {
                         window.toggleSidebar();
                     } else if (typeof toggleSidebar === 'function') {
                         toggleSidebar();
                     }
-                }
+                }, { passive: false });
             });
-        });
-    },
-
-    injectPhase9Panels: function() {
-        if(document.getElementById('phase9-panels-injected')) return;
-        
-        const logsPanel = Array.from(document.querySelectorAll('.panel')).find(p => p.innerText.includes('CENTRAL LOGS'));
-        if(!logsPanel) return;
-        
-        const wrapper = document.createElement('div');
-        wrapper.id = 'phase9-panels-injected';
-        wrapper.innerHTML = `
-            <div class="panel phase9-panel" style="margin-top: 15px; background: #fff; border: 1px solid var(--border, #eee); border-radius: 8px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); cursor: pointer;">
-                <div class="panel-header" style="font-weight: bold; color: var(--navy-blue, #1e3a8a); margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px;">
-                    🔍 ENGINEERING INSPECTOR
-                </div>
-                <div class="panel-body" style="font-size: 0.8rem; display: flex; justify-content: space-between;">
-                    <div>ACTIVE REQ: <br><strong id="ui-insp-req">0</strong></div>
-                    <div>LOAD: <br><strong id="ui-insp-load">LOW</strong></div>
-                    <div>PROVIDER: <br><strong id="ui-insp-prov">ONLINE</strong></div>
-                </div>
-            </div>
-            <div class="panel phase9-panel" style="background: #fff; border: 1px solid var(--border, #eee); border-radius: 8px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); cursor: pointer;">
-                <div class="panel-header" style="font-weight: bold; color: var(--navy-blue, #1e3a8a); margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px;">
-                    🩺 MEMORY HEALTH
-                </div>
-                <div class="panel-body" style="font-size: 0.8rem; display: flex; justify-content: space-between;">
-                    <div>STATUS: <br><strong id="ui-mem-status" style="color: green;">OPTIMAL</strong></div>
-                    <div>CACHE HIT: <br><strong id="ui-mem-cache">100%</strong></div>
-                </div>
-            </div>
-        `;
-        
-        logsPanel.parentNode.insertBefore(wrapper, logsPanel);
-        this.setupCardInteractions(); 
+        }
     },
 
     initLiveTelemetryLoop: function() {
@@ -95,23 +54,109 @@ window.Dashboard = {
         }, 5000);
 
         window.globalEventBus?.on('MemoryRestored', (history) => {
-            const nodeEl = document.getElementById('telemetry-nodes') || document.querySelector('[data-type="nodes"]');
+            const nodeEl = document.getElementById('telemetry-nodes') || document.getElementById('mem-nodes');
             if(nodeEl && history) nodeEl.innerText = history.length;
         });
+    },
+
+    // 🟢 ২. পার্মানেন্ট লগবুক: LocalStorage এবং কালার কোডিং লজিক
+    syncAndRenderLogs: function(serverLogs) {
+        if (!serverLogs || !Array.isArray(serverLogs)) return;
+        
+        let localLogs = JSON.parse(localStorage.getItem('orbis_logs') || '[]');
+        
+        serverLogs.forEach(log => {
+            let logStr = `[${log.time}] [${log.level}]: ${log.message}`;
+            // ডুপ্লিকেট চেক (যাতে একই লগ বারবার না আসে)
+            let isDuplicate = localLogs.slice(-20).some(l => l.includes(log.time) && l.includes(log.message));
+            if (!isDuplicate) {
+                localLogs.push(logStr);
+            }
+        });
+        
+        // ১০০ লগের রোলিং উইন্ডো (১০১ হলে প্রথমটা ডিলিট হবে)
+        if (localLogs.length > 100) localLogs = localLogs.slice(localLogs.length - 100);
+        localStorage.setItem('orbis_logs', JSON.stringify(localLogs));
+        
+        const logBox = document.getElementById('log-box');
+        if (logBox) {
+            logBox.innerHTML = localLogs.map(logStr => {
+                let color = '#f8fafc'; // ডিফল্ট সাদা
+                if (logStr.includes('[ERR]') || logStr.includes('FAILED') || logStr.includes('503')) color = '#ef4444'; // লাল
+                else if (logStr.includes('[WARN]') || logStr.includes('HIGH')) color = '#facc15'; // হলুদ
+                else if (logStr.includes('[OK]') || logStr.includes('ONLINE') || logStr.includes('Success')) color = '#10b981'; // সবুজ
+                else if (logStr.includes('[INFO]')) color = '#38bdf8'; // নীল
+                
+                return `<div style="color:${color}; padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.05);">${logStr}</div>`;
+            }).join('');
+            
+            logBox.scrollTop = logBox.scrollHeight; // স্ক্রল সবসময় নিচে রাখবে
+        }
     },
 
     updateCockpitUI: function(telemetry) {
         if (!telemetry) return;
         this.latestTelemetrySnapshot = telemetry; 
 
-        if (telemetry.engineering_inspector || telemetry.memory_health) {
-            this.injectPhase9Panels();
+        // লগ সিঙ্ক
+        if (telemetry.logs) this.syncAndRenderLogs(telemetry.logs);
+
+        // অরিজিনাল টেলিমেট্রি
+        if(telemetry.apiPing) {
+            const el = document.getElementById('net-ping');
+            if(el) el.innerText = `${telemetry.apiPing} ms`;
+        }
+        if(telemetry.ramUsage) {
+            const el = document.getElementById('sys-ram');
+            if(el) el.innerText = `${telemetry.ramUsage} MB`;
         }
 
-        const uiFields = document.querySelectorAll('.panel-body div');
-        if(uiFields && uiFields.length >= 4) {
-            if(telemetry.apiPing) uiFields[2].innerHTML = `PING<br><strong>${telemetry.apiPing} ms</strong>`;
-            if(telemetry.ramUsage) uiFields[3].innerHTML = `RAM<br><strong>${telemetry.ramUsage} MB</strong>`;
+        // 🟢 ৩. খাঁচায় প্রাণ: নতুন প্যানেলগুলোর লাইভ ডেটা আপডেট
+        if (telemetry.engineering_inspector) {
+            const req = telemetry.engineering_inspector.active_requests || 0;
+            document.getElementById('ui-insp-req').innerText = req;
+            document.getElementById('ui-insp-load').innerText = telemetry.engineering_inspector.load_status || 'LOW';
+            document.getElementById('ui-insp-load').style.color = telemetry.engineering_inspector.load_status === 'HIGH' ? '#facc15' : '#10b981';
+            
+            // ইকোনমি: টোকেন ক্যালকুলেশন (এস্টিমেটেড)
+            document.getElementById('token-used').innerText = req * 154; // Avg token per req
+            document.getElementById('token-cost').innerText = '$' + ((req * 154) * 0.00005).toFixed(4);
+        }
+
+        if (telemetry.provider_monitor) {
+            document.getElementById('ui-insp-prov').innerText = telemetry.provider_monitor.status || 'ONLINE';
+            document.getElementById('ui-insp-prov').style.color = telemetry.provider_monitor.status === 'OFFLINE' ? '#ef4444' : '#10b981';
+        }
+
+        // ল্যাটেন্সি সিমুলেশন (DB Speed)
+        if (telemetry.latency || telemetry.apiPing) {
+            const basePing = telemetry.apiPing || telemetry.latency || 45;
+            document.getElementById('db-read-ping').innerText = Math.max(12, basePing - 15) + ' ms';
+            document.getElementById('db-write-ping').innerText = (basePing + 10) + ' ms';
+        }
+
+        // 🟢 মাস্টারস্ট্রোক: লাইভ ভিজ্যুয়াল ডিপেনডেন্সি ট্রি
+        const treeCanvas = document.getElementById('dependency-tree-canvas');
+        if (treeCanvas) {
+            const activeBus = telemetry.lastRoute || 'CORE_ROUTER';
+            const status = telemetry.provider_monitor?.status || 'ONLINE';
+            
+            let treeHTML = `<div style="text-align:left; padding-left: 20px;">`;
+            treeHTML += `<div style="color: #38bdf8; margin-bottom:4px;">[⚙️] BrainController.js</div>`;
+            treeHTML += `<div style="border-left: 1px solid #475569; margin-left: 10px; padding-left: 10px;">`;
+            
+            if (activeBus.includes('Local') || status === 'OFFLINE') {
+                treeHTML += `<div style="color: #10b981; margin-bottom:4px;"> ├── [🧠] LocalNLPEngine (ACTIVE)</div>`;
+                treeHTML += `<div style="color: #64748b;"> └── [🌐] GeminiProvider (STANDBY)</div>`;
+            } else {
+                treeHTML += `<div style="color: #64748b; margin-bottom:4px;"> ├── [🧠] LocalNLPEngine (BYPASS)</div>`;
+                treeHTML += `<div style="color: #10b981;"> └── [🌐] GeminiProvider (ACTIVE)</div>`;
+                if (status === 'ERROR' || status === '503') {
+                    treeHTML += `<div style="color: #ef4444; margin-top:4px; font-weight:bold; animation: blinker 1s infinite;"> &nbsp;&nbsp;&nbsp;&nbsp; ⚠️ API_FAULT_DETECTED</div>`;
+                }
+            }
+            treeHTML += `</div></div>`;
+            treeCanvas.innerHTML = treeHTML;
         }
 
         const pathNodes = document.querySelectorAll('.execution-path span, .panel-body span');
@@ -126,40 +171,8 @@ window.Dashboard = {
                 }
             });
         }
-
-        if (telemetry.engineering_inspector) {
-            const reqEl = document.getElementById('ui-insp-req');
-            if(reqEl) reqEl.innerText = telemetry.engineering_inspector.active_requests || 0;
-        }
-        if (telemetry.brain_monitor) {
-            const loadEl = document.getElementById('ui-insp-load');
-            if(loadEl) loadEl.innerText = telemetry.brain_monitor.cognitive_load || 'LOW';
-        }
-        if (telemetry.provider_monitor) {
-            const provEl = document.getElementById('ui-insp-prov');
-            if(provEl) provEl.innerText = telemetry.provider_monitor.status || 'ONLINE';
-        }
-        if (telemetry.memory_health) {
-            const statusEl = document.getElementById('ui-mem-status');
-            if(statusEl) statusEl.innerText = telemetry.memory_health.status || 'OPTIMAL';
-        }
-        if (telemetry.cache_monitor) {
-            const cacheEl = document.getElementById('ui-mem-cache');
-            if(cacheEl) cacheEl.innerText = telemetry.cache_monitor.hit_ratio || '100%';
-        }
     },
 
-    checkDuplicateTrigger: function() {
-        const now = Date.now();
-        if (now - this.lastEventTimestamp < 500) { 
-            window.printLog('ERR', 'Anti-Loop Triggered: Duplicate UI Event Blocked!');
-            return true;
-        }
-        this.lastEventTimestamp = now;
-        return false;
-    },
-
-    // 🟢 ফিক্স ৪: JSON কোডকে মানুষের পড়ার মতো সুন্দর টেক্সটে রূপান্তর করার ফাংশন
     formatHumanText: function(dataObj) {
         if (!dataObj) return "No data available.";
         if (typeof dataObj === 'string') return dataObj.replace(/[{}"\[\]]/g, '').trim();
@@ -177,26 +190,18 @@ window.Dashboard = {
         panels.forEach(panel => {
             panel.classList.add('has-click-listener');
             panel.addEventListener('click', (e) => {
-                if(e.target.closest('.log-controls') || e.target.closest('.filter-badge')) return;
+                // Ignore clicks on specific inner elements
+                if(e.target.closest('.log-controls') || e.target.closest('.filter-badge') || e.target.closest('input') || e.target.closest('button')) return;
                 
                 const header = panel.querySelector('.panel-header')?.innerText.trim() || 'System Details';
-                
-                // 🟢 ফিক্স ৩: ডাবল লগ সরানো হলো। লগের ক্ষেত্রে অরিজিনাল কন্টেন্ট আর দেখানো হবে না।
                 let originalContent = header.includes('LOGS') ? '' : panel.innerHTML; 
                 let rawDataObj = panel.innerText.replace(header, '').trim();
                 
                 if (header.includes('LOGS')) {
                     rawDataObj = document.querySelector('.terminal')?.innerText || "Log stream empty.";
                 } else if (this.latestTelemetrySnapshot) {
-                    if (header.includes('INSPECTOR')) rawDataObj = this.latestTelemetrySnapshot.engineering_inspector;
-                    else if (header.includes('HEALTH')) rawDataObj = this.latestTelemetrySnapshot.memory_health;
-                    else if (header.includes('EXECUTION')) rawDataObj = this.latestTelemetrySnapshot.architecture_analyzer;
-                    else if (header.includes('TELEMETRY')) rawDataObj = {
-                        Build: document.getElementById('sys-env')?.innerText,
-                        Uptime: document.getElementById('sys-uptime')?.innerText,
-                        Ping: this.latestTelemetrySnapshot.apiPing || 'N/A',
-                        RAM: this.latestTelemetrySnapshot.ramUsage || 'N/A'
-                    };
+                    if (header.includes('INSPECTOR') || header.includes('DIAGNOSTICS')) rawDataObj = this.latestTelemetrySnapshot.engineering_inspector || this.latestTelemetrySnapshot.memory_health;
+                    else if (header.includes('TELEMETRY')) rawDataObj = { Ping: this.latestTelemetrySnapshot.apiPing, RAM: this.latestTelemetrySnapshot.ramUsage };
                 }
 
                 const cleanTextToCopy = this.formatHumanText(rawDataObj);
@@ -213,7 +218,6 @@ window.Dashboard = {
         });
     },
 
-    // 🟢 ফিক্স ২: পপআপ এখন স্ক্রিনের একদম মাঝখানে (Centered) আসবে
     showMinimalModal: function(title, content) {
         const modal = document.createElement('div');
         modal.className = 'orbis-modal'; 
@@ -226,7 +230,6 @@ window.Dashboard = {
             <div style="flex:1;">${content}</div>
         `;
         document.body.appendChild(modal);
-        if(title.includes('LIVE LOGS')) this.setupLogFilters(); 
     }
 };
 
