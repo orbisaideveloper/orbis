@@ -1,7 +1,7 @@
 // frontend/js/ui-dashboard.js
 /**
  * UI Dashboard Module
- * * PHASE 10.3: Full-Scale Architectural Schema & Popup Data Fix
+ * * PHASE 10.5: JSON Log Fix, Double Copy Fix, Anti-Blur & Modal Stacking Fix
  */
 window.Dashboard = {
     startTime: Date.now(),
@@ -119,7 +119,6 @@ window.Dashboard = {
             if(writeEl) writeEl.innerText = (basePing + 10) + ' ms';
         }
 
-        // 🟢 ফুল-স্কেল আর্কিটেকচারাল ট্রি অ্যানিমেশন
         const treeCanvas = document.getElementById('dependency-tree-canvas');
         if (treeCanvas) {
             const activeBus = telemetry.lastRoute || 'CORE_ROUTER';
@@ -131,10 +130,7 @@ window.Dashboard = {
             treeHTML += `<div style="color: #64748b;"> └── [🚦] Express Router</div>`;
             treeHTML += `<div style="color: #38bdf8; font-weight: bold;"> &nbsp;&nbsp;&nbsp;&nbsp;└── [⚙️] BrainController (CORE)</div>`;
             
-            // Memory Branch
             treeHTML += `<div style="color: #a78bfa;"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── [💾] Supabase Memory (${memNodes} Nodes)</div>`;
-            
-            // Engine Branch
             treeHTML += `<div style="color: #94a3b8;"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── [⚡] Cognitive Switch</div>`;
             
             if (activeBus.includes('Local') || status === 'OFFLINE' || status === 'ERROR' || status === '503') {
@@ -153,15 +149,29 @@ window.Dashboard = {
         }
     },
 
+    // 🟢 ফিক্স ১: জেসন (JSON) ফরম্যাট ভেঙে সুন্দর হিউম্যান রিডেবল লগবুক বানানো
     formatHumanText: function(dataObj) {
         if (!dataObj) return "No data available.";
         if (typeof dataObj === 'string') return dataObj.replace(/[{}"\[\]]/g, '').trim();
+        
         let readableText = "";
         for (let key in dataObj) {
             let cleanKey = key.replace(/_/g, ' ').toUpperCase();
-            // Object হলে JSON স্ট্রিং করে দেখানো
-            let val = typeof dataObj[key] === 'object' ? JSON.stringify(dataObj[key]) : dataObj[key];
-            readableText += `▪ ${cleanKey}: ${val}\n`;
+            let val = dataObj[key];
+
+            // যদি ডেটাটি Logs Array হয়, তবে লাইন বাই লাইন ফরম্যাট করবে
+            if ((key === 'logs' || key === 'LOGS') && Array.isArray(val)) {
+                readableText += `▪ ${cleanKey}:\n`;
+                val.forEach(l => {
+                    let t = l.time || '--:--:--';
+                    let lvl = l.level || 'INFO';
+                    let msg = l.message || JSON.stringify(l);
+                    readableText += `  [${t}] [${lvl}]: ${msg}\n`;
+                });
+            } else {
+                let finalVal = typeof val === 'object' ? JSON.stringify(val) : val;
+                readableText += `▪ ${cleanKey}: ${finalVal}\n`;
+            }
         }
         return readableText.trim();
     },
@@ -180,7 +190,6 @@ window.Dashboard = {
                 let header = card.querySelector('.panel-header')?.innerText.trim() || card.querySelector('div[style*="font-weight: bold"]')?.innerText.trim() || 'System Details';
                 let rawDataObj = "";
                 
-                // 🟢 ডেটা ম্যাপিং ফিক্স
                 if (header.includes('LOGS')) {
                     rawDataObj = document.querySelector('.terminal')?.innerText || "Log stream empty.";
                 } else if (this.latestTelemetrySnapshot) {
@@ -188,7 +197,7 @@ window.Dashboard = {
                     else if (header.includes('HEALTH')) rawDataObj = this.latestTelemetrySnapshot.memory_health || "No Memory Data";
                     else if (header.includes('TOKENS')) rawDataObj = { Active_Requests: this.latestTelemetrySnapshot.engineering_inspector?.active_requests || 0 };
                     else if (header.includes('SPEED')) rawDataObj = { Read: document.getElementById('db-read-ping')?.innerText, Write: document.getElementById('db-write-ping')?.innerText };
-                    else if (header.includes('DEPENDENCY') || header.includes('VISUAL')) rawDataObj = this.latestTelemetrySnapshot; // 🟢 পুরো JSON ডেটা দেখাবে
+                    else if (header.includes('DEPENDENCY') || header.includes('VISUAL')) rawDataObj = this.latestTelemetrySnapshot; 
                     else if (header.includes('EXECUTION')) rawDataObj = this.latestTelemetrySnapshot.architecture_analyzer || "No Routing Data";
                     else if (header.includes('SUPABASE') || header.includes('MEMORY BUS')) rawDataObj = { Sync: "OK", Nodes: this.latestTelemetrySnapshot.memoryNodes || 0, Route: this.latestTelemetrySnapshot.lastRoute || "N/A" };
                     else rawDataObj = this.latestTelemetrySnapshot || "Data fetching in progress...";
@@ -205,23 +214,42 @@ window.Dashboard = {
                     </div>
                 `;
                 
-                this.showMinimalModal(header, card.innerHTML.includes('copy-log-area') ? "" : card.innerHTML + extraTools);
+                // 🟢 ফিক্স ২: ডাবল কপি দূর করা হলো। যদি LOGS হয়, তবে শুধু extraTools দেখাবে।
+                let contentToShow = header.includes('LOGS') ? extraTools : (card.innerHTML + extraTools);
+                this.showMinimalModal(header, contentToShow);
             });
         });
     },
 
+    // 🟢 ফিক্স ৩ ও ৪: Anti-Blur Flexbox এবং Modal Stacking প্রতিরোধ
     showMinimalModal: function(title, content) {
+        // ফিক্স ৪: নতুন পপআপ তৈরির আগে পুরোনোটা ডিলিট করে দেবে
+        const existing = document.getElementById('active-orbis-modal');
+        if(existing) existing.remove();
+
+        const overlay = document.createElement('div');
+        overlay.id = 'active-orbis-modal';
+        // ফিক্স ৩: Flexbox ব্যবহার করে সেন্টারিং এবং অ্যান্টি-এলিয়াসিং
+        overlay.style = "position:fixed; inset:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:99999; display:flex; justify-content:center; align-items:center; backdrop-filter:blur(2px); -webkit-font-smoothing:antialiased;";
+
         const modal = document.createElement('div');
-        modal.className = 'orbis-modal'; 
-        modal.style = "position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); width:92%; max-width:500px; max-height:85vh; background:white; z-index:99999; border:1px solid #e2e8f0; padding:20px; border-radius:12px; overflow-y:auto; box-shadow:0 15px 50px rgba(0,0,0,0.5); display:flex; flex-direction:column;";
+        modal.style = "width:92%; max-width:500px; max-height:85vh; background:white; padding:20px; border-radius:12px; box-shadow:0 15px 50px rgba(0,0,0,0.5); display:flex; flex-direction:column; overflow:hidden;";
+
         modal.innerHTML = `
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #e2e8f0; padding-bottom:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #e2e8f0; padding-bottom:12px; flex-shrink:0;">
                 <h3 style="color:#1e3a8a; margin:0; font-size:1rem; font-weight:bold;">${title}</h3>
-                <button onclick="this.parentElement.parentElement.remove()" style="background:none; border:none; font-size:1.5rem; color:#ef4444; cursor:pointer; font-weight:bold; line-height:1;">×</button>
+                <button onclick="document.getElementById('active-orbis-modal').remove()" style="background:none; border:none; font-size:1.5rem; color:#ef4444; cursor:pointer; font-weight:bold; line-height:1;">×</button>
             </div>
-            <div style="flex:1;">${content}</div>
+            <div style="flex:1; overflow-y:auto; -webkit-font-smoothing:antialiased;">${content}</div>
         `;
-        document.body.appendChild(modal);
+
+        // পপআপের বাইরের কালো অংশে ক্লিক করলেও পপআপ বন্ধ হয়ে যাবে
+        overlay.addEventListener('click', (e) => {
+            if(e.target === overlay) overlay.remove();
+        });
+
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
     }
 };
 
