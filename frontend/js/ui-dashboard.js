@@ -1,7 +1,7 @@
 // frontend/js/ui-dashboard.js
 /**
  * UI Dashboard Module
- * * PHASE 10.2: Sub-card Click Fix & Payload Interceptor
+ * * PHASE 10.3: Full-Scale Architectural Schema & Popup Data Fix
  */
 window.Dashboard = {
     startTime: Date.now(),
@@ -71,8 +71,8 @@ window.Dashboard = {
         if (!telemetry) return;
         this.latestTelemetrySnapshot = telemetry; 
 
-        // 🟢 সার্ভার কী পাঠাচ্ছে, তা হাতেনাতে ধরার জন্য কনসোল ট্র্যাকার
-        console.log("📦 RAW PAYLOAD RECEIVED FROM SERVER:", telemetry);
+        // Raw payload tracker
+        console.log("📦 RAW PAYLOAD RECEIVED:", telemetry);
 
         if (telemetry.logs) this.syncAndRenderLogs(telemetry.logs);
 
@@ -119,28 +119,36 @@ window.Dashboard = {
             if(writeEl) writeEl.innerText = (basePing + 10) + ' ms';
         }
 
+        // 🟢 ফুল-স্কেল আর্কিটেকচারাল ট্রি অ্যানিমেশন
         const treeCanvas = document.getElementById('dependency-tree-canvas');
         if (treeCanvas) {
             const activeBus = telemetry.lastRoute || 'CORE_ROUTER';
             const status = (telemetry.provider_monitor && telemetry.provider_monitor.status) || 'ONLINE';
+            const memNodes = telemetry.memoryNodes || 0;
             
-            let treeHTML = `<div style="text-align:left; padding-left: 20px;">`;
-            treeHTML += `<div style="color: #38bdf8; margin-bottom:4px;">[⚙️] BrainController.js</div>`;
-            treeHTML += `<div style="border-left: 1px solid #475569; margin-left: 10px; padding-left: 10px;">`;
+            let treeHTML = `<div style="text-align:left; padding-left: 5px; line-height: 1.5; font-size: 0.65rem;">`;
+            treeHTML += `<div style="color: #cbd5e1;">[👤] Client Interface</div>`;
+            treeHTML += `<div style="color: #64748b;"> └── [🚦] Express Router</div>`;
+            treeHTML += `<div style="color: #38bdf8; font-weight: bold;"> &nbsp;&nbsp;&nbsp;&nbsp;└── [⚙️] BrainController (CORE)</div>`;
+            
+            // Memory Branch
+            treeHTML += `<div style="color: #a78bfa;"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── [💾] Supabase Memory (${memNodes} Nodes)</div>`;
+            
+            // Engine Branch
+            treeHTML += `<div style="color: #94a3b8;"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── [⚡] Cognitive Switch</div>`;
             
             if (activeBus.includes('Local') || status === 'OFFLINE' || status === 'ERROR' || status === '503') {
-                treeHTML += `<div style="color: #10b981; margin-bottom:4px;"> ├── [🧠] LocalNLPEngine (ACTIVE)</div>`;
-                treeHTML += `<div style="color: #64748b;"> └── [🌐] GeminiProvider (STANDBY)</div>`;
+                treeHTML += `<div style="color: #10b981; font-weight:bold;"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── [🧠] LocalNLPEngine (ACTIVE)</div>`;
+                treeHTML += `<div style="color: #475569;"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── [☁️] GeminiProvider (STANDBY)</div>`;
+                if (status === 'OFFLINE' || status === 'ERROR' || status === '503') {
+                    treeHTML += `<div style="color: #ef4444; margin-top:2px; font-weight:bold; animation: blinker 1s infinite;"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;⚠️ API_FAULT_DETECTED</div>`;
+                }
             } else {
-                treeHTML += `<div style="color: #64748b; margin-bottom:4px;"> ├── [🧠] LocalNLPEngine (BYPASS)</div>`;
-                treeHTML += `<div style="color: #10b981;"> └── [🌐] GeminiProvider (ACTIVE)</div>`;
+                treeHTML += `<div style="color: #475569;"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── [🧠] LocalNLPEngine (BYPASS)</div>`;
+                treeHTML += `<div style="color: #10b981; font-weight:bold;"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── [☁️] GeminiProvider (ACTIVE)</div>`;
             }
 
-            if (status === 'ERROR' || status === '503' || activeBus.includes('Fallback')) {
-                 treeHTML += `<div style="color: #ef4444; margin-top:4px; font-weight:bold; animation: blinker 1s infinite;"> &nbsp;&nbsp;&nbsp;&nbsp; ⚠️ API_FAULT_DETECTED</div>`;
-            }
-
-            treeHTML += `</div></div>`;
+            treeHTML += `</div>`;
             treeCanvas.innerHTML = treeHTML;
         }
     },
@@ -151,14 +159,14 @@ window.Dashboard = {
         let readableText = "";
         for (let key in dataObj) {
             let cleanKey = key.replace(/_/g, ' ').toUpperCase();
-            readableText += `▪ ${cleanKey}: ${dataObj[key]}\n`;
+            // Object হলে JSON স্ট্রিং করে দেখানো
+            let val = typeof dataObj[key] === 'object' ? JSON.stringify(dataObj[key]) : dataObj[key];
+            readableText += `▪ ${cleanKey}: ${val}\n`;
         }
         return readableText.trim();
     },
 
-    // 🟢 পপআপ ফিক্স: মূল প্যানেল এবং ভেতরের সাব-বক্সগুলোকেও ক্লিকযোগ্য করা হলো
     setupCardInteractions: function() {
-        // Find panels AND the inner styled div cards
         const clickableCards = document.querySelectorAll('.panel:not(.has-click-listener), .panel div[style*="border-radius: 4px"]:not(.has-click-listener)');
         
         clickableCards.forEach(card => {
@@ -167,12 +175,12 @@ window.Dashboard = {
             
             card.addEventListener('click', (e) => {
                 if(e.target.closest('.log-controls') || e.target.closest('.filter-badge') || e.target.closest('input') || e.target.closest('button')) return;
-                
-                e.stopPropagation(); // 🟢 ক্লিক যেন ভেতরের বক্স থেকে বাইরের বক্সে না ছড়ায়
+                e.stopPropagation(); 
                 
                 let header = card.querySelector('.panel-header')?.innerText.trim() || card.querySelector('div[style*="font-weight: bold"]')?.innerText.trim() || 'System Details';
                 let rawDataObj = "";
                 
+                // 🟢 ডেটা ম্যাপিং ফিক্স
                 if (header.includes('LOGS')) {
                     rawDataObj = document.querySelector('.terminal')?.innerText || "Log stream empty.";
                 } else if (this.latestTelemetrySnapshot) {
@@ -180,8 +188,12 @@ window.Dashboard = {
                     else if (header.includes('HEALTH')) rawDataObj = this.latestTelemetrySnapshot.memory_health || "No Memory Data";
                     else if (header.includes('TOKENS')) rawDataObj = { Active_Requests: this.latestTelemetrySnapshot.engineering_inspector?.active_requests || 0 };
                     else if (header.includes('SPEED')) rawDataObj = { Read: document.getElementById('db-read-ping')?.innerText, Write: document.getElementById('db-write-ping')?.innerText };
-                    else if (header.includes('TELEMETRY')) rawDataObj = { Ping: this.latestTelemetrySnapshot.apiPing, RAM: this.latestTelemetrySnapshot.ramUsage };
-                    else rawDataObj = "Detailed metrics active.";
+                    else if (header.includes('DEPENDENCY') || header.includes('VISUAL')) rawDataObj = this.latestTelemetrySnapshot; // 🟢 পুরো JSON ডেটা দেখাবে
+                    else if (header.includes('EXECUTION')) rawDataObj = this.latestTelemetrySnapshot.architecture_analyzer || "No Routing Data";
+                    else if (header.includes('SUPABASE') || header.includes('MEMORY BUS')) rawDataObj = { Sync: "OK", Nodes: this.latestTelemetrySnapshot.memoryNodes || 0, Route: this.latestTelemetrySnapshot.lastRoute || "N/A" };
+                    else rawDataObj = this.latestTelemetrySnapshot || "Data fetching in progress...";
+                } else {
+                    rawDataObj = "Awaiting Server Telemetry...";
                 }
 
                 const cleanTextToCopy = this.formatHumanText(rawDataObj);
