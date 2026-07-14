@@ -1,13 +1,13 @@
 /**
  * BrainController: Orchestrates Local NLP, Memory, and Decision Engine.
- * Updated: Actionable Telemetry Logging & strict NLP threshold.
+ * Refactored: Phase 9.0 - Integrated with Unified MemoryInterface.
  */
 import { DecisionEngine } from './DecisionEngine.js';
 import { ExecutionTracer } from './core/ExecutionTracer.js'; 
-import { MemoryEngine } from './memory/MemoryEngine.js';
+// 🟢 ফিক্স: MemoryEngine-এর বদলে আমাদের নতুন মাস্টার গেটওয়ে MemoryInterface আনা হলো
+import { MemoryInterface } from './memory/MemoryInterface.js'; 
 import { LocalNLPEngine } from './LocalNLPEngine.js';
 import { OrbisAutonomousMind } from './OrbisAutonomousMind.js';
-// 🟢 ফিক্স: addLog ইমপোর্ট করা হলো যাতে আমরা ড্যাশবোর্ডে লাইভ এরর দেখতে পাই
 import { getTelemetryData, addLog } from './telemetry.js'; 
 
 export class BrainController {
@@ -16,11 +16,12 @@ export class BrainController {
       provider: 'gemini',
       memoryEnabled: true,
       developerMode: true,
-      confidenceThreshold: 0.95, // 🟢 লোকাল ব্রেইনের থ্রেশহোল্ড বাড়ানো হলো (যাতে সহজে বাইপাস না করে)
+      confidenceThreshold: 0.95, 
       ...initialConfig
     };
     
-    this.memory = new MemoryEngine();
+    // 🟢 ব্রেইন এখন সরাসরি গেটওয়ের সাথে কথা বলবে
+    this.memory = new MemoryInterface();
     this.localNLP = new LocalNLPEngine();
     this.autonomousMind = new OrbisAutonomousMind();
 
@@ -45,9 +46,10 @@ export class BrainController {
             }
         }
 
-        // ২. মেমোরি চেক
+        // ২. মেমোরি চেক (Unified API)
         if (this.config.memoryEnabled && userPrompt) {
-            const cached = await this.memory.searchCognitiveMemory(userPrompt, sessionId);
+            // 🟢 API স্ট্যান্ডার্ড অনুযায়ী আর্গুমেন্ট পাঠানো হচ্ছে
+            const cached = await this.memory.searchCognitiveMemory(sessionId, userPrompt);
             if (cached) {
                 addLog('INFO', 'Brain: Answer loaded from Cognitive Memory.');
                 this.syncLiveTelemetry();
@@ -59,19 +61,22 @@ export class BrainController {
         addLog('INFO', 'Brain: Sending payload to External AI (Gemini)...');
         const remoteResponse = await this.decisionEngine.processRequest(payload, this.config);
         
-        // জেমিনি সফল হলে
         addLog('OK', 'Brain: Received successful response from AI Provider.');
+        
+        // 🟢 সফল হলে নতুন ইন্টারফেস দিয়ে সেভ করা
+        await this.saveAutonomousContext(sessionId, userPrompt, remoteResponse);
+        
         this.syncLiveTelemetry();
         return remoteResponse;
 
     } catch (error) {
-        // 🚨 আসল জায়গা: জেমিনি ফেইল করলে এখন ড্যাশবোর্ডে আমরা লাল রঙে এরর দেখতে পাব
         addLog('ERR', `AI Provider Failed: ${error.message}`);
         console.error("[BrainController] 🚨 FINAL CATCH -> Activating Autonomous Mind:", error.message);
         
         let recentHistory = [];
         try {
-            recentHistory = await this.memory.getRecentConversations(sessionId, 3);
+            // 🟢 ইউনিফায়েড API ব্যবহার করা হলো
+            recentHistory = await this.memory.loadConversation(sessionId, 3);
         } catch (memError) {}
 
         addLog('WARN', 'Brain: Activating Local Fallback Identity...');
@@ -87,21 +92,18 @@ export class BrainController {
   }
 
   async saveAutonomousContext(sessionId, prompt, response) {
-      if (!this.config.memoryEnabled || !prompt) return;
+      if (!this.config.memoryEnabled || !prompt || !response) return;
       
-      if (typeof this.memory.saveToMemory === 'function') {
-          await this.memory.saveToMemory(sessionId, { role: 'user', content: prompt });
-          await this.memory.saveToMemory(sessionId, { role: 'model', content: response });
-      } else if (typeof this.memory.storeConversation === 'function') {
-          await this.memory.storeConversation(sessionId, prompt, response);
-      }
+      // 🟢 লিগ্যাসি চেকের ঝামেলা বাদ দিয়ে সরাসরি ইউনিফায়েড API কল
+      const textResponse = typeof response === 'string' ? response : JSON.stringify(response);
+      await this.memory.saveConversation(sessionId, prompt, textResponse);
   }
 
   syncLiveTelemetry() {
       try {
           const telemetry = getTelemetryData();
           if (telemetry) {
-              telemetry.memoryNodes = this.memory?.nodes?.length || 36;
+              telemetry.memoryNodes = this.memory.nodes?.length || 0;
               telemetry.lastRouteTimestamp = new Date().toISOString();
           }
       } catch (e) {}

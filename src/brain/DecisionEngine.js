@@ -6,9 +6,16 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+/**
+ * DecisionEngine: Core Routing and Fallback logic.
+ * Refactored: Integrated Unified MemoryInterface for context loading.
+ */
 export class DecisionEngine {
   constructor() {
     this.provider = new GeminiProvider();
+    
+    // 🟢 BrainController থেকে MemoryInterface এখানে ইনজেক্ট হবে
+    this.memory = null; 
     
     this.intents = {
       system_status: /পরিস্থিতি|স্ট্রাকচার|স্ট্যাটাস|status|system/i,
@@ -23,6 +30,7 @@ export class DecisionEngine {
   async processRequest(input, config = {}) {
     try {
       const text = input.content.toLowerCase().trim();
+      const sessionId = input.sessionId || 'default_user';
 
       if (!text) return "[ORBIS Core]: আপনার ইনপুটটি ফাঁকা। দয়া করে কিছু লিখুন।";
 
@@ -64,10 +72,19 @@ export class DecisionEngine {
           if (this.intents.identity.test(text)) return "[ORBIS Core]: আমি ORBIS (Universal AI Engineering Platform)।";
       }
 
+      // 🟢 🚨 MEMORY INTEGRATION: জেমিনির কাছে যাওয়ার আগে ইউনিফাইড API ব্যবহার করে পুরোনো কথাগুলো (Context) ইনপুটের সাথে জুড়ে দেওয়া হলো
+      if (this.memory && config.memoryEnabled) {
+          try {
+              input.history = await this.memory.loadConversation(sessionId, 6);
+          } catch (e) {
+              console.warn("[DecisionEngine] Memory Context load bypassed.");
+          }
+      }
+
       // 🤖 এক্সটার্নাল প্রোভাইডার (Gemini) কল
       const response = await this.provider.execute(input);
       
-      // 🟢 🚨 স্মার্ট ফিক্স: প্রোভাইডার যদি এরর গিলে ফেলে ভুয়া টেক্সট দেয়, তবে সেটাকে ধরে এরর হিসেবে Throw করো
+      // 🟢 স্মার্ট ফিক্স: প্রোভাইডার যদি এরর গিলে ফেলে ভুয়া টেক্সট দেয়, তবে সেটাকে ধরে এরর হিসেবে Throw করো
       if (typeof response === 'string' && (response.includes('Quota Overload') || response.includes('দুঃখিত, গুগলের সার্ভারে'))) {
           throw new Error("Provider Quota Overload API Limit Reached.");
       }
@@ -77,7 +94,7 @@ export class DecisionEngine {
     } catch (error) {
       console.error("[DecisionEngine Error]:", error);
       
-      // 🟢 🚨 মাস্টার ফিক্স: আগে এখানে return ছিল বলে ব্রেইন ফলব্যাক করত না। এখন throw করায় ব্রেইন কন্ট্রোলার ঠিকমতো কাজ করবে।
+      // মাস্টার ফিক্স: আগে এখানে return ছিল বলে ব্রেইন ফলব্যাক করত না। এখন throw করায় ব্রেইন কন্ট্রোলার ঠিকমতো কাজ করবে।
       throw error;
     }
   }

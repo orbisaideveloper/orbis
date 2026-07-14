@@ -1,9 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
-import LZString from 'lz-string'; // 🟢 কমপ্রেশন লাইব্রেরি
+import LZString from 'lz-string'; 
 
 /**
- * MemoryRepository: Handles persistent storage operations.
- * Updated: Phase 7.8 - Added LZ-String Compression for 512MB optimization.
+ * MemoryRepository: Handles persistent storage operations (Supabase).
+ * Refactored: Strict Persistent Storage Layer (Directive 9.0).
  */
 export class MemoryRepository {
   constructor(dbClient = null) {
@@ -16,8 +16,11 @@ export class MemoryRepository {
     }
   }
 
-  // কম্প্রেশন হেল্পার
+  // =======================================================
+  // 🟢 COMPRESSION HELPERS
+  // =======================================================
   _compress(data) { return LZString.compressToUTF16(JSON.stringify(data)); }
+  
   _decompress(str) { 
       try { return JSON.parse(LZString.decompressFromUTF16(str)); } 
       catch(e) { return str; } 
@@ -34,7 +37,7 @@ export class MemoryRepository {
         .upsert({ 
             category, 
             memory_key: key, 
-            memory_value: this._compress(value), // 🟢 কম্প্রেসড
+            memory_value: this._compress(value), 
             updated_at: new Date() 
         });
       
@@ -57,7 +60,7 @@ export class MemoryRepository {
         .single();
         
       if (error || !data) return null;
-      return this._decompress(data.memory_value); // 🟢 ডিকম্প্রেসড
+      return this._decompress(data.memory_value);
     } catch (err) {
       return null;
     }
@@ -74,7 +77,7 @@ export class MemoryRepository {
         .insert([{ 
             session_id: sessionId, 
             role: role, 
-            content: this._compress(content) // 🟢 কম্প্রেসড
+            content: this._compress(content) 
         }]);
       
       if (error) throw error;
@@ -100,7 +103,7 @@ export class MemoryRepository {
 
       return data.reverse().map(row => ({
          role: row.role,
-         message: this._decompress(row.content), // 🟢 ডিকম্প্রেসড
+         message: this._decompress(row.content), 
          content: this._decompress(row.content),
          created_at: row.created_at 
       }));
