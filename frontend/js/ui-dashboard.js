@@ -1,8 +1,7 @@
 // frontend/js/ui-dashboard.js
 /**
  * UI Dashboard Module
- * * PHASE 10.1: Master-Slave Architecture (Slave Node)
- * This file ONLY handles UI updates and receives data from ui-telemetry.js
+ * * PHASE 10.2: Sub-card Click Fix & Payload Interceptor
  */
 window.Dashboard = {
     startTime: Date.now(),
@@ -23,7 +22,6 @@ window.Dashboard = {
         }, 1000);
     },
 
-    // 🟢 গ্যারান্টেড টাচ ক্লোজ লজিক
     setupOutsideClickToClose: function() {
         const overlay = document.getElementById('dashboard-overlay');
         if (overlay) {
@@ -34,28 +32,21 @@ window.Dashboard = {
                     if (sidebar) sidebar.style.display = 'none';
                     overlay.style.display = 'none';
                     
-                    if (typeof window.toggleSidebar === 'function') {
-                        window.toggleSidebar();
-                    } else if (typeof toggleSidebar === 'function') {
-                        toggleSidebar();
-                    }
+                    if (typeof window.toggleSidebar === 'function') window.toggleSidebar();
+                    else if (typeof toggleSidebar === 'function') toggleSidebar();
                 }, { passive: false });
             });
         }
     },
 
-    // 🟢 পার্মানেন্ট লগবুক: LocalStorage এবং কালার কোডিং লজিক
     syncAndRenderLogs: function(serverLogs) {
         if (!serverLogs || !Array.isArray(serverLogs)) return;
-        
         let localLogs = JSON.parse(localStorage.getItem('orbis_logs') || '[]');
         
         serverLogs.forEach(log => {
             let logStr = `[${log.time}] [${log.level}]: ${log.message}`;
             let isDuplicate = localLogs.slice(-20).some(l => l.includes(log.time) && l.includes(log.message));
-            if (!isDuplicate) {
-                localLogs.push(logStr);
-            }
+            if (!isDuplicate) localLogs.push(logStr);
         });
         
         if (localLogs.length > 100) localLogs = localLogs.slice(localLogs.length - 100);
@@ -72,15 +63,16 @@ window.Dashboard = {
                 
                 return `<div style="color:${color}; padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.05);">${logStr}</div>`;
             }).join('');
-            
             logBox.scrollTop = logBox.scrollHeight; 
         }
     },
 
-    // 🟢 এই ফাংশনটি এখন মাস্টার (ui-telemetry.js) থেকে কল হবে
     updateCockpitUI: function(telemetry) {
         if (!telemetry) return;
         this.latestTelemetrySnapshot = telemetry; 
+
+        // 🟢 সার্ভার কী পাঠাচ্ছে, তা হাতেনাতে ধরার জন্য কনসোল ট্র্যাকার
+        console.log("📦 RAW PAYLOAD RECEIVED FROM SERVER:", telemetry);
 
         if (telemetry.logs) this.syncAndRenderLogs(telemetry.logs);
 
@@ -95,26 +87,38 @@ window.Dashboard = {
 
         if (telemetry.engineering_inspector) {
             const req = telemetry.engineering_inspector.active_requests || 0;
-            document.getElementById('ui-insp-req').innerText = req;
-            document.getElementById('ui-insp-load').innerText = telemetry.engineering_inspector.load_status || 'LOW';
-            document.getElementById('ui-insp-load').style.color = telemetry.engineering_inspector.load_status === 'HIGH' ? '#facc15' : '#10b981';
+            const reqEl = document.getElementById('ui-insp-req');
+            if(reqEl) reqEl.innerText = req;
             
-            document.getElementById('token-used').innerText = req * 154; 
-            document.getElementById('token-cost').innerText = '$' + ((req * 154) * 0.00005).toFixed(4);
+            const loadEl = document.getElementById('ui-insp-load');
+            if(loadEl) {
+                loadEl.innerText = telemetry.engineering_inspector.load_status || 'LOW';
+                loadEl.style.color = telemetry.engineering_inspector.load_status === 'HIGH' ? '#facc15' : '#10b981';
+            }
+            
+            const usedEl = document.getElementById('token-used');
+            if(usedEl) usedEl.innerText = req * 154; 
+            
+            const costEl = document.getElementById('token-cost');
+            if(costEl) costEl.innerText = '$' + ((req * 154) * 0.00005).toFixed(4);
         }
 
         if (telemetry.provider_monitor) {
-            document.getElementById('ui-insp-prov').innerText = telemetry.provider_monitor.status || 'ONLINE';
-            document.getElementById('ui-insp-prov').style.color = telemetry.provider_monitor.status === 'OFFLINE' ? '#ef4444' : '#10b981';
+            const provEl = document.getElementById('ui-insp-prov');
+            if (provEl) {
+                provEl.innerText = telemetry.provider_monitor.status || 'ONLINE';
+                provEl.style.color = telemetry.provider_monitor.status === 'OFFLINE' ? '#ef4444' : '#10b981';
+            }
         }
 
         if (telemetry.latency || telemetry.apiPing) {
             const basePing = telemetry.apiPing || telemetry.latency || 45;
-            document.getElementById('db-read-ping').innerText = Math.max(12, basePing - 15) + ' ms';
-            document.getElementById('db-write-ping').innerText = (basePing + 10) + ' ms';
+            const readEl = document.getElementById('db-read-ping');
+            if(readEl) readEl.innerText = Math.max(12, basePing - 15) + ' ms';
+            const writeEl = document.getElementById('db-write-ping');
+            if(writeEl) writeEl.innerText = (basePing + 10) + ' ms';
         }
 
-        // 🟢 শক্তিশালী ডিপেনডেন্সি ট্রি লজিক
         const treeCanvas = document.getElementById('dependency-tree-canvas');
         if (treeCanvas) {
             const activeBus = telemetry.lastRoute || 'CORE_ROUTER';
@@ -139,25 +143,11 @@ window.Dashboard = {
             treeHTML += `</div></div>`;
             treeCanvas.innerHTML = treeHTML;
         }
-
-        const pathNodes = document.querySelectorAll('.execution-path span, .panel-body span');
-        if(pathNodes && telemetry.lastRoute) {
-            pathNodes.forEach(node => {
-                if(telemetry.lastRoute.includes(node.innerText)) {
-                    node.style.color = 'var(--green, green)';
-                    node.style.fontWeight = 'bold';
-                } else {
-                    node.style.color = '';
-                    node.style.fontWeight = '';
-                }
-            });
-        }
     },
 
     formatHumanText: function(dataObj) {
         if (!dataObj) return "No data available.";
         if (typeof dataObj === 'string') return dataObj.replace(/[{}"\[\]]/g, '').trim();
-        
         let readableText = "";
         for (let key in dataObj) {
             let cleanKey = key.replace(/_/g, ' ').toUpperCase();
@@ -166,18 +156,63 @@ window.Dashboard = {
         return readableText.trim();
     },
 
+    // 🟢 পপআপ ফিক্স: মূল প্যানেল এবং ভেতরের সাব-বক্সগুলোকেও ক্লিকযোগ্য করা হলো
     setupCardInteractions: function() {
-        const panels = document.querySelectorAll('.panel:not(.has-click-listener)');
-        panels.forEach(panel => {
-            panel.classList.add('has-click-listener');
-            panel.addEventListener('click', (e) => {
+        // Find panels AND the inner styled div cards
+        const clickableCards = document.querySelectorAll('.panel:not(.has-click-listener), .panel div[style*="border-radius: 4px"]:not(.has-click-listener)');
+        
+        clickableCards.forEach(card => {
+            card.classList.add('has-click-listener');
+            card.style.cursor = 'pointer'; 
+            
+            card.addEventListener('click', (e) => {
                 if(e.target.closest('.log-controls') || e.target.closest('.filter-badge') || e.target.closest('input') || e.target.closest('button')) return;
                 
-                const header = panel.querySelector('.panel-header')?.innerText.trim() || 'System Details';
-                let originalContent = header.includes('LOGS') ? '' : panel.innerHTML; 
-                let rawDataObj = panel.innerText.replace(header, '').trim();
+                e.stopPropagation(); // 🟢 ক্লিক যেন ভেতরের বক্স থেকে বাইরের বক্সে না ছড়ায়
+                
+                let header = card.querySelector('.panel-header')?.innerText.trim() || card.querySelector('div[style*="font-weight: bold"]')?.innerText.trim() || 'System Details';
+                let rawDataObj = "";
                 
                 if (header.includes('LOGS')) {
                     rawDataObj = document.querySelector('.terminal')?.innerText || "Log stream empty.";
                 } else if (this.latestTelemetrySnapshot) {
-                    if (header.includes('INSPECTOR') || header.includes('DIAGNOSTICS')) rawDataObj = this.latestTelemetrySnapshot.
+                    if (header.includes('INSPECTOR')) rawDataObj = this.latestTelemetrySnapshot.engineering_inspector || "No Inspector Data";
+                    else if (header.includes('HEALTH')) rawDataObj = this.latestTelemetrySnapshot.memory_health || "No Memory Data";
+                    else if (header.includes('TOKENS')) rawDataObj = { Active_Requests: this.latestTelemetrySnapshot.engineering_inspector?.active_requests || 0 };
+                    else if (header.includes('SPEED')) rawDataObj = { Read: document.getElementById('db-read-ping')?.innerText, Write: document.getElementById('db-write-ping')?.innerText };
+                    else if (header.includes('TELEMETRY')) rawDataObj = { Ping: this.latestTelemetrySnapshot.apiPing, RAM: this.latestTelemetrySnapshot.ramUsage };
+                    else rawDataObj = "Detailed metrics active.";
+                }
+
+                const cleanTextToCopy = this.formatHumanText(rawDataObj);
+
+                const extraTools = `
+                    <div style="${header.includes('LOGS') ? '' : 'margin-top:15px; border-top:1px dashed #ccc; padding-top:15px;'}">
+                        <textarea class="copy-log-area" style="width:100%; height:160px; font-family:monospace; font-size:0.8rem; background:#f8fafc; padding:12px; border:1px solid #cbd5e1; border-radius:6px; margin-bottom:12px; color:#334155; line-height:1.5;" readonly>${cleanTextToCopy}</textarea>
+                        <button onclick="navigator.clipboard.writeText(this.previousElementSibling.value); this.innerText='✅ COPIED SUCCESSFULLY!'; this.style.background='#10b981';" style="width:100%; padding:12px; background:#1e3a8a; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer; transition:0.3s;">📋 COPY FULL DATA</button>
+                    </div>
+                `;
+                
+                this.showMinimalModal(header, card.innerHTML.includes('copy-log-area') ? "" : card.innerHTML + extraTools);
+            });
+        });
+    },
+
+    showMinimalModal: function(title, content) {
+        const modal = document.createElement('div');
+        modal.className = 'orbis-modal'; 
+        modal.style = "position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); width:92%; max-width:500px; max-height:85vh; background:white; z-index:99999; border:1px solid #e2e8f0; padding:20px; border-radius:12px; overflow-y:auto; box-shadow:0 15px 50px rgba(0,0,0,0.5); display:flex; flex-direction:column;";
+        modal.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #e2e8f0; padding-bottom:12px;">
+                <h3 style="color:#1e3a8a; margin:0; font-size:1rem; font-weight:bold;">${title}</h3>
+                <button onclick="this.parentElement.parentElement.remove()" style="background:none; border:none; font-size:1.5rem; color:#ef4444; cursor:pointer; font-weight:bold; line-height:1;">×</button>
+            </div>
+            <div style="flex:1;">${content}</div>
+        `;
+        document.body.appendChild(modal);
+    }
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    window.Dashboard.init();
+});
