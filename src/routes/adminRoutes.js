@@ -19,12 +19,20 @@ let globalSystemState = {
     }
 };
 
+// ==========================================
+// 🟢 NEW (Priority 2): API ROUTE PROTECTION
+// ==========================================
 const adminAuth = (req, res, next) => {
-    const isAdmin = true; 
-    if (isAdmin) {
+    const token = req.headers['authorization'];
+    
+    // টোকেন ভ্যালিডেশন (ভবিষ্যতে JWT দিয়ে রিপ্লেস হবে)
+    const isValidAdmin = token === 'Bearer ORBIS_ADMIN_API_TOKEN' || token === 'ORBIS_ADMIN_API_TOKEN'; 
+
+    if (isValidAdmin) {
         next();
     } else {
-        res.status(403).json({ error: 'Forbidden: Admin access required.' });
+        console.warn(`[Security] Blocked unauthorized admin API access from ${req.ip}`);
+        res.status(403).json({ success: false, error: 'Forbidden: Admin authorization required.' });
     }
 };
 
@@ -79,12 +87,12 @@ router.get('/health', adminAuth, (req, res) => {
     });
 });
 
-// 🟢 NEW: Get Current System State for Admin Panel
+// 🟢 Get Current System State for Admin Panel
 router.get('/system-state', adminAuth, (req, res) => {
     res.json({ success: true, state: globalSystemState });
 });
 
-// 🟢 NEW: Update System Version (Publish)
+// 🟢 Update System Version (Publish)
 router.post('/publish-version', adminAuth, (req, res) => {
     const { newVersion } = req.body;
     if(newVersion) {
@@ -96,7 +104,7 @@ router.post('/publish-version', adminAuth, (req, res) => {
     }
 });
 
-// 🟢 NEW: Toggle Module Status
+// 🟢 Toggle Module Status
 router.post('/toggle-module', adminAuth, (req, res) => {
     const { moduleId, status } = req.body;
     if(globalSystemState.modules[moduleId] !== undefined) {

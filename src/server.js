@@ -6,9 +6,8 @@ import fs from 'fs';
 import { getTelemetryData, logRequest, addLog } from './brain/telemetry.js';
 import { BrainController } from './brain/BrainController.js'; 
 
-// 🟢 NEW: Admin রাউট ইম্পোর্ট করা হলো (Sprint-1)
+// 🟢 Admin রুট ইম্পোর্ট
 import adminRoutes from './routes/adminRoutes.js';
-// import authRoutes from './auth/authRoutes.js'; // Auth-এর কাজ পরে হবে
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -43,6 +42,27 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json());
+
+// ==========================================
+// 🟢 NEW (Priority 2): ADMIN ROUTE PROTECTION
+// সরাসরি URL টাইপ করে admin.html এ প্রবেশ বন্ধ করা হলো
+// ==========================================
+app.use('/admin.html', (req, res, next) => {
+    logSystemEvent('INFO', 'Security', `Admin page access attempt from ${req.ip}`);
+    
+    // ব্রাউজারের কুকি থেকে ভ্যালিডেশন চেক করা হচ্ছে
+    const cookieHeader = req.headers.cookie || '';
+    const hasAdminSession = cookieHeader.includes('orbis_admin_session=SECURE');
+    
+    if (hasAdminSession) {
+        next(); // ভ্যালিড হলে পেজ লোড হতে দেবে
+    } else {
+        logSystemEvent('WARN', 'Security', `Unauthorized access blocked for Admin Dashboard.`);
+        res.redirect('/admin/login'); // ভ্যালিড না হলে লগইন পেজে পাঠাবে
+    }
+});
+
+// স্ট্যাটিক ফোল্ডার সার্ভ করা
 app.use(express.static(path.join(__dirname, '../frontend'), { index: false }));
 
 const getAppVersion = () => {
@@ -68,13 +88,44 @@ app.get('/', (req, res) => {
 });
 
 // ==========================================
-// 🟢 NEW: ADMIN WORKSPACE ROUTE (Sprint-1)
+// 🟢 NEW (Priority 1): AUTH & IDENTITY SYSTEM
 // ==========================================
+app.post('/api/auth/login', (req, res) => {
+    const { mobile, password } = req.body;
+    logSystemEvent('INFO', 'Auth', `Login attempt for identity: ${mobile}`);
+
+    // [Mock] অ্যাডমিন ভ্যালিডেশন - ভবিষ্যতে ডেটাবেস দিয়ে পরিবর্তন হবে
+    if (mobile === 'admin' && password === 'admin123') { 
+        // সিকিউর কুকি সেট করা হচ্ছে (স্ট্যাটিক পেজ প্রোটেকশনের জন্য)
+        res.cookie('orbis_admin_session', 'SECURE', { httpOnly: true, maxAge: 30 * 24 * 60 * 60 * 1000 });
+        
+        res.status(200).json({ 
+            success: true, 
+            user: { uid: 'ADM_MASTER', mobile: mobile, role: 'ADMIN' },
+            token: 'ORBIS_ADMIN_API_TOKEN'
+        });
+    } else if (mobile) {
+        // রেগুলার ইউজার আইডেন্টিটি
+        res.status(200).json({ 
+            success: true, 
+            user: { uid: `USR_${Date.now()}`, mobile: mobile, role: 'USER' },
+            token: 'ORBIS_USER_API_TOKEN'
+        });
+    } else {
+        res.status(401).json({ success: false, message: "Invalid identity credentials" });
+    }
+});
+
+app.post('/api/auth/logout', (req, res) => {
+    res.clearCookie('orbis_admin_session');
+    res.status(200).json({ success: true, message: "Session cleared successfully" });
+});
+
+// 🟢 ADMIN WORKSPACE ROUTE
 app.get('/admin/login', (req, res) => {
     logSystemEvent('INFO', 'Router', 'Admin login page requested.');
     const adminPath = path.join(__dirname, '../frontend/admin.html');
     
-    // ফাইল থাকলে সার্ভ করবে, না থাকলে Coming Soon দেখাবে যাতে সিস্টেম ব্রেক না করে
     if (fs.existsSync(adminPath)) {
         res.sendFile(adminPath);
     } else {
@@ -82,11 +133,8 @@ app.get('/admin/login', (req, res) => {
     }
 });
 
-// ==========================================
-// 🟢 NEW: API ROUTES MOUNTING (Sprint-1)
-// ==========================================
-app.use('/api/admin', adminRoutes); // 🟢 অ্যাডমিন এপিআই কানেক্ট করা হলো
-// app.use('/api/auth', authRoutes); // Auth-এর কাজ পরে হবে
+// 🟢 API ROUTES MOUNTING
+app.use('/api/admin', adminRoutes);
 
 // 🟢 লাইভ পোলিং লুপ
 app.get('/api/telemetry', (req, res) => {
