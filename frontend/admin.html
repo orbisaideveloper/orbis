@@ -101,7 +101,7 @@
             <div class="stat-box" style="border-left-color: var(--saffron);">
                 <div class="stat-label">System Uptime</div>
                 <div class="stat-value" id="live-uptime">00:00:00</div>
-                <div class="stat-live">Running perfectly</div>
+                <div class="stat-live">Server Sync</div>
             </div>
         </div>
 
@@ -126,9 +126,34 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             if (window.ORBIS_ADMIN) {
+                
+                // 🟢 PHASE 1: FETCHING REAL BACKEND DATA FROM YOUR /health API
                 window.ORBIS_ADMIN.registerProvider('sys-metrics', async () => {
-                    return { success: true, data: { ram: 125 + Math.floor(Math.random() * 8), ping: 10 + Math.floor(Math.random() * 5), activeUsers: 1 } };
+                    try {
+                        const response = await fetch('/api/admin/health');
+                        const result = await response.json();
+                        
+                        if(result.status === 'OK') {
+                            // Node.js process.memoryUsage().rss gives bytes. Convert to MB:
+                            const ramMB = Math.round(result.memoryUsage.rss / (1024 * 1024));
+                            
+                            return { 
+                                success: true, 
+                                data: { 
+                                    ram: ramMB, 
+                                    ping: 12, // Database ping will be connected in Phase 2
+                                    activeUsers: 1, // Live Users will be dynamic in Phase 2
+                                    uptime: Math.floor(result.uptime)
+                                } 
+                            };
+                        }
+                        throw new Error('Health API Failed');
+                    } catch (error) {
+                        console.error("[ORBIS Network] Backend sync failed, retrying...");
+                        return { success: false, data: { ram: '--', ping: '--', activeUsers: '--', uptime: 0 } };
+                    }
                 });
+
                 startTelemetryPolling();
                 renderPlugins();
             } else {
@@ -166,8 +191,8 @@
             });
         }
 
-        // 🟢 TELEMETRY POLLING
-        let uptimeSeconds = 0;
+        // 🟢 TELEMETRY POLLING (Using Real Server Uptime)
+        let localUptimeSeconds = 0;
         function startTelemetryPolling() {
             setInterval(async () => {
                 const response = await window.ORBIS_ADMIN.fetchData('sys-metrics');
@@ -175,18 +200,19 @@
                     document.getElementById('live-ram').innerText = response.data.ram;
                     document.getElementById('live-ping').innerText = response.data.ping;
                     document.getElementById('live-users').innerText = response.data.activeUsers;
+                    
+                    // Sync uptime with actual Node.js server uptime
+                    let currentUptime = response.data.uptime || ++localUptimeSeconds;
+                    const h = Math.floor(currentUptime / 3600).toString().padStart(2, '0');
+                    const m = Math.floor((currentUptime % 3600) / 60).toString().padStart(2, '0');
+                    const s = (currentUptime % 60).toString().padStart(2, '0');
+                    document.getElementById('live-uptime').innerText = `${h}:${m}:${s}`;
                 }
-                uptimeSeconds++;
-                const h = Math.floor(uptimeSeconds / 3600).toString().padStart(2, '0');
-                const m = Math.floor((uptimeSeconds % 3600) / 60).toString().padStart(2, '0');
-                const s = (uptimeSeconds % 60).toString().padStart(2, '0');
-                document.getElementById('live-uptime').innerText = `${h}:${m}:${s}`;
             }, 1000);
         }
 
         // 🟢 DYNAMIC PANEL ROUTER
         function openPanel(pluginId) {
-            // 🟢 FIX: Handle Public Link instantly without opening a panel
             if (pluginId === 'plugin-public') {
                 window.location.href = '/';
                 return;
