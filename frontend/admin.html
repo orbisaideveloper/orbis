@@ -2,264 +2,146 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ORBIS Admin Workspace</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ORBIS Admin Command Center</title>
     <style>
-        /* =========================================================
-           আপনার অরিজিনাল CSS (কোনো পরিবর্তন করা হয়নি)
-           ========================================================= */
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1e293b; color: #f8fafc; margin: 0; padding: 0; display: flex; height: 100vh; }
-        .sidebar { width: 250px; background-color: #0f172a; padding: 20px; box-sizing: border-box; border-right: 1px solid #334155; }
-        .sidebar h2 { color: #3b82f6; font-size: 1.5rem; margin-top: 0; border-bottom: 1px solid #334155; padding-bottom: 10px; }
-        .nav-item { padding: 12px 15px; margin-bottom: 8px; border-radius: 6px; cursor: pointer; transition: background 0.2s; color: #94a3b8; font-weight: bold; }
-        .nav-item:hover, .nav-item.active { background-color: #3b82f6; color: white; }
-        
-        .main-content { flex: 1; padding: 30px; overflow-y: auto; background-color: #0f172a; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-        
-        .card { background-color: #1e293b; padding: 20px; border-radius: 8px; border: 1px solid #334155; }
-        .card h3 { margin-top: 0; color: #e2e8f0; font-size: 1.1rem; border-bottom: 1px solid #334155; padding-bottom: 10px; }
-        
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; color: #cbd5e1; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #334155; }
-        th { font-weight: bold; color: #94a3b8; }
-        
-        .btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: bold; }
-        .btn-green { background: #10b981; color: white; }
-        .btn-red { background: #ef4444; color: white; }
-        .btn-yellow { background: #f59e0b; color: white; }
-
-        /* =========================================================
-           ✨ নতুন সংযোজন: ট্যাব, মোবাইল রেস্পন্সিভ এবং ডাটা বক্স
-           ========================================================= */
-        /* Tab Switching Logic */
-        .tab-section { display: none; animation: fadeIn 0.3s ease-in; }
-        .tab-section.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Data Container for Logs and Tree (Scrollable inside card) */
-        .data-box { background-color: #0f172a; padding: 15px; border-radius: 6px; border: 1px solid #334155; font-family: monospace; font-size: 0.9rem; overflow-x: auto; margin-top: 10px; color: #94a3b8; line-height: 1.6; white-space: pre-wrap; }
-        .flex-between { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 15px; }
-        .flex-between h3 { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
-
-        /* Mobile Header */
-        .mobile-header { display: none; padding: 15px 20px; background-color: #0f172a; border-bottom: 1px solid #334155; align-items: center; justify-content: space-between; }
-        .mobile-header h2 { color: #3b82f6; margin: 0; font-size: 1.2rem; }
-        .menu-btn { background: none; border: 1px solid #3b82f6; color: #3b82f6; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-weight: bold; }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            body { flex-direction: column; overflow: hidden; }
-            .mobile-header { display: flex; }
-            
-            /* Sidebar becomes collapsible on mobile */
-            .sidebar { width: 100%; height: 0; padding: 0; overflow: hidden; border-right: none; transition: all 0.3s ease; }
-            .sidebar.open { height: auto; max-height: 50vh; overflow-y: auto; padding: 15px; border-bottom: 1px solid #334155; }
-            .sidebar h2 { display: none; } /* Hide duplicate title on mobile */
-            
-            .main-content { flex: 1; overflow-y: auto; padding: 15px; }
-            .header { flex-direction: column; align-items: flex-start; gap: 10px; }
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --accent-orange: #f59e0b;
         }
         
-        /* 🟢 FIX: Sidebar Scrolling for Desktop */
-        .sidebar { display: flex; flex-direction: column; }
-        .nav-list-wrapper { flex: 1; overflow-y: auto; overflow-x: hidden; margin-bottom: 20px; padding-right: 5px; }
-        /* Scrollbar Styling for Sidebar */
-        .nav-list-wrapper::-webkit-scrollbar { width: 4px; }
-        .nav-list-wrapper::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-dark); color: var(--text-main); margin: 0; padding: 0; overflow-x: hidden; }
+        
+        /* 🟢 Top Navigation */
+        .admin-nav { background: var(--bg-card); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; position: sticky; top: 0; z-index: 100; }
+        .admin-nav h1 { margin: 0; font-size: 1.2rem; color: var(--accent-blue); letter-spacing: 1px; }
+        .sys-status { font-size: 0.8rem; font-weight: bold; color: var(--accent-green); background: rgba(16, 185, 129, 0.1); padding: 4px 10px; border-radius: 20px; border: 1px solid var(--accent-green); }
+
+        /* 🟢 Main Dashboard Grid */
+        .dashboard-container { padding: 20px; max-width: 1200px; margin: 0 auto; transition: all 0.3s ease; }
+        .section-title { font-size: 1rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 15px; border-bottom: 1px dashed #334155; padding-bottom: 5px; }
+        
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        
+        .admin-card { background: var(--bg-card); border: 1px solid #334155; border-radius: 10px; padding: 20px 15px; text-align: center; cursor: pointer; transition: transform 0.2s, background 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 120px; }
+        .admin-card:hover { transform: translateY(-5px); background: #253347; border-color: var(--accent-blue); }
+        .card-icon { font-size: 2.5rem; margin-bottom: 10px; }
+        .card-title { font-size: 0.9rem; font-weight: bold; margin-bottom: 5px; }
+        .card-status { font-size: 0.7rem; color: var(--accent-green); font-family: monospace; }
+
+        /* 🟢 Detail Panel (Hidden by default) */
+        .detail-panel-container { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-dark); z-index: 200; flex-direction: column; }
+        .panel-header { background: var(--bg-card); padding: 10px 20px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid #334155; }
+        .btn-back { background: transparent; border: 1px solid var(--text-muted); color: var(--text-main); padding: 5px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .btn-back:hover { background: #334155; }
+        .panel-title { font-size: 1.1rem; font-weight: bold; color: var(--accent-blue); margin: 0; }
+        
+        .panel-content { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; }
+        
+        /* Placeholder for injected content */
+        .placeholder-box { border: 2px dashed #334155; border-radius: 8px; padding: 30px; text-align: center; color: var(--text-muted); font-family: monospace; margin-top: 20px; }
+
     </style>
 </head>
 <body>
 
-    <div class="mobile-header">
-        <h2>ORBIS ADMIN</h2>
-        <button class="menu-btn" onclick="toggleSidebar()">☰ MENU</button>
-    </div>
+    <header class="admin-nav">
+        <h1>⚙️ ORBIS ADMIN</h1>
+        <div class="sys-status">● ONLINE</div>
+    </header>
 
-    <div class="sidebar" id="sidebar">
-        <h2>ORBIS ADMIN</h2>
+    <div class="dashboard-container" id="main-dashboard">
         
-        <div class="nav-list-wrapper">
-            <div class="nav-item active" onclick="openTab('tab-health', this)">📊 Platform Health</div>
-            <div class="nav-item" onclick="openTab('tab-modules', this)">🧩 Module Manager</div>
-            <div class="nav-item" onclick="openTab('tab-diagnostics', this)">🔬 Diagnostics & X-Ray</div>
-            <div class="nav-item" onclick="openTab('tab-dependency', this)">🔗 Dependency Explorer</div>
-            <div class="nav-item" onclick="openTab('tab-execution', this)">⚡ Execution Bus</div>
-            <div class="nav-item" onclick="openTab('tab-memory', this)">💾 Memory Stream</div>
-            <div class="nav-item" onclick="openTab('tab-logs', this)">📋 Central Logs</div>
-            <div class="nav-item" onclick="openTab('tab-users', this)">👥 User Statistics</div>
-            <div class="nav-item" onclick="openTab('tab-config', this)">⚙️ Configuration</div>
+        <div class="section-title">Core Testing & Diagnostics</div>
+        <div class="card-grid">
+            <div class="admin-card" onclick="openPanel('panel-chat', '💬 AI Sandbox (Test Interface)')">
+                <div class="card-icon">💬</div>
+                <div class="card-title">AI Sandbox</div>
+                <div class="card-status">Active</div>
+            </div>
+            
+            <div class="admin-card" onclick="openPanel('panel-logs', '📜 Central System Logs')">
+                <div class="card-icon">📜</div>
+                <div class="card-title">Live Logs</div>
+                <div class="card-status" id="log-count">Monitoring...</div>
+            </div>
+
+            <div class="admin-card" onclick="openPanel('panel-tree', '🧬 Visual Dependency Tree')">
+                <div class="card-icon">🧬</div>
+                <div class="card-title">Logic Tree</div>
+                <div class="card-status">Active</div>
+            </div>
+
+            <div class="admin-card" onclick="openPanel('panel-telemetry', '📊 Hardware & DB Telemetry')">
+                <div class="card-icon">📊</div>
+                <div class="card-title">Telemetry</div>
+                <div class="card-status" style="color: var(--accent-orange)">Ping: 12ms</div>
+            </div>
         </div>
 
-        <div>
-            <div class="nav-item btn-yellow" style="text-align: center; color: #0f172a;" onclick="window.location.href='/?mode=preview'">👁️ Preview Public UI</div>
-            <div class="nav-item btn-red" style="text-align: center; color: white;" onclick="window.location.href='/'">🔙 Exit Admin Space</div>
+        <div class="section-title">Platform Management</div>
+        <div class="card-grid">
+            <div class="admin-card" onclick="openPanel('panel-modules', '🧩 Module Publisher')">
+                <div class="card-icon">🧩</div>
+                <div class="card-title">Modules</div>
+                <div class="card-status">3 Installed</div>
+            </div>
+            
+            <div class="admin-card" style="border-color: var(--accent-red);" onclick="window.location.href='/'">
+                <div class="card-icon">🚪</div>
+                <div class="card-title" style="color: var(--accent-red);">Exit Admin</div>
+                <div class="card-status" style="color: var(--text-muted);">Return to Public</div>
+            </div>
         </div>
     </div>
 
-    <div class="main-content">
-        <div class="header">
-            <h1 style="margin: 0; font-size: 2rem;">Command Center</h1>
-            <div>Status: <span style="color: #10b981; font-weight: bold;">● ALL SYSTEMS NOMINAL</span></div>
+    <div class="detail-panel-container" id="detail-panel">
+        <div class="panel-header">
+            <button class="btn-back" onclick="closePanel()">← Back</button>
+            <h2 class="panel-title" id="panel-title-text">Panel Name</h2>
         </div>
-
-        <div id="tab-health" class="tab-section active">
-            <div class="card-grid">
-                <div class="card">
-                    <div class="flex-between">
-                        <h3>System Telemetry</h3>
-                        <button class="btn btn-green" onclick="copyData('sys-health')">Copy</button>
-                    </div>
-                    <div id="sys-health" class="data-box" style="color: #38bdf8;">
-                        Loading health data...
-                    </div>
-                </div>
+        
+        <div class="panel-content" id="panel-content-area">
             </div>
-        </div>
-
-        <div id="tab-modules" class="tab-section">
-            <div class="card">
-                <h3>Module Publish Control</h3>
-                <div style="overflow-x: auto;">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Module Name</th>
-                                <th>Version</th>
-                                <th>Status</th>
-                                <th>Visibility</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="module-list">
-                            <tr><td colspan="5">Loading modules...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <div id="tab-dependency" class="tab-section">
-            <div class="card">
-                <div class="flex-between">
-                    <h3>Visual Dependency Tree</h3>
-                    <button class="btn btn-green" onclick="copyData('dep-tree-data')">Copy Tree</button>
-                </div>
-                <div id="dep-tree-data" class="data-box">
-[👤] Client Interface
- └─ [🚦] Express Router
-    └─ [⚙️] BrainController (CORE)
-       ├─ [💾] Supabase Memory (100 Nodes)
-       ├─ [⚡] Cognitive Switch
-       │  └─ [🧠] LocalNLPEngine (BYPASS)
-       └─ [☁️] GeminiProvider (ACTIVE)
-                </div>
-            </div>
-        </div>
-
-        <div id="tab-logs" class="tab-section">
-            <div class="card">
-                <div class="flex-between">
-                    <h3>System Terminal Logs</h3>
-                    <button class="btn btn-green" onclick="copyData('log-data')">Copy Logs</button>
-                </div>
-                <div id="log-data" class="data-box" style="height: 300px; color: #38bdf8; background: #000;">
-[15:18:15] [INFO]: [Router] Admin login page requested.
-[15:21:35] [INFO]: [Memory] Restored 100 messages for session.
-[17:09:07] [OK]: [Server] ORBIS Live on Port: 10000
-                </div>
-            </div>
-        </div>
-
-        <div id="tab-diagnostics" class="tab-section"><div class="card"><h3>Diagnostics & X-Ray</h3><div class="data-box">Connecting to diagnostic stream...</div></div></div>
-        <div id="tab-execution" class="tab-section"><div class="card"><h3>Execution Bus</h3><div class="data-container">USER ➔ ROUTER ➔ CORE ➔ PROVIDER</div></div></div>
-        <div id="tab-memory" class="tab-section"><div class="card"><h3>Memory Stream</h3><div class="data-box">Memory Sync: OK | Nodes: 100</div></div></div>
-        <div id="tab-users" class="tab-section"><div class="card"><h3>User Statistics</h3><div class="data-box">Total Users: 1 (Admin)</div></div></div>
-        <div id="tab-config" class="tab-section"><div class="card"><h3>Configuration</h3><div class="data-box">Loading system config...</div></div></div>
-
     </div>
 
     <script>
-        // =========================================================
-        // ✨ NEW LOGIC: Tab Switching, Sidebar & Copy Features
-        // =========================================================
-        
-        // 1. Tab Switching Function
-        function openTab(tabId, element) {
-            // Hide all tabs
-            document.querySelectorAll('.tab-section').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            // Show targeted tab
-            document.getElementById(tabId).classList.add('active');
-            
-            // Highlight selected menu item
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            element.classList.add('active');
+        // 🟢 Navigation Logic
+        function openPanel(panelId, title) {
+            // Hide Dashboard, Show Panel
+            document.getElementById('main-dashboard').style.display = 'none';
+            document.getElementById('detail-panel').style.display = 'flex';
+            document.getElementById('panel-title-text').innerText = title;
 
-            // Close sidebar automatically on mobile after clicking
-            if (window.innerWidth <= 768) {
-                document.getElementById('sidebar').classList.remove('open');
+            const contentArea = document.getElementById('panel-content-area');
+            
+            // 🟢 In the next phase, we will inject the actual Cockpit UI components here.
+            // For now, setting up the placeholders to prove the architecture works.
+            if (panelId === 'panel-chat') {
+                contentArea.innerHTML = `<div class="placeholder-box">Chat Interface will be mounted here...</div>`;
+            } else if (panelId === 'panel-logs') {
+                contentArea.innerHTML = `<div class="placeholder-box">Terminal Logs will stream here...</div>`;
+            } else if (panelId === 'panel-tree') {
+                contentArea.innerHTML = `<div class="placeholder-box">Visual Node Tree will render here...</div>`;
+            } else if (panelId === 'panel-telemetry') {
+                contentArea.innerHTML = `<div class="placeholder-box">RAM, CPU, and DB Status will display here...</div>`;
+            } else if (panelId === 'panel-modules') {
+                contentArea.innerHTML = `<div class="placeholder-box">Module Enable/Disable Toggles will appear here...</div>`;
             }
         }
 
-        // 2. Mobile Sidebar Toggle
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('open');
+        function closePanel() {
+            // Hide Panel, Show Dashboard
+            document.getElementById('detail-panel').style.display = 'none';
+            document.getElementById('main-dashboard').style.display = 'block';
+            document.getElementById('panel-content-area').innerHTML = ''; // Clear memory
         }
-
-        // 3. Copy to Clipboard Function
-        function copyData(elementId) {
-            const textToCopy = document.getElementById(elementId).innerText;
-            navigator.clipboard.writeText(textToCopy).then(() => {
-                alert("Copied to clipboard!");
-            }).catch(err => {
-                console.error("Failed to copy text: ", err);
-            });
-        }
-
-        // =========================================================
-        // 🟢 আপনার অরিজিনাল API লজিক (হুবহু এক রাখা হয়েছে)
-        // =========================================================
-        
-        // Fetch Platform Health
-        fetch('/api/admin/health')
-            .then(res => res.json())
-            .then(data => {
-                document.getElementById('sys-health').innerHTML = `
-                    Uptime: ${Math.floor(data.uptime)} seconds<br>
-                    Memory: ${Math.round(data.memoryUsage.rss / 1024 / 1024)} MB<br>
-                    Version: ${data.version}
-                `;
-            }).catch(e => console.error(e));
-
-        // Fetch Modules
-        fetch('/api/admin/modules')
-            .then(res => res.json())
-            .then(res => {
-                if(res.success) {
-                    let html = '';
-                    res.data.forEach(mod => {
-                        html += `
-                            <tr>
-                                <td><strong>${mod.name}</strong></td>
-                                <td>${mod.version}</td>
-                                <td style="color: ${mod.status === 'Active' ? '#10b981' : '#f59e0b'}">${mod.status}</td>
-                                <td>${mod.visibility}</td>
-                                <td>
-                                    ${mod.status === 'Active' ? 
-                                    '<button class="btn btn-red" onclick="alert(\'Action: Disable\')">Disable</button>' : 
-                                    '<button class="btn btn-green" onclick="alert(\'Action: Publish\')">Publish</button>'}
-                                </td>
-                            </tr>
-                        `;
-                    });
-                    document.getElementById('module-list').innerHTML = html;
-                }
-            }).catch(e => console.error(e));
     </script>
 </body>
 </html>
