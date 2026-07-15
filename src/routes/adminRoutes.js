@@ -9,9 +9,17 @@ const router = express.Router();
 // 🟢 LIVE RADAR STORE (In-Memory Tracking)
 const activeUsersStore = new Map();
 
-// 🟢 Mock Admin Middleware (Sprint-1 Security)
+// 🟢 GLOBAL SYSTEM STATE (Versioning & Modules)
+let globalSystemState = {
+    version: '1.4.2', // Current Live Version
+    modules: {
+        orchestrator: 'Active',
+        farmer: 'Coming Soon',
+        ledger: 'Coming Soon'
+    }
+};
+
 const adminAuth = (req, res, next) => {
-    // ভবিষ্যতে এখানে JWT বা Supabase Admin Token ভেরিফাই হবে
     const isAdmin = true; 
     if (isAdmin) {
         next();
@@ -24,7 +32,6 @@ const adminAuth = (req, res, next) => {
 // 📡 PHASE 2: HEARTBEAT & RADAR SYSTEM
 // ==========================================
 
-// 1. Receive Pulse from Public Users (No Admin Auth required for this)
 router.post('/heartbeat', (req, res) => {
     const { mobile, name, currentModule } = req.body;
     if (mobile && name) {
@@ -34,15 +41,14 @@ router.post('/heartbeat', (req, res) => {
             lastSeen: Date.now()
         });
     }
-    res.json({ success: true });
+    // 🟢 Send the global state back to the user on every heartbeat
+    res.json({ success: true, systemState: globalSystemState });
 });
 
-// 2. Serve Live Radar Data to Admin Panel
 router.get('/radar', adminAuth, (req, res) => {
     const now = Date.now();
     const activeList = [];
     
-    // Clean up dead sessions (Inactive for more than 45 seconds)
     for (const [mobile, data] of activeUsersStore.entries()) {
         if (now - data.lastSeen > 45000) {
             activeUsersStore.delete(mobile);
@@ -55,11 +61,10 @@ router.get('/radar', adminAuth, (req, res) => {
 });
 
 // ==========================================
-// 🟢 PLATFORM HEALTH & MODULES
+// 🟢 PLATFORM HEALTH & STATE MANAGEMENT
 // ==========================================
 
 router.get('/health', adminAuth, (req, res) => {
-    // Clean up before reporting total active users
     const now = Date.now();
     for (const [mobile, data] of activeUsersStore.entries()) {
         if (now - data.lastSeen > 45000) activeUsersStore.delete(mobile);
@@ -69,24 +74,38 @@ router.get('/health', adminAuth, (req, res) => {
         status: 'OK',
         uptime: process.uptime(),
         memoryUsage: process.memoryUsage(),
-        version: process.env.FINAL_VERSION || '10.0-STABLE',
-        activeUsers: activeUsersStore.size // 🟢 Dynamically reporting live users
+        version: globalSystemState.version,
+        activeUsers: activeUsersStore.size
     });
 });
 
-router.get('/modules', adminAuth, (req, res) => {
-    const modules = [
-        { id: 'orchestrator', name: 'AI Orchestrator', version: '1.0', status: 'Active', visibility: 'Public' },
-        { id: 'farmer', name: 'Farmer Brain', version: '0.1-beta', status: 'Coming Soon', visibility: 'Hidden' },
-        { id: 'ledger', name: 'DigiLedger', version: '0.1-alpha', status: 'Coming Soon', visibility: 'Hidden' }
-    ];
-    res.json({ success: true, data: modules });
+// 🟢 NEW: Get Current System State for Admin Panel
+router.get('/system-state', adminAuth, (req, res) => {
+    res.json({ success: true, state: globalSystemState });
 });
 
-router.post('/publish', adminAuth, (req, res) => {
-    const { moduleId, action } = req.body;
-    console.log(`[Admin] Module: ${moduleId} action: ${action}`);
-    res.json({ success: true, message: `Module ${moduleId} successfully updated to ${action}.` });
+// 🟢 NEW: Update System Version (Publish)
+router.post('/publish-version', adminAuth, (req, res) => {
+    const { newVersion } = req.body;
+    if(newVersion) {
+        globalSystemState.version = newVersion;
+        console.log(`[Admin] System Updated to Version: ${newVersion}`);
+        res.json({ success: true, version: newVersion });
+    } else {
+        res.status(400).json({ success: false, message: "Version missing" });
+    }
+});
+
+// 🟢 NEW: Toggle Module Status
+router.post('/toggle-module', adminAuth, (req, res) => {
+    const { moduleId, status } = req.body;
+    if(globalSystemState.modules[moduleId] !== undefined) {
+        globalSystemState.modules[moduleId] = status;
+        console.log(`[Admin] Module ${moduleId} changed to:${status}`);
+        res.json({ success: true, modules: globalSystemState.modules });
+    } else {
+        res.status(400).json({ success: false, message: "Invalid Module" });
+    }
 });
 
 export default router;

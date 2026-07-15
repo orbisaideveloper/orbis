@@ -5,27 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ORBIS Master Command Center</title>
     <style>
-        :root {
-            --saffron: #FF9933;
-            --white: #FFFFFF;
-            --green: #138808;
-            --bg-light: #f4f7f6;
-            --text-dark: #1e293b;
-            --text-muted: #64748b;
-            --shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-            --shadow-hover: 0 10px 15px -3px rgba(255,153,51,0.2);
-        }
-        
+        :root { --saffron: #FF9933; --white: #FFFFFF; --green: #138808; --bg-light: #f4f7f6; --text-dark: #1e293b; --text-muted: #64748b; --shadow: 0 4px 6px -1px rgba(0,0,0,0.1); --shadow-hover: 0 10px 15px -3px rgba(255,153,51,0.2); }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-light); color: var(--text-dark); margin: 0; padding: 0; overflow-x: hidden; }
-        
         .admin-nav { background: var(--white); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-bottom: 4px solid; border-image: linear-gradient(to right, var(--saffron) 33%, var(--white) 33%, var(--white) 66%, var(--green) 66%) 1; }
         .admin-nav h1 { margin: 0; font-size: 1.4rem; color: var(--text-dark); font-weight: 900; letter-spacing: -0.5px; }
         .admin-nav h1 span { color: var(--saffron); }
-        
         .sys-status-badge { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: bold; color: var(--green); background: #dcfce7; padding: 6px 12px; border-radius: 20px; border: 1px solid var(--green); }
         .pulse-dot { width: 8px; height: 8px; background-color: var(--green); border-radius: 50%; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(19, 136, 8, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(19, 136, 8, 0); } 100% { box-shadow: 0 0 0 0 rgba(19, 136, 8, 0); } }
-
         .dashboard-container { padding: 20px; max-width: 1200px; margin: 0 auto; }
         .quick-stats { display: flex; gap: 15px; margin-bottom: 25px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; }
         .quick-stats::-webkit-scrollbar { display: none; }
@@ -33,42 +20,38 @@
         .stat-label { font-size: 0.75rem; color: var(--text-muted); font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
         .stat-value { font-size: 1.5rem; font-weight: 900; color: var(--text-dark); }
         .stat-live { color: var(--green); font-size: 0.8rem; font-weight: bold; margin-top: 5px; display: block; }
-
         .section-title { font-size: 1.1rem; color: var(--text-dark); font-weight: 800; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
         .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; margin-bottom: 35px; }
-        
         .admin-card { background: var(--white); border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px 20px; cursor: pointer; transition: all 0.3s ease; display: flex; flex-direction: column; position: relative; box-shadow: var(--shadow); overflow: hidden; }
         .admin-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: #e2e8f0; transition: background 0.3s; }
         .admin-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-hover); border-color: #cbd5e1; }
         .admin-card:hover::before { background: var(--saffron); }
-        
         .card-icon { font-size: 2.8rem; margin-bottom: 15px; }
         .card-title { font-size: 1.1rem; font-weight: bold; color: var(--text-dark); margin-bottom: 8px; }
         .card-desc { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px; line-height: 1.4; flex: 1; }
-        
         .card-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 12px; margin-top: auto; }
         .card-status { font-size: 0.75rem; font-weight: bold; padding: 4px 10px; border-radius: 20px; }
         .status-ok { background: #dcfce7; color: var(--green); }
         .status-warn { background: #fef08a; color: #854d0e; }
         .status-admin { background: #e2e8f0; color: var(--text-dark); }
-
         .detail-panel-container { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-light); z-index: 200; flex-direction: column; animation: slideUp 0.3s ease-out; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        
         .panel-header { background: var(--white); padding: 15px 20px; display: flex; align-items: center; gap: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .btn-back { background: transparent; border: 2px solid var(--text-muted); color: var(--text-dark); padding: 6px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: all 0.2s; }
         .btn-back:hover { background: var(--saffron); color: var(--white); border-color: var(--saffron); }
         .panel-title { font-size: 1.2rem; font-weight: bold; color: var(--text-dark); margin: 0; }
-        
         .panel-content { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; }
         .placeholder-box { border: 2px dashed #cbd5e1; border-radius: 12px; padding: 40px; text-align: center; color: var(--text-muted); background: var(--white); margin-top: 20px; font-size: 1.1rem; }
-
         .radar-table-wrapper { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .radar-table { width: 100%; min-width: 500px; border-collapse: collapse; margin-top: 15px; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .radar-table th { background: #f8fafc; padding: 12px; text-align: left; font-size: 0.85rem; color: var(--text-muted); font-weight: bold; border-bottom: 2px solid #e2e8f0; white-space: nowrap; }
         .radar-table td { padding: 12px; font-size: 0.9rem; color: var(--text-dark); border-bottom: 1px solid #e2e8f0; }
         .radar-table tr:last-child td { border-bottom: none; }
         .live-dot { display: inline-block; width: 8px; height: 8px; background: var(--green); border-radius: 50%; margin-right: 8px; animation: pulse 1.5s infinite; }
+        
+        /* Module Toggle Switch */
+        .toggle-btn { background: #e2e8f0; border: none; padding: 6px 12px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 0.8rem; color: var(--text-muted); transition: 0.3s; }
+        .toggle-btn.active { background: #dcfce7; color: var(--green); border: 1px solid var(--green); }
     </style>
 </head>
 <body>
@@ -117,7 +100,6 @@
         <div class="panel-content" id="panel-content-area"></div>
     </div>
 
-    <!-- 🟢 FIX: Added Absolute Paths (/) so routing doesn't break -->
     <script src="/js/admin-registry.js"></script>
     <script src="/js/admin-plugins.js"></script>
 
@@ -128,20 +110,15 @@
                     try {
                         const response = await fetch('/api/admin/health');
                         const result = await response.json();
-                        
                         if(result.status === 'OK') {
                             const ramMB = Math.round(result.memoryUsage.rss / (1024 * 1024));
-                            return { 
-                                success: true, 
-                                data: { ram: ramMB, ping: 12, activeUsers: result.activeUsers || 0, uptime: Math.floor(result.uptime) } 
-                            };
+                            return { success: true, data: { ram: ramMB, ping: 12, activeUsers: result.activeUsers || 0, uptime: Math.floor(result.uptime) } };
                         }
                         throw new Error('Health API Failed');
                     } catch (error) {
                         return { success: false, data: { ram: '--', ping: '--', activeUsers: '--', uptime: 0 } };
                     }
                 });
-
                 startTelemetryPolling();
                 renderPlugins();
             }
@@ -159,9 +136,7 @@
                     card.style.background = 'transparent';
                     card.style.boxShadow = 'none';
                 }
-                
                 card.onclick = () => openPanel(plugin.id);
-                
                 card.innerHTML = `
                     <div class="card-icon">${plugin.icon}</div>
                     <div class="card-title" ${plugin.id === 'plugin-public' ? 'style="color: var(--text-muted);"' : ''}>${plugin.name}</div>
@@ -185,7 +160,6 @@
                     document.getElementById('live-ram').innerText = response.data.ram;
                     document.getElementById('live-ping').innerText = response.data.ping;
                     document.getElementById('live-users').innerText = response.data.activeUsers;
-                    
                     let currentUptime = response.data.uptime || ++localUptimeSeconds;
                     const h = Math.floor(currentUptime / 3600).toString().padStart(2, '0');
                     const m = Math.floor((currentUptime % 3600) / 60).toString().padStart(2, '0');
@@ -195,7 +169,15 @@
             }, 1000);
         }
 
-        function openPanel(pluginId) {
+        async function fetchSystemState() {
+            try {
+                const res = await fetch('/api/admin/system-state');
+                const data = await res.json();
+                return data.state;
+            } catch(e) { return null; }
+        }
+
+        async function openPanel(pluginId) {
             if (pluginId === 'plugin-public') {
                 window.location.href = '/';
                 return;
@@ -218,9 +200,7 @@
                     <div style="background:#fff; padding:20px; border-radius:10px; max-width:900px; margin:0 auto; box-shadow: var(--shadow);">
                         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:15px;">
                             <h3 style="margin:0; color:var(--text-dark);">Active Sessions Map</h3>
-                            <span style="font-size:0.85rem; background:#dcfce7; color:var(--green); padding:4px 10px; border-radius:20px; font-weight:bold;">
-                                <span class="live-dot"></span> Live Tracking
-                            </span>
+                            <span style="font-size:0.85rem; background:#dcfce7; color:var(--green); padding:4px 10px; border-radius:20px; font-weight:bold;"><span class="live-dot"></span> Live Tracking</span>
                         </div>
                         <div id="radar-table-container">
                             <p style="text-align:center; color:var(--text-muted); padding:20px;">Scanning network for active users...</p>
@@ -236,77 +216,66 @@
                         if (!container) return; 
 
                         if (data.success && data.users.length > 0) {
-                            let tableHTML = `
-                                <div class="radar-table-wrapper">
-                                    <table class="radar-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Identity (Phone)</th>
-                                                <th>Name</th>
-                                                <th>Active Module</th>
-                                                <th>Status</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                            `;
+                            let tableHTML = `<div class="radar-table-wrapper"><table class="radar-table"><thead><tr><th>Identity (Phone)</th><th>Name</th><th>Active Module</th><th>Status</th></tr></thead><tbody>`;
                             data.users.forEach(user => {
-                                tableHTML += `
-                                    <tr>
-                                        <td style="font-family:monospace; font-weight:bold;">${user.mobile}</td>
-                                        <td>${user.name}</td>
-                                        <td><span style="background:#f1f5f9; padding:4px 8px; border-radius:4px; font-size:0.8rem;">${user.module}</span></td>
-                                        <td><span style="color:var(--green); font-size:0.85rem; font-weight:bold;"><span class="live-dot"></span> Online</span></td>
-                                    </tr>
-                                `;
+                                tableHTML += `<tr><td style="font-family:monospace; font-weight:bold;">${user.mobile}</td><td>${user.name}</td><td><span style="background:#f1f5f9; padding:4px 8px; border-radius:4px; font-size:0.8rem;">${user.module}</span></td><td><span style="color:var(--green); font-size:0.85rem; font-weight:bold;"><span class="live-dot"></span> Online</span></td></tr>`;
                             });
                             tableHTML += `</tbody></table></div>`;
                             container.innerHTML = tableHTML;
                         } else {
                             container.innerHTML = `<p style="text-align:center; color:var(--text-muted); padding:30px; font-style:italic;">No active users found on the network currently.</p>`;
                         }
-                    } catch (e) {
-                        console.error('Radar sync failed', e);
-                    }
+                    } catch (e) {}
                 };
 
                 fetchRadarData();
                 activeRadarInterval = setInterval(fetchRadarData, 3000);
 
             } else if (pluginId === 'plugin-deploy') {
+                const sysState = await fetchSystemState();
+                const currentVer = sysState ? sysState.version : '1.0.0';
+                const shadowVer = '1.5.0-beta';
+                
                 contentArea.style.padding = '20px';
                 contentArea.innerHTML = `
-                    <div style="background:#fff; border:1px solid #e2e8f0; padding:20px; border-radius:10px; max-width:800px; margin:0 auto;">
-                        <h3 style="margin-top:0; color:var(--text-dark);">Deployment Branches</h3>
+                    <div style="background:#fff; border:1px solid #e2e8f0; padding:20px; border-radius:10px; max-width:800px; margin:0 auto; box-shadow: var(--shadow);">
+                        <h3 style="margin-top:0; color:var(--text-dark); border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">Deployment Branches</h3>
+                        
                         <div style="display:flex; justify-content:space-between; margin-bottom:15px; padding:15px; background:#f4f7f6; border-radius:8px; border-left:4px solid var(--green);">
                             <div><strong>Live Production (Public)</strong><br><span style="font-size:0.85rem; color:var(--text-muted);">Currently visible to normal users.</span></div>
-                            <div style="font-weight:bold; color:var(--green); font-size:1.2rem;">v1.4.2</div>
+                            <div style="font-weight:bold; color:var(--green); font-size:1.2rem;" id="ui-live-version">v${currentVer}</div>
                         </div>
+                        
                         <div style="display:flex; justify-content:space-between; margin-bottom:25px; padding:15px; background:#fffbeb; border-radius:8px; border-left:4px solid var(--saffron);">
                             <div><strong>Shadow Environment (Test)</strong><br><span style="font-size:0.85rem; color:var(--text-muted);">Active workspace. Not published yet.</span></div>
-                            <div style="font-weight:bold; color:#d97706; font-size:1.2rem;">v1.5.0-beta</div>
+                            <div style="font-weight:bold; color:#d97706; font-size:1.2rem;">v${shadowVer}</div>
                         </div>
-                        <button style="background:var(--saffron); color:white; border:none; padding:12px 24px; border-radius:6px; font-weight:bold; cursor:pointer; width:100%; font-size:1rem;">🚀 Publish Shadow to Production</button>
+                        
+                        <button onclick="publishNewVersion('${shadowVer}')" style="background:var(--saffron); color:white; border:none; padding:12px 24px; border-radius:6px; font-weight:bold; cursor:pointer; width:100%; font-size:1rem; transition: 0.3s; box-shadow: 0 4px 6px rgba(255,153,51,0.3);">🚀 Publish Shadow to Production</button>
+                        
+                        <h3 style="margin-top:40px; color:var(--text-dark); border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">Module Publisher (Live Controls)</h3>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #f1f5f9;">
+                            <div>
+                                <div style="font-weight: bold; color: var(--navy);">🌾 Farmer Brain</div>
+                                <div style="font-size: 0.8rem; color: var(--text-muted);">Intelligent agricultural management.</div>
+                            </div>
+                            <button class="toggle-btn ${sysState && sysState.modules.farmer === 'Active' ? 'active' : ''}" onclick="toggleModule('farmer', this)">
+                                ${sysState && sysState.modules.farmer === 'Active' ? 'Active' : 'Coming Soon'}
+                            </button>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 0;">
+                            <div>
+                                <div style="font-weight: bold; color: var(--navy);">📒 DigiLedger</div>
+                                <div style="font-size: 0.8rem; color: var(--text-muted);">Secure financial tracking database.</div>
+                            </div>
+                            <button class="toggle-btn ${sysState && sysState.modules.ledger === 'Active' ? 'active' : ''}" onclick="toggleModule('ledger', this)">
+                                ${sysState && sysState.modules.ledger === 'Active' ? 'Active' : 'Coming Soon'}
+                            </button>
+                        </div>
                     </div>
                 `;
             } else {
                 contentArea.style.padding = '20px';
-                contentArea.innerHTML = `
-                    <div class="placeholder-box" style="border-color: var(--saffron);">
-                        <h3 style="color: var(--saffron); margin-top:0;">${plugin.name} is Loading...</h3>
-                        <p>This module is currently being connected to the backend datastream.</p>
-                    </div>`;
-            }
-        }
-
-        function closePanel() {
-            if (activeRadarInterval) {
-                clearInterval(activeRadarInterval);
-                activeRadarInterval = null;
-            }
-            document.getElementById('detail-panel').style.display = 'none';
-            document.getElementById('main-dashboard').style.display = 'block';
-            document.getElementById('panel-content-area').innerHTML = ''; 
-        }
-    </script>
-</body>
-</html>
+                contentArea.inn
