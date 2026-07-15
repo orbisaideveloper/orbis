@@ -7,6 +7,18 @@
 document.addEventListener('DOMContentLoaded', () => {
     const platformRoot = document.getElementById('orbis-platform-root');
     
+    // 🟢 MAGIC: ADMIN COCKPIT BYPASS (Zero-Breaking Injection)
+    // যখন অ্যাডমিন প্যানেল থেকে ককপিট কল করা হবে, তখন এটি কাজ করবে
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('cockpit_mode') === 'true') {
+        if (platformRoot) {
+            platformRoot.style.display = 'none'; // পাবলিক ল্যান্ডিং পেজ হাইড
+            platformRoot.innerHTML = '';
+        }
+        console.log("[ORBIS] Admin Cockpit Mode Active. Public Identity Gateway Bypassed.");
+        return; // 🛑 এখানেই প্ল্যাটফর্ম লজিক থেমে যাবে এবং আপনার পুরোনো ইঞ্জিন চালু হয়ে যাবে
+    }
+
     if (!platformRoot) {
         console.warn("[ORBIS] Platform root not found. Defaulting to Core Cockpit.");
         return;
@@ -189,7 +201,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // 🟢 Persistent Login: লোকাল স্টোরেজে ডেটা সেভ করা হচ্ছে
+            // 🟢 Persistent Login
             localStorage.setItem('orbis_active_user', mobile);
             localStorage.setItem('orbis_user_name', name);
             if(email) localStorage.setItem('orbis_user_email', email);
@@ -199,7 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         logout: function() {
-            // 🟢 Logout: সেশন ক্লিয়ার করা হচ্ছে
+            // 🟢 Logout
             localStorage.removeItem('orbis_active_user');
             localStorage.removeItem('orbis_user_name');
             localStorage.removeItem('orbis_user_email');
@@ -219,7 +231,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }, 500); 
                 
             } else if (moduleId === 'admin_center') {
-                // ✨ NEW: Admin Center Routing
                 console.log("[Platform Core] Launching Admin Control Center...");
                 window.location.href = 'admin.html'; 
                 
@@ -228,7 +239,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
 
-        // ✨ NEW: Admin Preview Mode Helper
         enterPreviewMode: function() {
             console.log("[Platform Core] Entering Public Preview Mode...");
             this.navigate('dashboard'); 
