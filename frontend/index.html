@@ -223,5 +223,26 @@
     <script src="js/ui-voice.js?v={{APP_VERSION}}"></script>
 
     <script src="js/platform-core.js?v={{APP_VERSION}}"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const isAdmin = urlParams.get('cockpit_mode') === 'true';
+
+            if (!isAdmin) {
+                // 1. Hide the Menu Button from public users
+                const menuBtn = document.querySelector('.mobile-menu-btn');
+                if (menuBtn) menuBtn.style.display = 'none';
+
+                // 2. completely remove the Admin Sidebar from DOM so hackers can't inspect it
+                const devSidebar = document.getElementById('dev-sidebar');
+                if (devSidebar) devSidebar.remove();
+
+                console.log('[ORBIS SECURITY] Admin Cockpit Locked for Public View.');
+            } else {
+                console.log('[ORBIS SECURITY] Admin Mode Authenticated.');
+            }
+        });
+    </script>
 </body>
 </html>

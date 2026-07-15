@@ -72,7 +72,6 @@ document.addEventListener('DOMContentLoaded', () => {
             .module-status { font-size: 0.75rem; font-weight: 800; padding: 4px 10px; border-radius: 20px; display: inline-block; text-transform: uppercase; letter-spacing: 0.5px; }
             .status-active { background: #dcfce7; color: var(--green); border: 1px solid var(--green); }
             .status-soon { background: #fef08a; color: #854d0e; border: 1px solid #eab308; }
-            .status-admin { background: #e2e8f0; color: var(--navy); border: 1px solid var(--navy); }
             
             /* Nav Top */
             .nav-top { position: absolute; top: 20px; right: 20px; display: flex; gap: 10px; align-items: center; }
@@ -134,13 +133,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="module-title">AI Orchestrator</div>
                     <div class="module-desc">Core cognitive engine, telemetry, and live execution bus.</div>
                     <div class="module-status status-active">Active</div>
-                </div>
-
-                <div class="module-card" style="border-bottom-color: var(--navy);" onclick="window.orbisPlatform.launchModule('admin_center')">
-                    <div class="module-icon">⚙️</div>
-                    <div class="module-title">Admin Center</div>
-                    <div class="module-desc">Complete Platform Control and Engineering Workspace.</div>
-                    <div class="module-status status-admin">Admin Only</div>
                 </div>
 
                 <div class="module-card" style="border-bottom-color: var(--saffron);" onclick="window.orbisPlatform.launchModule('farmer')">
@@ -229,10 +221,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     platformRoot.style.visibility = 'hidden';
                     platformRoot.innerHTML = ''; 
                 }, 500); 
-                
-            } else if (moduleId === 'admin_center') {
-                console.log("[Platform Core] Launching Admin Control Center...");
-                window.location.href = 'admin.html'; 
                 
             } else {
                 alert("This module is currently in development.\nStatus: Coming Soon!");
