@@ -18,7 +18,7 @@
         
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-light); color: var(--text-dark); margin: 0; padding: 0; overflow-x: hidden; }
         
-        /* 🟢 Top Navigation (Tricolor Theme) */
+        /* 🟢 Top Navigation */
         .admin-nav { background: var(--white); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-bottom: 4px solid; border-image: linear-gradient(to right, var(--saffron) 33%, var(--white) 33%, var(--white) 66%, var(--green) 66%) 1; }
         .admin-nav h1 { margin: 0; font-size: 1.4rem; color: var(--text-dark); font-weight: 900; letter-spacing: -0.5px; }
         .admin-nav h1 span { color: var(--saffron); }
@@ -104,70 +104,11 @@
             </div>
         </div>
 
-        <div class="section-title">🚀 Core Infrastructure & AI</div>
-        <div class="card-grid">
-            <div class="admin-card" onclick="openPanel('panel-cockpit', '🧠 AI Core Cockpit')">
-                <div class="card-icon">🧠</div>
-                <div class="card-title">AI Core Cockpit</div>
-                <div class="card-desc">Your main engineering space. Access Visual Tree, Memory Bus, and live AI chats here.</div>
-                <div class="card-footer">
-                    <span class="card-status status-ok">Ready to Inject</span>
-                    <span style="color: var(--text-muted); font-size: 1.2rem;">➔</span>
-                </div>
+        <div class="section-title">🚀 Core Modules & Plugins</div>
+        
+        <div class="card-grid" id="dynamic-plugin-grid">
             </div>
 
-            <div class="admin-card" onclick="openPanel('panel-economy', '🪙 AI Token Economy')">
-                <div class="card-icon">🪙</div>
-                <div class="card-title">Token & Cost Metrics</div>
-                <div class="card-desc">Monitor API usage, Gemini token burns, and daily calculated costs.</div>
-                <div class="card-footer">
-                    <span class="card-status status-ok">$1.24 Spent Today</span>
-                    <span style="color: var(--text-muted); font-size: 1.2rem;">➔</span>
-                </div>
-            </div>
-
-            <div class="admin-card" onclick="openPanel('panel-logs', '📜 Central Terminal Logs')">
-                <div class="card-icon">📜</div>
-                <div class="card-title">Live Terminal Logs</div>
-                <div class="card-desc">Real-time error tracking, router payload monitoring, and system warnings.</div>
-                <div class="card-footer">
-                    <span class="card-status status-ok" id="log-status">Monitoring...</span>
-                    <span style="color: var(--text-muted); font-size: 1.2rem;">➔</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="section-title">📊 Management & Security</div>
-        <div class="card-grid">
-            <div class="admin-card" onclick="openPanel('panel-modules', '🧩 Module Publisher')">
-                <div class="card-icon">🧩</div>
-                <div class="card-title">Module Control</div>
-                <div class="card-desc">Enable, disable, or publish modules like Farmer Brain and DigiLedger to public.</div>
-                <div class="card-footer">
-                    <span class="card-status status-warn">2 Pending Release</span>
-                    <span style="color: var(--text-muted); font-size: 1.2rem;">➔</span>
-                </div>
-            </div>
-
-            <div class="admin-card" onclick="openPanel('panel-users', '👥 User Analytics')">
-                <div class="card-icon">👥</div>
-                <div class="card-title">User Management</div>
-                <div class="card-desc">View registered identities, session times, and manage user access roles.</div>
-                <div class="card-footer">
-                    <span class="card-status status-ok">Database Synced</span>
-                    <span style="color: var(--text-muted); font-size: 1.2rem;">➔</span>
-                </div>
-            </div>
-
-            <div class="admin-card" style="border: 2px solid #e2e8f0; background: transparent; box-shadow: none;" onclick="window.location.href='/'">
-                <div class="card-icon">🌐</div>
-                <div class="card-title" style="color: var(--text-muted);">View Public Platform</div>
-                <div class="card-desc">Switch to the public view to see what your normal users are experiencing.</div>
-                <div class="card-footer" style="border-top: none;">
-                    <span class="card-status" style="background: var(--text-muted); color: white;">Switch View</span>
-                </div>
-            </div>
-        </div>
     </div>
 
     <div class="detail-panel-container" id="detail-panel">
@@ -175,49 +116,61 @@
             <button class="btn-back" onclick="closePanel()">← Back to Dashboard</button>
             <h2 class="panel-title" id="panel-title-text">Panel Name</h2>
         </div>
-        <div class="panel-content" id="panel-content-area">
-        </div>
+        <div class="panel-content" id="panel-content-area"></div>
     </div>
 
     <script src="js/admin-registry.js"></script>
+    <script src="js/admin-plugins.js"></script>
 
     <script>
-        // 🟢 2. REGISTERING MOCK DATA PROVIDERS (Preparation for Backend)
         document.addEventListener('DOMContentLoaded', () => {
             if (window.ORBIS_ADMIN) {
-                // Registering System Stats Provider
+                // Register Provider
                 window.ORBIS_ADMIN.registerProvider('sys-metrics', async () => {
-                    // Future backend connection will go here: return await fetch('/api/admin/metrics');
-                    return {
-                        success: true,
-                        data: {
-                            ram: 125 + Math.floor(Math.random() * 8),
-                            ping: 10 + Math.floor(Math.random() * 5),
-                            activeUsers: 24 + Math.floor(Math.random() * 3)
-                        }
-                    };
+                    return { success: true, data: { ram: 125 + Math.floor(Math.random() * 8), ping: 10 + Math.floor(Math.random() * 5), activeUsers: 1 } };
                 });
-                
                 startTelemetryPolling();
+                
+                // 🟢 DYNAMICALLY DRAW PLUGINS
+                renderPlugins();
             } else {
                 console.error("[Fatal] ORBIS Core Registry failed to load!");
             }
         });
 
-        // 🟢 3. ADVANCED POLLING LOOP (Fetching from Registry)
+        // 🟢 PLUGIN RENDERING ENGINE
+        function renderPlugins() {
+            const grid = document.getElementById('dynamic-plugin-grid');
+            if (!grid) return;
+            
+            window.ORBIS_ADMIN.plugins.forEach(plugin => {
+                const card = document.createElement('div');
+                card.className = 'admin-card';
+                card.onclick = () => openPanel(plugin.id);
+                
+                card.innerHTML = `
+                    <div class="card-icon">${plugin.icon}</div>
+                    <div class="card-title">${plugin.name}</div>
+                    <div class="card-desc">${plugin.desc}</div>
+                    <div class="card-footer">
+                        <span class="card-status ${plugin.statusClass}">${plugin.statusText}</span>
+                        <span style="color: var(--text-muted); font-size: 1.2rem;">➔</span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // 🟢 TELEMETRY POLLING
         let uptimeSeconds = 0;
         function startTelemetryPolling() {
             setInterval(async () => {
-                // Fetch data cleanly from our abstract Provider
                 const response = await window.ORBIS_ADMIN.fetchData('sys-metrics');
-                
                 if(response && response.success) {
                     document.getElementById('live-ram').innerText = response.data.ram;
                     document.getElementById('live-ping').innerText = response.data.ping;
                     document.getElementById('live-users').innerText = response.data.activeUsers;
                 }
-
-                // UI Uptime Counter
                 uptimeSeconds++;
                 const h = Math.floor(uptimeSeconds / 3600).toString().padStart(2, '0');
                 const m = Math.floor((uptimeSeconds % 3600) / 60).toString().padStart(2, '0');
@@ -226,27 +179,45 @@
             }, 1000);
         }
 
-        // 🟢 4. NAVIGATION LOGIC & SECURE COCKPIT INJECTION
-        function openPanel(panelId, title) {
+        // 🟢 DYNAMIC PANEL ROUTER
+        function openPanel(pluginId) {
+            const plugin = window.ORBIS_ADMIN.plugins.get(pluginId);
             document.getElementById('main-dashboard').style.display = 'none';
             document.getElementById('detail-panel').style.display = 'flex';
-            document.getElementById('panel-title-text').innerText = title;
+            document.getElementById('panel-title-text').innerText = plugin.name;
 
             const contentArea = document.getElementById('panel-content-area');
             
-            if (panelId === 'panel-cockpit') {
-                // Original Cockpit injection (Safely preserved)
-                contentArea.style.padding = '0'; 
+            if (pluginId === 'plugin-cockpit') {
+                contentArea.style.padding = '0';
+                contentArea.innerHTML = `<iframe src="index.html?cockpit_mode=true" style="width: 100%; height: 100%; border: none; background: #0f172a;"></iframe>`;
+            
+            } else if (pluginId === 'plugin-deploy') {
+                // 🚀 YOUR VERSION CONTROL UI MOCKUP
+                contentArea.style.padding = '20px';
                 contentArea.innerHTML = `
-                    <iframe src="index.html?cockpit_mode=true" 
-                            style="width: 100%; height: 100%; border: none; background: #0f172a;">
-                    </iframe>`;
+                    <div style="background:#fff; border:1px solid #e2e8f0; padding:20px; border-radius:10px; max-width:800px; margin:0 auto;">
+                        <h3 style="margin-top:0; color:var(--text-dark);">Deployment Branches</h3>
+                        
+                        <div style="display:flex; justify-content:space-between; margin-bottom:15px; padding:15px; background:#f4f7f6; border-radius:8px; border-left:4px solid var(--green);">
+                            <div><strong>Live Production (Public)</strong><br><span style="font-size:0.85rem; color:var(--text-muted);">Currently visible to normal users.</span></div>
+                            <div style="font-weight:bold; color:var(--green); font-size:1.2rem;">v1.4.2</div>
+                        </div>
+                        
+                        <div style="display:flex; justify-content:space-between; margin-bottom:25px; padding:15px; background:#fffbeb; border-radius:8px; border-left:4px solid var(--saffron);">
+                            <div><strong>Shadow Environment (Test)</strong><br><span style="font-size:0.85rem; color:var(--text-muted);">Active workspace. Not published yet.</span></div>
+                            <div style="font-weight:bold; color:#d97706; font-size:1.2rem;">v1.5.0-beta</div>
+                        </div>
+                        
+                        <button style="background:var(--saffron); color:white; border:none; padding:12px 24px; border-radius:6px; font-weight:bold; cursor:pointer; width:100%; font-size:1rem;">🚀 Publish Shadow to Production</button>
+                    </div>
+                `;
             } else {
                 contentArea.style.padding = '20px';
                 contentArea.innerHTML = `
                     <div class="placeholder-box" style="border-color: var(--saffron);">
-                        <h3 style="color: var(--saffron); margin-top:0;">${title}</h3>
-                        <p>This module is currently being connected to the backend datastream. It will be live soon.</p>
+                        <h3 style="color: var(--saffron); margin-top:0;">${plugin.name} is Loading...</h3>
+                        <p>This module is currently being connected to the backend datastream.</p>
                     </div>`;
             }
         }
