@@ -1,17 +1,30 @@
 // frontend/js/ui-api.js - Frontend API Gateway
 /**
  * APIGateway: Manages synchronous communication with ORBIS Core Backend.
- * Updated: Phase 8.0 - Safe Payload Mapping & Autonomous Log Interception.
+ * Updated: Phase 8.1 - Added Security Token for API Gateway
  */
 window.APIGateway = {
+    // 🟢 হেল্পার: টোকেন নেওয়ার জন্য
+    getHeaders: function() {
+        const headers = { 'Content-Type': 'application/json' };
+        if (window.StorageEngine) {
+            const token = window.StorageEngine.getAuthToken();
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+        }
+        return headers;
+    },
+
     fetchHistory: async function(sessionId = 'default_user') {
         window.printLog('INFO', `API: Fetching chat history...`);
         try {
-            const response = await fetch(`/api/history?sessionId=${sessionId}`);
+            // 🟢 ফিক্স: Authorization হেডার যুক্ত করা হলো
+            const response = await fetch(`/api/history?sessionId=${sessionId}`, {
+                method: 'GET',
+                headers: this.getHeaders()
+            });
             const result = await response.json();
             
             if (response.ok && result.success) {
-                // গ্লোবাল ইভেন্ট বাসে জানিয়ে দেওয়া যে মেমোরি লোড হয়েছে
                 if (window.globalEventBus) {
                     window.globalEventBus.emit('MemoryRestored', result.history);
                 }
@@ -29,14 +42,14 @@ window.APIGateway = {
         window.printLog('INFO', `API: Calling backend (/api/chat)...`);
         
         try {
-            // 🟢 ফিক্স: ব্যাকএন্ডের server.js এর সাথে সামঞ্জস্য রেখে পেলোড প্রম্পট ম্যাপিং নিশ্চিত করা হলো
             const payload = {
                 prompt: typeof data === 'string' ? data : (data.prompt || data.content)
             };
 
+            // 🟢 ফিক্স: Authorization হেডার যুক্ত করা হলো
             const response = await fetch('/api/chat', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: this.getHeaders(),
                 body: JSON.stringify(payload) 
             });
 
@@ -48,7 +61,6 @@ window.APIGateway = {
                 if (response.ok && result.success) {
                     let aiReply = result.response;
                     
-                    // চেক করা হচ্ছে এটি কি এরর মেসেজ নাকি আমাদের লোকাল ব্রেইনের তৈরি করা স্বায়ত্তশাসিত মেসেজ
                     const isSystemError = (typeof aiReply === 'string' && (aiReply.includes('[API Error]') || aiReply.includes('quota') || aiReply.includes('503')));
                     const isBrainFallback = (typeof aiReply === 'string' && aiReply.includes('[Local Brain Active]'));
 
@@ -62,7 +74,6 @@ window.APIGateway = {
                     }
 
                     if (isBrainFallback) {
-                        // 🟢 ফিক্স: লোকাল ব্রেইন অ্যাক্টিভ হলে ড্যাশবোর্ডে সাকসেস লগ পুশ হবে, ব্ল্যাক হোলে আটকাবে না
                         window.printLog('OK', 'Core: Local Autonomous Mind responded successfully.');
                     } else {
                         window.printLog('OK', 'Core: Response generated and dispatched successfully.');
