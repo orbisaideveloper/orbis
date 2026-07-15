@@ -1,6 +1,6 @@
 // frontend/js/ui-chat.js
 /**
- * UI Chat Module: Direct Fetch API Integration with Unique User Identity
+ * UI Chat Module: Direct Fetch API Integration with Permanent ORB-ID
  */
 
 window.ChatStateLock = {
@@ -26,16 +26,13 @@ window.dispatchToAI = async function() {
     window.updateChatUI('YOU', msg);
     promptBox.value = ''; 
 
-    // 🟢 FIX: Fetching actual User ID (Mobile Number) instead of default
-    const activeUserId = localStorage.getItem('orbis_active_user') || 'guest_user';
+    // 🟢 FETCH PERMANENT ORB-ID
+    const activeUserId = localStorage.getItem('orbis_uid') || localStorage.getItem('orbis_active_user') || 'guest_user';
 
     try {
         const response = await fetch('/api/chat', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            // Sending the unique sessionId to the backend
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ prompt: msg, sessionId: activeUserId }) 
         });
 
@@ -47,11 +44,8 @@ window.dispatchToAI = async function() {
 
         if (response.ok && (apiResult.success || apiResult.status === 'success')) {
             const reply = apiResult.reply || apiResult.response || apiResult.data || apiResult.message;
-            if (reply) {
-                window.updateChatUI('ORBIS', reply);
-            } else {
-                window.updateChatUI('SYSTEM_ERROR', `সার্ভার রেসপন্স দিয়েছে কিন্তু টেক্সট খুঁজে পায়নি।`);
-            }
+            if (reply) { window.updateChatUI('ORBIS', reply); } 
+            else { window.updateChatUI('SYSTEM_ERROR', `সার্ভার রেসপন্স দিয়েছে কিন্তু টেক্সট খুঁজে পায়নি।`); }
         } else {
             window.updateChatUI('SYSTEM_ERROR', `সার্ভার এরর: ${apiResult?.error || response.statusText}`);
         }
@@ -86,10 +80,8 @@ window.updateChatUI = function(sender, message, timestamp = null) {
 
 window.renderHistoryMessages = function(historyArray) {
     if (!historyArray || !Array.isArray(historyArray)) return;
-    
     const chatBox = document.getElementById('chat-box');
     if (!chatBox) return;
-
     chatBox.innerHTML = '';
 
     historyArray.forEach(item => {
@@ -97,16 +89,14 @@ window.renderHistoryMessages = function(historyArray) {
         const messageText = item.content || item.message || item.prompt || item.reply; 
         const dbTime = item.created_at || item.timestamp; 
         
-        if (messageText) {
-            window.updateChatUI(sender, messageText, dbTime);
-        }
+        if (messageText) { window.updateChatUI(sender, messageText, dbTime); }
     });
 };
 
 if (!window.ChatUIInitialized) {
     document.addEventListener('DOMContentLoaded', async () => {
-        // 🟢 FIX: Fetching unique history for the specific user
-        const activeUserId = localStorage.getItem('orbis_active_user') || 'guest_user';
+        // 🟢 LOAD HISTORY USING PERMANENT ORB-ID
+        const activeUserId = localStorage.getItem('orbis_uid') || localStorage.getItem('orbis_active_user') || 'guest_user';
         
         try {
             const response = await fetch(`/api/history?sessionId=${activeUserId}`);
