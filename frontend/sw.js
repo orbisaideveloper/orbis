@@ -1,4 +1,5 @@
-const CACHE_NAME = 'orbis-v1-cache';
+// 🟢 Cache Busted Version 2.0 (Network First Strategy)
+const CACHE_NAME = 'orbis-v2-cache-bust';
 const urlsToCache = [
   '/',
   '/css/style.css',
@@ -6,34 +7,41 @@ const urlsToCache = [
   '/manifest.json'
 ];
 
-// Install Service Worker & Cache Files
 self.addEventListener('install', event => {
+    self.skipWaiting(); // 🟢 Force new service worker to activate immediately
     event.waitUntil(
-        caches.open(CACHE_NAME)
-        .then(cache => {
+        caches.open(CACHE_NAME).then(cache => {
             console.log('[Service Worker] Caching Core Assets');
             return cache.addAll(urlsToCache);
         })
     );
 });
 
-// Serve from Cache when Offline
+// 🟢 Network First Strategy (Always get latest code if internet is on)
 self.addEventListener('fetch', event => {
     event.respondWith(
-        caches.match(event.request)
-        .then(response => {
-            // Return cached version or fetch from network
-            return response || fetch(event.request);
+        fetch(event.request).then(response => {
+            // Update cache dynamically
+            return caches.open(CACHE_NAME).then(cache => {
+                cache.put(event.request, response.clone());
+                return response;
+            });
         }).catch(() => {
-            // Fallback for offline mode if page is not cached
-            if(event.request.mode === 'navigate') {
-                return caches.match('/');
-            }
+            // Fallback to cache ONLY if offline
+            return caches.match(event.request).then(cachedResponse => {
+                if (cachedResponse) {
+                    return cachedResponse;
+                }
+                // Final fallback for HTML pages
+                if (event.request.mode === 'navigate') {
+                    return caches.match('/');
+                }
+            });
         })
     );
 });
 
-// Update Cache & Remove Old Ones
+// Clean up old caches
 self.addEventListener('activate', event => {
     const cacheWhitelist = [CACHE_NAME];
     event.waitUntil(
@@ -45,6 +53,6 @@ self.addEventListener('activate', event => {
                     }
                 })
             );
-        })
+        }).then(() => self.clients.claim()) // 🟢 Take control immediately
     );
 });

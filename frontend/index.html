@@ -5,22 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ORBIS Engineering Cockpit (Live X-Ray)</title>
     
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#FF9933">
     
-    <link rel="stylesheet" href="css/style.css?v={{APP_VERSION}}">
+    <link rel="stylesheet" href="/css/style.css?v={{APP_VERSION}}">
     <style>
-        /* 🟢 NEW: Platform Layer Styling (Sprint-1) */
+        /* 🟢 Platform Layer Styling */
         .platform-layer {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: #ffffff; /* ল্যান্ডিং পেজের ব্যাকগ্রাউন্ড */
-            z-index: 9999; /* পুরোনো সবকিছুর ওপরে থাকবে */
-            overflow-y: auto;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #ffffff; z-index: 9999; overflow-y: auto;
             transition: opacity 0.5s ease, visibility 0.5s ease;
         }
 
-        /* পুরোনো সমস্ত স্টাইল অপরিবর্তিত */
         .wf-step { transition: all 0.3s ease; padding: 2px 6px; border-radius: 4px; }
         .wf-active { background: #00e676 !important; color: #000 !important; font-weight: bold; box-shadow: 0 0 10px #00e676; }
         .wf-error { background: #ff4d4d !important; color: #fff !important; font-weight: bold; animation: blinker 1s linear infinite; }
@@ -34,10 +30,7 @@
         .side-by-side-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
         .side-by-side-row span { color: #64748b; }
         
-        .sidebar-overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.3); z-index: 998; backdrop-filter: blur(1px);
-        }
+        .sidebar-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.3); z-index: 998; backdrop-filter: blur(1px); }
         .telemetry-sidebar { z-index: 999 !important; position: relative; }
 
         /* 🟢 PWA Install Banner Style */
@@ -72,7 +65,7 @@
 
     <header class="top-nav">
         <div class="brand">
-            <button onclick="toggleSidebar()" class="mobile-menu-btn">☰</button>
+            <button onclick="toggleSidebar()" class="mobile-menu-btn" id="mobile-menu-btn" style="display: none;">☰</button>
             <span>ORBIS Core Autonomous Mind</span>
         </div>
         <div class="sys-badges">
@@ -85,7 +78,7 @@
     <div class="main-layout">
         <div id="dashboard-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
-        <aside class="telemetry-sidebar cockpit-mode" id="dev-sidebar" style="width: 380px; display: flex; flex-direction: column; gap: 10px;">
+        <aside class="telemetry-sidebar cockpit-mode" id="dev-sidebar" style="width: 380px; display: none; flex-direction: column; gap: 10px;">
             <div class="cockpit-header" style="display: flex; justify-content: space-between; align-items: center;">
                 <h3 style="margin: 0; font-size: 0.9rem; color: var(--navy-blue); font-weight: 800;">🛠️ DIAGNOSTIC COCKPIT {{APP_VERSION}}</h3>
                 <button onclick="toggleSidebar()" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:var(--red); font-weight:bold;">×</button>
@@ -229,45 +222,31 @@
             
             if(window.updateXRay) window.updateXRay(data);
         });
-
-        const observer = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                if (mutation.attributeName === 'style') {
-                    const sidebar = document.getElementById('dev-sidebar');
-                    const overlay = document.getElementById('dashboard-overlay');
-                    if(sidebar && overlay) {
-                        const isOpen = sidebar.style.display !== 'none' && sidebar.offsetWidth > 0;
-                        overlay.style.display = isOpen ? 'block' : 'none';
-                    }
-                }
-            });
-        });
-        const sidebarEl = document.getElementById('dev-sidebar');
-        if(sidebarEl) observer.observe(sidebarEl, { attributes: true });
     </script>
 
-    <script src="js/ui-core.js?v={{APP_VERSION}}"></script>
-    <script src="js/ui-dashboard.js?v={{APP_VERSION}}"></script>
-    <script src="js/ui-telemetry.js?v={{APP_VERSION}}"></script>
-    <script src="js/ui-chat.js?v={{APP_VERSION}}"></script>
-    <script src="js/ui-voice.js?v={{APP_VERSION}}"></script>
-    <script src="js/platform-core.js?v={{APP_VERSION}}"></script>
+    <script src="/js/ui-core.js?v={{APP_VERSION}}"></script>
+    <script src="/js/ui-dashboard.js?v={{APP_VERSION}}"></script>
+    <script src="/js/ui-telemetry.js?v={{APP_VERSION}}"></script>
+    <script src="/js/ui-chat.js?v={{APP_VERSION}}"></script>
+    <script src="/js/ui-voice.js?v={{APP_VERSION}}"></script>
+    <script src="/js/platform-core.js?v={{APP_VERSION}}"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             const isAdmin = urlParams.get('cockpit_mode') === 'true';
 
-            if (!isAdmin) {
-                const menuBtn = document.querySelector('.mobile-menu-btn');
-                if (menuBtn) menuBtn.style.display = 'none';
+            if (isAdmin) {
+                // 🟢 FIX: Only show sidebar and menu if explicitly authenticated as Admin
+                const menuBtn = document.getElementById('mobile-menu-btn');
+                if (menuBtn) menuBtn.style.display = 'block';
 
                 const devSidebar = document.getElementById('dev-sidebar');
-                if (devSidebar) devSidebar.remove();
-
-                console.log('[ORBIS SECURITY] Admin Cockpit Locked for Public View.');
+                if (devSidebar) devSidebar.style.display = 'flex';
+                
+                console.log('[ORBIS SECURITY] Admin Mode Authenticated. Cockpit Unlocked.');
             } else {
-                console.log('[ORBIS SECURITY] Admin Mode Authenticated.');
+                console.log('[ORBIS SECURITY] Admin Cockpit Locked for Public View.');
             }
         });
 
@@ -282,7 +261,6 @@
             installBanner.style.display = 'none';
         }
 
-        // 1. Register Service Worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js')
@@ -295,14 +273,29 @@
             });
         }
 
-        // 2. Intercept Install Prompt & Show Custom Banner
         window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault(); // Prevent default Chrome prompt
-            deferredPrompt = e; // Save event for later
-            
-            // Show our custom tricolor banner
+            e.preventDefault(); 
+            deferredPrompt = e; 
             installBanner.style.display = 'flex';
             console.log('[PWA] Ready to install. Banner displayed.');
         });
 
-        // 3. Handl
+        if (installBtn) {
+            installBtn.addEventListener('click', async () => {
+                hideInstallBanner();
+                if (deferredPrompt) {
+                    deferredPrompt.prompt(); 
+                    const { outcome } = await deferredPrompt.userChoice;
+                    console.log(`[PWA] Install status: ${outcome}`);
+                    deferredPrompt = null;
+                }
+            });
+        }
+
+        window.addEventListener('appinstalled', () => {
+            hideInstallBanner();
+            console.log('[PWA] ORBIS App successfully installed on device.');
+        });
+    </script>
+</body>
+</html>
