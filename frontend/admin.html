@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ORBIS Admin Workspace</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1e293b; color: #f8fafc; margin: 0; padding: 0; display: flex; height: 100vh; }
+        .sidebar { width: 250px; background-color: #0f172a; padding: 20px; box-sizing: border-box; border-right: 1px solid #334155; }
+        .sidebar h2 { color: #3b82f6; font-size: 1.5rem; margin-top: 0; border-bottom: 1px solid #334155; padding-bottom: 10px; }
+        .nav-item { padding: 12px 15px; margin-bottom: 8px; border-radius: 6px; cursor: pointer; transition: background 0.2s; color: #94a3b8; font-weight: bold; }
+        .nav-item:hover, .nav-item.active { background-color: #3b82f6; color: white; }
+        
+        .main-content { flex: 1; padding: 30px; overflow-y: auto; background-color: #0f172a; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        
+        .card { background-color: #1e293b; padding: 20px; border-radius: 8px; border: 1px solid #334155; }
+        .card h3 { margin-top: 0; color: #e2e8f0; font-size: 1.1rem; border-bottom: 1px solid #334155; padding-bottom: 10px; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; color: #cbd5e1; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #334155; }
+        th { font-weight: bold; color: #94a3b8; }
+        
+        .btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: bold; }
+        .btn-green { background: #10b981; color: white; }
+        .btn-red { background: #ef4444; color: white; }
+        .btn-yellow { background: #f59e0b; color: white; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h2>ORBIS ADMIN</h2>
+        <div class="nav-item active">📊 Platform Health</div>
+        <div class="nav-item">🧩 Module Manager</div>
+        <div class="nav-item">👥 User Statistics</div>
+        <div class="nav-item">⚙️ Configuration</div>
+        <div style="margin-top: 50px;" class="nav-item btn-red" onclick="window.location.href='/'">🔙 Exit Admin Space</div>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <h1 style="margin: 0; font-size: 2rem;">Command Center</h1>
+            <div>Status: <span style="color: #10b981; font-weight: bold;">● ALL SYSTEMS NOMINAL</span></div>
+        </div>
+
+        <div class="card-grid">
+            <div class="card">
+                <h3>System Telemetry</h3>
+                <div id="sys-health" style="font-family: monospace; font-size: 0.9rem; line-height: 1.6;">
+                    Loading health data...
+                </div>
+            </div>
+
+            <div class="card" style="grid-column: span 2;">
+                <h3>Module Publish Control</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Module Name</th>
+                            <th>Version</th>
+                            <th>Status</th>
+                            <th>Visibility</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="module-list">
+                        <tr><td colspan="5">Loading modules...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Fetch Platform Health
+        fetch('/api/admin/health')
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('sys-health').innerHTML = `
+                    Uptime: ${Math.floor(data.uptime)} seconds<br>
+                    Memory: ${Math.round(data.memoryUsage.rss / 1024 / 1024)} MB<br>
+                    Version: ${data.version}
+                `;
+            }).catch(e => console.error(e));
+
+        // Fetch Modules
+        fetch('/api/admin/modules')
+            .then(res => res.json())
+            .then(res => {
+                if(res.success) {
+                    let html = '';
+                    res.data.forEach(mod => {
+                        html += `
+                            <tr>
+                                <td><strong>${mod.name}</strong></td>
+                                <td>${mod.version}</td>
+                                <td style="color: ${mod.status === 'Active' ? '#10b981' : '#f59e0b'}">${mod.status}</td>
+                                <td>${mod.visibility}</td>
+                                <td>
+                                    ${mod.status === 'Active' ? 
+                                    '<button class="btn btn-red" onclick="alert(\'Action: Disable\')">Disable</button>' : 
+                                    '<button class="btn btn-green" onclick="alert(\'Action: Publish\')">Publish</button>'}
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    document.getElementById('module-list').innerHTML = html;
+                }
+            }).catch(e => console.error(e));
+    </script>
+</body>
+</html>

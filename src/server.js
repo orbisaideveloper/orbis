@@ -6,9 +6,9 @@ import fs from 'fs';
 import { getTelemetryData, logRequest, addLog } from './brain/telemetry.js';
 import { BrainController } from './brain/BrainController.js'; 
 
-// 🟢 NEW: Auth এবং Admin রাউটগুলোর ইম্পোর্ট (ফাইলগুলো তৈরি হলে আমরা এগুলো আনকমেন্ট করব)
-// import authRoutes from './auth/authRoutes.js';
-// import adminRoutes from './routes/adminRoutes.js';
+// 🟢 NEW: Admin রাউট ইম্পোর্ট করা হলো (Sprint-1)
+import adminRoutes from './routes/adminRoutes.js';
+// import authRoutes from './auth/authRoutes.js'; // Auth-এর কাজ পরে হবে
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -85,9 +85,8 @@ app.get('/admin/login', (req, res) => {
 // ==========================================
 // 🟢 NEW: API ROUTES MOUNTING (Sprint-1)
 // ==========================================
-// আমরা ফাইলগুলো তৈরি করার পর এই রাউটগুলো চালু করব
-// app.use('/api/auth', authRoutes);
-// app.use('/api/admin', adminRoutes);
+app.use('/api/admin', adminRoutes); // 🟢 অ্যাডমিন এপিআই কানেক্ট করা হলো
+// app.use('/api/auth', authRoutes); // Auth-এর কাজ পরে হবে
 
 // 🟢 লাইভ পোলিং লুপ
 app.get('/api/telemetry', (req, res) => {
