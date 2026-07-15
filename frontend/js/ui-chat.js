@@ -1,6 +1,6 @@
 // frontend/js/ui-chat.js
 /**
- * UI Chat Module: Direct Fetch API Integration (Bypassing Gateways)
+ * UI Chat Module: Direct Fetch API Integration with Unique User Identity
  */
 
 window.ChatStateLock = {
@@ -16,30 +16,31 @@ window.dispatchToAI = async function() {
 
     const now = Date.now();
     if (msg === window.ChatStateLock.lastUserPrompt && (now - window.ChatStateLock.lastTimestamp < 500)) {
-        return; // Anti-Loop
+        return; 
     }
 
     window.ChatStateLock.lastUserPrompt = msg;
     window.ChatStateLock.lastTimestamp = now;
     window.ChatStateLock.isProcessing = true;
 
-    // ১. স্ক্রিনে ইউজারের মেসেজ বসানো
     window.updateChatUI('YOU', msg);
     promptBox.value = ''; 
 
-    // ২. ডিরেক্ট Fetch API দিয়ে সার্ভারে মেসেজ পাঠানো (কোনো Gateway লাগবে না)
+    // 🟢 FIX: Fetching actual User ID (Mobile Number) instead of default
+    const activeUserId = localStorage.getItem('orbis_active_user') || 'guest_user';
+
     try {
         const response = await fetch('/api/chat', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ prompt: msg })
+            // Sending the unique sessionId to the backend
+            body: JSON.stringify({ prompt: msg, sessionId: activeUserId }) 
         });
 
         const apiResult = await response.json();
         
-        // টেলিমেট্রি সিঙ্ক
         if (apiResult && apiResult.telemetry) {
             window.globalEventBus?.emit('TelemetryUpdated', apiResult.telemetry);
         }
@@ -104,9 +105,11 @@ window.renderHistoryMessages = function(historyArray) {
 
 if (!window.ChatUIInitialized) {
     document.addEventListener('DOMContentLoaded', async () => {
-        // ডিরেক্ট ফেচ দিয়ে হিস্ট্রি রিকভারি
+        // 🟢 FIX: Fetching unique history for the specific user
+        const activeUserId = localStorage.getItem('orbis_active_user') || 'guest_user';
+        
         try {
-            const response = await fetch('/api/history?user=default_user');
+            const response = await fetch(`/api/history?sessionId=${activeUserId}`);
             if (response.ok) {
                 const result = await response.json();
                 if (result && (result.status === 'success' || result.success) && result.data) {

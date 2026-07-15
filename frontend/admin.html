@@ -68,9 +68,10 @@
         .panel-content { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; }
         .placeholder-box { border: 2px dashed #cbd5e1; border-radius: 12px; padding: 40px; text-align: center; color: var(--text-muted); background: var(--white); margin-top: 20px; font-size: 1.1rem; }
 
-        /* 🟢 User Radar Table Styles */
-        .radar-table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .radar-table th { background: #f8fafc; padding: 12px; text-align: left; font-size: 0.85rem; color: var(--text-muted); font-weight: bold; border-bottom: 2px solid #e2e8f0; }
+        /* 🟢 User Radar Table Styles (FIXED RESPONSIVENESS) */
+        .radar-table-wrapper { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .radar-table { width: 100%; min-width: 500px; border-collapse: collapse; margin-top: 15px; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .radar-table th { background: #f8fafc; padding: 12px; text-align: left; font-size: 0.85rem; color: var(--text-muted); font-weight: bold; border-bottom: 2px solid #e2e8f0; white-space: nowrap; }
         .radar-table td { padding: 12px; font-size: 0.9rem; color: var(--text-dark); border-bottom: 1px solid #e2e8f0; }
         .radar-table tr:last-child td { border-bottom: none; }
         .live-dot { display: inline-block; width: 8px; height: 8px; background: var(--green); border-radius: 50%; margin-right: 8px; animation: pulse 1.5s infinite; }
@@ -131,8 +132,6 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             if (window.ORBIS_ADMIN) {
-                
-                // 🟢 FETCHING REAL BACKEND DATA FROM /health API
                 window.ORBIS_ADMIN.registerProvider('sys-metrics', async () => {
                     try {
                         const response = await fetch('/api/admin/health');
@@ -145,7 +144,7 @@
                                 data: { 
                                     ram: ramMB, 
                                     ping: 12, 
-                                    activeUsers: result.activeUsers || 0, // Using actual live user count from radar store
+                                    activeUsers: result.activeUsers || 0,
                                     uptime: Math.floor(result.uptime)
                                 } 
                             };
@@ -161,7 +160,6 @@
             }
         });
 
-        // 🟢 PLUGIN RENDERING ENGINE
         function renderPlugins() {
             const grid = document.getElementById('dynamic-plugin-grid');
             if (!grid) return;
@@ -190,9 +188,8 @@
             });
         }
 
-        // 🟢 TELEMETRY POLLING
         let localUptimeSeconds = 0;
-        let activeRadarInterval = null; // Track radar polling to clean it up when panel closes
+        let activeRadarInterval = null; 
 
         function startTelemetryPolling() {
             setInterval(async () => {
@@ -211,7 +208,6 @@
             }, 1000);
         }
 
-        // 🟢 DYNAMIC PANEL ROUTER
         function openPanel(pluginId) {
             if (pluginId === 'plugin-public') {
                 window.location.href = '/';
@@ -230,8 +226,8 @@
                 contentArea.innerHTML = `<iframe src="index.html?cockpit_mode=true" style="width: 100%; height: 100%; border: none; background: #0f172a;"></iframe>`;
             
             } else if (pluginId === 'plugin-radar') {
-                // 📡 LIVE USER RADAR UI & FETCH LOGIC
                 contentArea.style.padding = '20px';
+                // 🟢 FIX: Added radar-table-wrapper for horizontal scrolling
                 contentArea.innerHTML = `
                     <div style="background:#fff; padding:20px; border-radius:10px; max-width:900px; margin:0 auto; box-shadow: var(--shadow);">
                         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:15px;">
@@ -246,27 +242,27 @@
                     </div>
                 `;
 
-                // Function to fetch and draw table
                 const fetchRadarData = async () => {
                     try {
                         const res = await fetch('/api/admin/radar');
                         const data = await res.json();
                         
                         const container = document.getElementById('radar-table-container');
-                        if (!container) return; // Panel closed
+                        if (!container) return; 
 
                         if (data.success && data.users.length > 0) {
                             let tableHTML = `
-                                <table class="radar-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Identity (Phone)</th>
-                                            <th>Name</th>
-                                            <th>Active Module</th>
-                                            <th>Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
+                                <div class="radar-table-wrapper">
+                                    <table class="radar-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Identity (Phone)</th>
+                                                <th>Name</th>
+                                                <th>Active Module</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
                             `;
                             
                             data.users.forEach(user => {
@@ -280,7 +276,7 @@
                                 `;
                             });
                             
-                            tableHTML += `</tbody></table>`;
+                            tableHTML += `</tbody></table></div>`;
                             container.innerHTML = tableHTML;
                         } else {
                             container.innerHTML = `<p style="text-align:center; color:var(--text-muted); padding:30px; font-style:italic;">No active users found on the network currently.</p>`;
@@ -290,7 +286,6 @@
                     }
                 };
 
-                // Fetch immediately, then every 3 seconds
                 fetchRadarData();
                 activeRadarInterval = setInterval(fetchRadarData, 3000);
 
@@ -321,12 +316,10 @@
         }
 
         function closePanel() {
-            // Clean up intervals when leaving a panel
             if (activeRadarInterval) {
                 clearInterval(activeRadarInterval);
                 activeRadarInterval = null;
             }
-
             document.getElementById('detail-panel').style.display = 'none';
             document.getElementById('main-dashboard').style.display = 'block';
             document.getElementById('panel-content-area').innerHTML = ''; 
