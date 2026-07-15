@@ -84,17 +84,17 @@
         <div class="quick-stats">
             <div class="stat-box">
                 <div class="stat-label">Active Users</div>
-                <div class="stat-value" id="live-users">24</div>
-                <div class="stat-live">↑ +3 this hour</div>
+                <div class="stat-value" id="live-users">--</div>
+                <div class="stat-live">Live Sync</div>
             </div>
             <div class="stat-box" style="border-left-color: var(--green);">
                 <div class="stat-label">Platform RAM</div>
-                <div class="stat-value"><span id="live-ram">128</span> MB</div>
+                <div class="stat-value"><span id="live-ram">--</span> MB</div>
                 <div class="stat-live">Stable</div>
             </div>
             <div class="stat-box" style="border-left-color: var(--text-dark);">
                 <div class="stat-label">DB Ping (Latency)</div>
-                <div class="stat-value"><span id="live-ping">12</span> ms</div>
+                <div class="stat-value"><span id="live-ping">--</span> ms</div>
                 <div class="stat-live">Optimal</div>
             </div>
             <div class="stat-box" style="border-left-color: var(--saffron);">
@@ -179,21 +179,54 @@
         </div>
     </div>
 
+    <script src="js/admin-registry.js"></script>
+
     <script>
-        // 🟢 Live Data Simulator (প্যানেলটিকে জীবন্ত করার জন্য)
+        // 🟢 2. REGISTERING MOCK DATA PROVIDERS (Preparation for Backend)
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.ORBIS_ADMIN) {
+                // Registering System Stats Provider
+                window.ORBIS_ADMIN.registerProvider('sys-metrics', async () => {
+                    // Future backend connection will go here: return await fetch('/api/admin/metrics');
+                    return {
+                        success: true,
+                        data: {
+                            ram: 125 + Math.floor(Math.random() * 8),
+                            ping: 10 + Math.floor(Math.random() * 5),
+                            activeUsers: 24 + Math.floor(Math.random() * 3)
+                        }
+                    };
+                });
+                
+                startTelemetryPolling();
+            } else {
+                console.error("[Fatal] ORBIS Core Registry failed to load!");
+            }
+        });
+
+        // 🟢 3. ADVANCED POLLING LOOP (Fetching from Registry)
         let uptimeSeconds = 0;
-        setInterval(() => {
-            uptimeSeconds++;
-            const h = Math.floor(uptimeSeconds / 3600).toString().padStart(2, '0');
-            const m = Math.floor((uptimeSeconds % 3600) / 60).toString().padStart(2, '0');
-            const s = (uptimeSeconds % 60).toString().padStart(2, '0');
-            document.getElementById('live-uptime').innerText = `${h}:${m}:${s}`;
+        function startTelemetryPolling() {
+            setInterval(async () => {
+                // Fetch data cleanly from our abstract Provider
+                const response = await window.ORBIS_ADMIN.fetchData('sys-metrics');
+                
+                if(response && response.success) {
+                    document.getElementById('live-ram').innerText = response.data.ram;
+                    document.getElementById('live-ping').innerText = response.data.ping;
+                    document.getElementById('live-users').innerText = response.data.activeUsers;
+                }
 
-            document.getElementById('live-ram').innerText = 125 + Math.floor(Math.random() * 8);
-            document.getElementById('live-ping').innerText = 10 + Math.floor(Math.random() * 5);
-        }, 1000);
+                // UI Uptime Counter
+                uptimeSeconds++;
+                const h = Math.floor(uptimeSeconds / 3600).toString().padStart(2, '0');
+                const m = Math.floor((uptimeSeconds % 3600) / 60).toString().padStart(2, '0');
+                const s = (uptimeSeconds % 60).toString().padStart(2, '0');
+                document.getElementById('live-uptime').innerText = `${h}:${m}:${s}`;
+            }, 1000);
+        }
 
-        // 🟢 Navigation Logic & COCKPIT INJECTION
+        // 🟢 4. NAVIGATION LOGIC & SECURE COCKPIT INJECTION
         function openPanel(panelId, title) {
             document.getElementById('main-dashboard').style.display = 'none';
             document.getElementById('detail-panel').style.display = 'flex';
@@ -202,8 +235,8 @@
             const contentArea = document.getElementById('panel-content-area');
             
             if (panelId === 'panel-cockpit') {
-                // 🟢 THE MAGIC: Injecting Original Cockpit directly inside Admin via secure iframe bypass
-                contentArea.style.padding = '0'; // প্যাডিং মুছে দিলাম যাতে ককপিট ফুল স্ক্রিন পায়
+                // Original Cockpit injection (Safely preserved)
+                contentArea.style.padding = '0'; 
                 contentArea.innerHTML = `
                     <iframe src="index.html?cockpit_mode=true" 
                             style="width: 100%; height: 100%; border: none; background: #0f172a;">
