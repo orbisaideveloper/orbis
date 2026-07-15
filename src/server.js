@@ -1,17 +1,19 @@
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import fs from 'fs'; // 🟢 ফাইল রিড করার জন্য fs মডিউল যুক্ত করা হলো
+import fs from 'fs'; 
 
-// 🟢 আপডেট: addLog যুক্ত করা হয়েছে যাতে ড্যাশবোর্ডের লগবুক ডেটা পায়
 import { getTelemetryData, logRequest, addLog } from './brain/telemetry.js';
 import { BrainController } from './brain/BrainController.js'; 
+
+// 🟢 NEW: Auth এবং Admin রাউটগুলোর ইম্পোর্ট (ফাইলগুলো তৈরি হলে আমরা এগুলো আনকমেন্ট করব)
+// import authRoutes from './auth/authRoutes.js';
+// import adminRoutes from './routes/adminRoutes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-// Render-এর সাথে সামঞ্জস্য রেখে পোর্ট ১০০০০ ডিফল্ট করা হলো, লোকাল হোস্ট হলে ৩০০০ নেবে
 const PORT = process.env.PORT || 10000; 
 
 const brain = new BrainController(); 
@@ -29,7 +31,6 @@ const logSystemEvent = (level, source, message) => {
         console.log(formattedLog);
     }
     
-    // 🟢 আপডেট: এই লাইনটির জন্যই এখন আপনার ড্যাশবোর্ডের কালো লগবক্স কাজ করবে
     try {
         addLog(level, `[${source}] ${message}`);
     } catch(e) {}
@@ -42,22 +43,17 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json());
-
-// 🟢 ফিক্স: index: false করা হলো, যাতে স্ট্যাটিক ফোল্ডার নিজে থেকে index.html রেন্ডার না করে দেয়
 app.use(express.static(path.join(__dirname, '../frontend'), { index: false }));
 
-// 🟢 ডায়নামিক অটো-ভার্সনিং মাস্টার সুইচ
 const getAppVersion = () => {
-    // Render-এ এনভায়রনমেন্ট ভেরিয়েবল সেট করা থাকলে সেটা নেবে
     if (process.env.SYSTEM_MODE === 'PRODUCTION') {
         return process.env.FINAL_VERSION || '10.0-STABLE';
     }
-    // অটো-জেনারেট DEV ভার্সন (গিটহাবে পুশ করলেই রিস্টার্ট হবে এবং নাম্বার বদলে যাবে)
     const dynamicHash = Math.floor(1000 + Math.random() * 9000); 
     return `9.01-DEV-${dynamicHash}`;
 };
 
-// 🟢 index.html ইন্টারসেপ্টর: ফাইল পড়ে ডায়নামিক ভার্সন বসিয়ে পাঠানো
+// 🟢 index.html ইন্টারসেপ্টর
 app.get('/', (req, res) => {
     const indexPath = path.join(__dirname, '../frontend/index.html');
     fs.readFile(indexPath, 'utf8', (err, data) => {
@@ -65,18 +61,38 @@ app.get('/', (req, res) => {
             logSystemEvent('ERR', 'Server', 'Failed to load index.html');
             return res.status(500).send('System Core Error');
         }
-        // ম্যাজিক ট্যাগটি রিপ্লেস করা হচ্ছে
         const liveVersion = getAppVersion();
         const finalHtml = data.replace(/{{APP_VERSION}}/g, liveVersion);
         res.send(finalHtml);
     });
 });
 
-// 🟢 ফিক্স: ড্যাশবোর্ডের লাইভ পোলিং লুপের জন্য এন্ডপয়েন্টটি সম্পূর্ণ সচল করা হলো
+// ==========================================
+// 🟢 NEW: ADMIN WORKSPACE ROUTE (Sprint-1)
+// ==========================================
+app.get('/admin/login', (req, res) => {
+    logSystemEvent('INFO', 'Router', 'Admin login page requested.');
+    const adminPath = path.join(__dirname, '../frontend/admin.html');
+    
+    // ফাইল থাকলে সার্ভ করবে, না থাকলে Coming Soon দেখাবে যাতে সিস্টেম ব্রেক না করে
+    if (fs.existsSync(adminPath)) {
+        res.sendFile(adminPath);
+    } else {
+        res.send('<h2 style="font-family:sans-serif; text-align:center; margin-top:20%;">Admin Workspace (Coming Soon)</h2>');
+    }
+});
+
+// ==========================================
+// 🟢 NEW: API ROUTES MOUNTING (Sprint-1)
+// ==========================================
+// আমরা ফাইলগুলো তৈরি করার পর এই রাউটগুলো চালু করব
+// app.use('/api/auth', authRoutes);
+// app.use('/api/admin', adminRoutes);
+
+// 🟢 লাইভ পোলিং লুপ
 app.get('/api/telemetry', (req, res) => {
     try {
         const rawTelemetry = getTelemetryData() || {};
-        // ব্রেইনে কতগুলো একটিভ মেসেজ নোড আছে তাও সাথে যোগ করে দেওয়া হলো
         const activeNodes = brain.memory?.nodes?.length || 36;
         
         res.status(200).json({
@@ -92,14 +108,13 @@ app.get('/api/telemetry', (req, res) => {
     }
 });
 
-// পেজ রিলোড দিলে চ্যাট হিস্ট্রি ফিরিয়ে দেওয়ার রাস্তা
+// চ্যাট হিস্ট্রি
 app.get('/api/history', async (req, res) => {
     try {
         const sessionId = req.query.sessionId || 'default_user';
         const history = await brain.memory.getRecentConversations(sessionId, 50); 
         
         logSystemEvent('INFO', 'Memory', `Restored ${history.length} messages for session: ${sessionId}`);
-        // 🟢 শুধুমাত্র এই লাইনে 'history:' এর বদলে 'data:' করা হয়েছে ফ্রন্টএন্ডের সাথে মেলাতে
         res.status(200).json({ success: true, data: history || [] });
     } catch (error) {
         logSystemEvent('ERR', 'Memory', `Failed to fetch history. Reason: ${error.message}`);
@@ -107,6 +122,7 @@ app.get('/api/history', async (req, res) => {
     }
 });
 
+// চ্যাট এপিআই
 app.post('/api/chat', async (req, res) => {
     const startTime = Date.now();
     try {
@@ -121,24 +137,20 @@ app.post('/api/chat', async (req, res) => {
 
         logSystemEvent('INFO', 'Router', 'Directing payload to ORBIS Core Brain...');
 
-        // ডাইরেক্ট জেমিনির বদলে এখন Brain কাজ করবে
         const brainResponse = await brain.handleRequest({
             type: 'CHAT_MESSAGE',
             content: prompt,
             sessionId: sessionId
         });
 
-        // রেসপন্স জেনারেট হতে কত সময় লাগলো (Latency)
         const latency = Date.now() - startTime;
 
-        // 🟢 যদি প্রোভাইডার থেকে কোনো হার্ডকোড করা ফেইল মেসেজ আসে, সিস্টেম সেটাকে ধরে লগ করবে
         if (typeof brainResponse === 'string' && (brainResponse.includes('Quota Overload') || brainResponse.includes('দুঃখিত') || brainResponse.includes('ব্যস্ত'))) {
              logSystemEvent('ERR', 'GeminiProvider', 'Connection failed! External API returned a Quota/Overload message.');
         } else {
              logSystemEvent('OK', 'Core', 'Response generated and dispatched successfully.');
         }
 
-        // 🟢 ফিক্স: সফল চ্যাটের সাথে সাথে লাইভ ল্যাটেন্সি এবং আপডেট টেলিমেট্রি ফ্রন্টএন্ডে ইনজেক্ট করা হলো
         const rawTelemetry = getTelemetryData() || {};
         res.status(200).json({ 
             success: true, 
@@ -163,7 +175,6 @@ app.post('/api/chat', async (req, res) => {
     }
 });
 
-// 🟢 আনক্যাচড এরর হ্যান্ডলার (যাতে কোনো এররের কারণে সার্ভার ক্র্যাশ না করে)
 process.on('unhandledRejection', (reason, promise) => {
     logSystemEvent('ERR', 'GlobalTracker', `Unhandled Promise :: ${reason}`);
 });

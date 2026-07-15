@@ -6,6 +6,17 @@
     <title>ORBIS Engineering Cockpit (Live X-Ray)</title>
     <link rel="stylesheet" href="css/style.css?v={{APP_VERSION}}">
     <style>
+        /* 🟢 NEW: Platform Layer Styling (Sprint-1) */
+        .platform-layer {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #ffffff; /* ল্যান্ডিং পেজের ব্যাকগ্রাউন্ড */
+            z-index: 9999; /* পুরোনো সবকিছুর ওপরে থাকবে */
+            overflow-y: auto;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+
+        /* পুরোনো সমস্ত স্টাইল অপরিবর্তিত */
         .wf-step { transition: all 0.3s ease; padding: 2px 6px; border-radius: 4px; }
         .wf-active { background: #00e676 !important; color: #000 !important; font-weight: bold; box-shadow: 0 0 10px #00e676; }
         .wf-error { background: #ff4d4d !important; color: #fff !important; font-weight: bold; animation: blinker 1s linear infinite; }
@@ -27,6 +38,8 @@
     </style>
 </head>
 <body>
+    <div id="orbis-platform-root" class="platform-layer"></div>
+
     <header class="top-nav">
         <div class="brand">
             <button onclick="toggleSidebar()" class="mobile-menu-btn">☰</button>
@@ -208,5 +221,7 @@
     <script src="js/ui-telemetry.js?v={{APP_VERSION}}"></script>
     <script src="js/ui-chat.js?v={{APP_VERSION}}"></script>
     <script src="js/ui-voice.js?v={{APP_VERSION}}"></script>
+
+    <script src="js/platform-core.js?v={{APP_VERSION}}"></script>
 </body>
 </html>
