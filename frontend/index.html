@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ORBIS Engineering Cockpit (Live X-Ray)</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#FF9933">
+    
     <link rel="stylesheet" href="css/style.css?v={{APP_VERSION}}">
     <style>
         /* 🟢 NEW: Platform Layer Styling (Sprint-1) */
@@ -35,9 +39,35 @@
             background: rgba(0, 0, 0, 0.3); z-index: 998; backdrop-filter: blur(1px);
         }
         .telemetry-sidebar { z-index: 999 !important; position: relative; }
+
+        /* 🟢 PWA Install Banner Style */
+        .pwa-banner {
+            display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: #ffffff; padding: 15px 20px; border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2); border-left: 5px solid #FF9933;
+            z-index: 100000; width: 90%; max-width: 400px; align-items: center;
+            justify-content: space-between; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            animation: slideUpPwa 0.5s ease-out;
+        }
+        @keyframes slideUpPwa { from { bottom: -100px; opacity: 0; } to { bottom: 20px; opacity: 1; } }
     </style>
 </head>
 <body>
+
+    <div id="pwa-install-banner" class="pwa-banner">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="background: #f8fafc; padding: 8px; border-radius: 8px; font-size: 1.5rem;">📱</div>
+            <div>
+                <strong style="color: #0f172a; font-size: 0.95rem; display: block;">Install ORBIS App</strong>
+                <span style="color: #64748b; font-size: 0.8rem;">Fast, offline access to your workspace.</span>
+            </div>
+        </div>
+        <div style="display: flex; gap: 8px;">
+            <button onclick="hideInstallBanner()" style="background: transparent; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 6px; color: #64748b; cursor: pointer; font-weight: bold; font-size: 0.8rem;">Later</button>
+            <button id="pwa-install-btn" style="background: #FF9933; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.8rem; box-shadow: 0 4px 6px rgba(255,153,51,0.3);">Install</button>
+        </div>
+    </div>
+
     <div id="orbis-platform-root" class="platform-layer"></div>
 
     <header class="top-nav">
@@ -221,7 +251,6 @@
     <script src="js/ui-telemetry.js?v={{APP_VERSION}}"></script>
     <script src="js/ui-chat.js?v={{APP_VERSION}}"></script>
     <script src="js/ui-voice.js?v={{APP_VERSION}}"></script>
-
     <script src="js/platform-core.js?v={{APP_VERSION}}"></script>
 
     <script>
@@ -230,11 +259,9 @@
             const isAdmin = urlParams.get('cockpit_mode') === 'true';
 
             if (!isAdmin) {
-                // 1. Hide the Menu Button from public users
                 const menuBtn = document.querySelector('.mobile-menu-btn');
                 if (menuBtn) menuBtn.style.display = 'none';
 
-                // 2. completely remove the Admin Sidebar from DOM so hackers can't inspect it
                 const devSidebar = document.getElementById('dev-sidebar');
                 if (devSidebar) devSidebar.remove();
 
@@ -243,6 +270,39 @@
                 console.log('[ORBIS SECURITY] Admin Mode Authenticated.');
             }
         });
-    </script>
-</body>
-</html>
+
+        // ==========================================
+        // 🚀 PROGRESSIVE WEB APP (PWA) INSTALL LOGIC
+        // ==========================================
+        let deferredPrompt;
+        const installBanner = document.getElementById('pwa-install-banner');
+        const installBtn = document.getElementById('pwa-install-btn');
+
+        function hideInstallBanner() {
+            installBanner.style.display = 'none';
+        }
+
+        // 1. Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                .then(registration => {
+                    console.log('[PWA] Service Worker Active. Offline mode ready.');
+                })
+                .catch(err => {
+                    console.error('[PWA] Service Worker Registration Failed:', err);
+                });
+            });
+        }
+
+        // 2. Intercept Install Prompt & Show Custom Banner
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault(); // Prevent default Chrome prompt
+            deferredPrompt = e; // Save event for later
+            
+            // Show our custom tricolor banner
+            installBanner.style.display = 'flex';
+            console.log('[PWA] Ready to install. Banner displayed.');
+        });
+
+        // 3. Handl
