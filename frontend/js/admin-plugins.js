@@ -4,7 +4,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     if (!window.ORBIS_ADMIN) return;
 
-    // 1. AI Core Cockpit (Existing)
+    // 1. AI Core Cockpit
     window.ORBIS_ADMIN.registerPlugin('plugin-cockpit', {
         name: '🧠 AI Core Cockpit',
         icon: '🧠',
@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
         statusText: 'Ready to Inject'
     });
 
-    // 2. Real-Time User Radar (NEW - Futuristic)
+    // 2. Real-Time User Radar
     window.ORBIS_ADMIN.registerPlugin('plugin-radar', {
         name: '📡 Live User Radar',
         icon: '📡',
@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
         statusText: 'Live Tracking'
     });
 
-    // 3. Shadow Deployment Manager (NEW - Version Control)
+    // 3. Shadow Deployment Manager
     window.ORBIS_ADMIN.registerPlugin('plugin-deploy', {
         name: '🚀 Deployment Engine',
         icon: '🚀',
@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
         statusText: 'v2.0 Pending'
     });
 
-    // 4. Token & Cost Economy (Existing)
+    // 4. Token & Cost Economy
     window.ORBIS_ADMIN.registerPlugin('plugin-economy', {
         name: '🪙 AI Token Economy',
         icon: '🪙',
@@ -40,12 +40,21 @@ document.addEventListener('DOMContentLoaded', () => {
         statusText: '$1.24 Spent Today'
     });
 
-    // 5. Central Logs (Existing)
+    // 5. Central Logs
     window.ORBIS_ADMIN.registerPlugin('plugin-logs', {
         name: '📜 Central Terminal Logs',
         icon: '📜',
         desc: 'Real-time error tracking, router payload monitoring, and system warnings.',
         statusClass: 'status-ok',
         statusText: 'Monitoring...'
+    });
+
+    // 6. Public Platform View (NEW FIX)
+    window.ORBIS_ADMIN.registerPlugin('plugin-public', {
+        name: '🌐 View Public Platform',
+        icon: '🌐',
+        desc: 'Switch to the public view to see what your normal users are experiencing in real-time.',
+        statusClass: 'status-admin', // Using a neutral badge color
+        statusText: 'Switch View'
     });
 });

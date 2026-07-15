@@ -54,6 +54,7 @@
         .card-status { font-size: 0.75rem; font-weight: bold; padding: 4px 10px; border-radius: 20px; }
         .status-ok { background: #dcfce7; color: var(--green); }
         .status-warn { background: #fef08a; color: #854d0e; }
+        .status-admin { background: #e2e8f0; color: var(--text-dark); }
 
         /* 🟢 Dynamic Detail Panel */
         .detail-panel-container { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-light); z-index: 200; flex-direction: column; animation: slideUp 0.3s ease-out; }
@@ -125,13 +126,10 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             if (window.ORBIS_ADMIN) {
-                // Register Provider
                 window.ORBIS_ADMIN.registerProvider('sys-metrics', async () => {
                     return { success: true, data: { ram: 125 + Math.floor(Math.random() * 8), ping: 10 + Math.floor(Math.random() * 5), activeUsers: 1 } };
                 });
                 startTelemetryPolling();
-                
-                // 🟢 DYNAMICALLY DRAW PLUGINS
                 renderPlugins();
             } else {
                 console.error("[Fatal] ORBIS Core Registry failed to load!");
@@ -146,13 +144,20 @@
             window.ORBIS_ADMIN.plugins.forEach(plugin => {
                 const card = document.createElement('div');
                 card.className = 'admin-card';
+                // Only style as transparent if it's the public link plugin (for aesthetics)
+                if(plugin.id === 'plugin-public') {
+                    card.style.border = '2px solid #e2e8f0';
+                    card.style.background = 'transparent';
+                    card.style.boxShadow = 'none';
+                }
+                
                 card.onclick = () => openPanel(plugin.id);
                 
                 card.innerHTML = `
                     <div class="card-icon">${plugin.icon}</div>
-                    <div class="card-title">${plugin.name}</div>
+                    <div class="card-title" ${plugin.id === 'plugin-public' ? 'style="color: var(--text-muted);"' : ''}>${plugin.name}</div>
                     <div class="card-desc">${plugin.desc}</div>
-                    <div class="card-footer">
+                    <div class="card-footer" ${plugin.id === 'plugin-public' ? 'style="border-top: none;"' : ''}>
                         <span class="card-status ${plugin.statusClass}">${plugin.statusText}</span>
                         <span style="color: var(--text-muted); font-size: 1.2rem;">➔</span>
                     </div>
@@ -181,6 +186,12 @@
 
         // 🟢 DYNAMIC PANEL ROUTER
         function openPanel(pluginId) {
+            // 🟢 FIX: Handle Public Link instantly without opening a panel
+            if (pluginId === 'plugin-public') {
+                window.location.href = '/';
+                return;
+            }
+
             const plugin = window.ORBIS_ADMIN.plugins.get(pluginId);
             document.getElementById('main-dashboard').style.display = 'none';
             document.getElementById('detail-panel').style.display = 'flex';
@@ -193,7 +204,6 @@
                 contentArea.innerHTML = `<iframe src="index.html?cockpit_mode=true" style="width: 100%; height: 100%; border: none; background: #0f172a;"></iframe>`;
             
             } else if (pluginId === 'plugin-deploy') {
-                // 🚀 YOUR VERSION CONTROL UI MOCKUP
                 contentArea.style.padding = '20px';
                 contentArea.innerHTML = `
                     <div style="background:#fff; border:1px solid #e2e8f0; padding:20px; border-radius:10px; max-width:800px; margin:0 auto;">
