@@ -3,111 +3,166 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ORBIS Admin Workspace</title>
+    <title>ORBIS Admin Workspace | Command Center</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1e293b; color: #f8fafc; margin: 0; padding: 0; display: flex; height: 100vh; }
-        .sidebar { width: 250px; background-color: #0f172a; padding: 20px; box-sizing: border-box; border-right: 1px solid #334155; }
-        .sidebar h2 { color: #3b82f6; font-size: 1.5rem; margin-top: 0; border-bottom: 1px solid #334155; padding-bottom: 10px; }
-        .nav-item { padding: 12px 15px; margin-bottom: 8px; border-radius: 6px; cursor: pointer; transition: background 0.2s; color: #94a3b8; font-weight: bold; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0f172a; color: #f8fafc; margin: 0; padding: 0; display: flex; height: 100vh; overflow: hidden; }
+        
+        /* Sidebar Styles */
+        .sidebar { width: 280px; background-color: #1e293b; padding: 20px; box-sizing: border-box; border-right: 1px solid #334155; display: flex; flex-direction: column; height: 100vh; }
+        .sidebar h2 { color: #3b82f6; font-size: 1.5rem; margin-top: 0; border-bottom: 1px solid #334155; padding-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
+        .nav-list { flex: 1; overflow-y: auto; padding-right: 5px; }
+        
+        /* Scrollbar for sidebar */
+        .nav-list::-webkit-scrollbar { width: 5px; }
+        .nav-list::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
+        
+        .nav-item { padding: 10px 15px; margin-bottom: 5px; border-radius: 6px; cursor: pointer; transition: background 0.2s; color: #cbd5e1; font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; gap: 10px; }
         .nav-item:hover, .nav-item.active { background-color: #3b82f6; color: white; }
         
+        /* Main Content Styles */
         .main-content { flex: 1; padding: 30px; overflow-y: auto; background-color: #0f172a; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid #334155; padding-bottom: 20px; }
+        .header h1 { margin: 0; font-size: 2rem; color: #f8fafc; }
+        .status-badge { background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 8px 16px; border-radius: 20px; font-weight: bold; border: 1px solid #10b981; }
         
-        .card { background-color: #1e293b; padding: 20px; border-radius: 8px; border: 1px solid #334155; }
-        .card h3 { margin-top: 0; color: #e2e8f0; font-size: 1.1rem; border-bottom: 1px solid #334155; padding-bottom: 10px; }
+        /* Grid Layouts */
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .module-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin-top: 15px; }
         
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; color: #cbd5e1; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #334155; }
-        th { font-weight: bold; color: #94a3b8; }
+        /* Card Styles */
+        .card { background-color: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #334155; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .card h3 { margin-top: 0; color: #e2e8f0; font-size: 1.1rem; border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 15px; display: flex; justify-content: space-between; }
         
-        .btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: bold; }
+        /* Module Cards */
+        .mod-card { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .mod-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #334155; padding-bottom: 8px; }
+        .mod-header h4 { margin: 0; font-size: 1.05rem; color: #38bdf8; }
+        .mod-details { font-size: 0.85rem; color: #94a3b8; display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+        .mod-actions { display: flex; gap: 8px; margin-top: 10px; }
+        
+        /* Utilities */
+        .badge { font-size: 0.7rem; padding: 3px 8px; border-radius: 12px; font-weight: bold; text-transform: uppercase; }
+        .badge-green { background: #10b981; color: white; }
+        .badge-yellow { background: #f59e0b; color: white; }
+        
+        .btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: bold; flex: 1; text-align: center; transition: opacity 0.2s; }
+        .btn:hover { opacity: 0.8; }
         .btn-green { background: #10b981; color: white; }
         .btn-red { background: #ef4444; color: white; }
+        .btn-blue { background: #3b82f6; color: white; }
         .btn-yellow { background: #f59e0b; color: white; }
+        .btn-outline { background: transparent; border: 1px solid #475569; color: #cbd5e1; }
+        
+        .action-area { border-top: 1px solid #334155; padding-top: 15px; margin-top: 15px; display: flex; flex-direction: column; gap: 10px; }
     </style>
 </head>
 <body>
     <div class="sidebar">
         <h2>ORBIS ADMIN</h2>
-        <div class="nav-item active">📊 Platform Health</div>
-        <div class="nav-item">🧩 Module Manager</div>
-        <div class="nav-item">👥 User Statistics</div>
-        <div class="nav-item">⚙️ Configuration</div>
-        <div style="margin-top: 50px;" class="nav-item btn-red" onclick="window.location.href='/'">🔙 Exit Admin Space</div>
+        <div class="nav-list">
+            <div class="nav-item active">📊 Platform Health</div>
+            <div class="nav-item">📡 System Telemetry</div>
+            <div class="nav-item">🧠 Brain Monitor</div>
+            <div class="nav-item">💾 Memory Monitor</div>
+            <div class="nav-item">🔗 Dependency Explorer</div>
+            <div class="nav-item">🔌 Provider Manager</div>
+            <div class="nav-item">⚡ Execution Monitor</div>
+            <div class="nav-item">📋 Logs</div>
+            <div class="nav-item">⚙️ Configuration</div>
+            <div class="nav-item">🚀 Release Manager</div>
+            <div class="nav-item">📤 Publish Center</div>
+            <div class="nav-item">🧩 Module Manager</div>
+            <div class="nav-item">👥 User Manager</div>
+            <div class="nav-item">🛠️ System Settings</div>
+        </div>
+        
+        <div class="action-area">
+            <div class="nav-item btn-yellow" style="justify-content: center; color: #0f172a;" onclick="window.location.href='/?mode=preview'">👁️ Preview Public UI</div>
+            <div class="nav-item btn-red" style="justify-content: center;" onclick="window.location.href='/'">🔙 Exit Admin Space</div>
+        </div>
     </div>
 
     <div class="main-content">
         <div class="header">
-            <h1 style="margin: 0; font-size: 2rem;">Command Center</h1>
-            <div>Status: <span style="color: #10b981; font-weight: bold;">● ALL SYSTEMS NOMINAL</span></div>
+            <h1>Command Center Workspace</h1>
+            <div class="status-badge">● ALL SYSTEMS NOMINAL</div>
         </div>
 
         <div class="card-grid">
             <div class="card">
-                <h3>System Telemetry</h3>
-                <div id="sys-health" style="font-family: monospace; font-size: 0.9rem; line-height: 1.6;">
-                    Loading health data...
+                <h3>System Telemetry <span class="badge badge-green">Live</span></h3>
+                <div id="sys-health" style="font-family: monospace; font-size: 0.95rem; line-height: 1.8; color: #38bdf8; background: #0f172a; padding: 15px; border-radius: 6px; border: 1px solid #334155;">
+                    <span style="color: #94a3b8;">Initializing telemetry stream...</span>
                 </div>
             </div>
+            
+            <div class="card">
+                <h3>Execution Monitor</h3>
+                <div style="font-family: monospace; font-size: 0.9rem; color: #94a3b8; text-align: center; padding: 20px;">
+                    No active tasks in queue.
+                </div>
+            </div>
+        </div>
 
-            <div class="card" style="grid-column: span 2;">
-                <h3>Module Publish Control</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Module Name</th>
-                            <th>Version</th>
-                            <th>Status</th>
-                            <th>Visibility</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="module-list">
-                        <tr><td colspan="5">Loading modules...</td></tr>
-                    </tbody>
-                </table>
+        <div class="card" style="width: 100%; box-sizing: border-box;">
+            <h3>Module Publish Control & Management</h3>
+            <div id="module-list" class="module-grid">
+                <div style="color: #94a3b8; padding: 10px;">Scanning registered modules...</div>
             </div>
         </div>
     </div>
 
     <script>
+        // ==========================================
+        // 🟢 PRESERVED API LOGIC (Zero Breaking)
+        // ==========================================
+        
         // Fetch Platform Health
         fetch('/api/admin/health')
             .then(res => res.json())
             .then(data => {
                 document.getElementById('sys-health').innerHTML = `
-                    Uptime: ${Math.floor(data.uptime)} seconds<br>
-                    Memory: ${Math.round(data.memoryUsage.rss / 1024 / 1024)} MB<br>
-                    Version: ${data.version}
+                    <div style="display:flex; justify-content:space-between;"><span>Uptime:</span> <strong style="color: white;">${Math.floor(data.uptime)} sec</strong></div>
+                    <div style="display:flex; justify-content:space-between;"><span>Memory RSS:</span> <strong style="color: white;">${Math.round(data.memoryUsage.rss / 1024 / 1024)} MB</strong></div>
+                    <div style="display:flex; justify-content:space-between;"><span>Core Version:</span> <strong style="color: white;">${data.version}</strong></div>
                 `;
-            }).catch(e => console.error(e));
+            }).catch(e => console.error("[Admin API] Health Check Failed:", e));
 
-        // Fetch Modules
+        // Fetch Modules & Render as Modern Cards
         fetch('/api/admin/modules')
             .then(res => res.json())
             .then(res => {
                 if(res.success) {
                     let html = '';
                     res.data.forEach(mod => {
+                        // ✨ NEW: Dynamic Card Rendering (Replaced Table Rows)
                         html += `
-                            <tr>
-                                <td><strong>${mod.name}</strong></td>
-                                <td>${mod.version}</td>
-                                <td style="color: ${mod.status === 'Active' ? '#10b981' : '#f59e0b'}">${mod.status}</td>
-                                <td>${mod.visibility}</td>
-                                <td>
+                            <div class="mod-card">
+                                <div class="mod-header">
+                                    <h4>${mod.name}</h4>
+                                    <span class="badge ${mod.status === 'Active' ? 'badge-green' : 'badge-yellow'}">${mod.status}</span>
+                                </div>
+                                <div class="mod-details">
+                                    <div><strong>Version:</strong> <span style="color:#e2e8f0;">${mod.version}</span></div>
+                                    <div><strong>Visibility:</strong> <span style="color:#e2e8f0;">${mod.visibility}</span></div>
+                                    <div><strong>Health:</strong> <span style="color:#10b981;">Optimal</span></div>
+                                    <div><strong>Users:</strong> <span style="color:#e2e8f0;">Active</span></div>
+                                </div>
+                                <div class="mod-actions">
+                                    <button class="btn btn-outline" onclick="alert('Opening Workspace: ${mod.name}')">Workspace</button>
+                                    <button class="btn btn-blue" onclick="alert('Settings: ${mod.name}')">Config</button>
+                                </div>
+                                <div class="mod-actions">
                                     ${mod.status === 'Active' ? 
-                                    '<button class="btn btn-red" onclick="alert(\'Action: Disable\')">Disable</button>' : 
-                                    '<button class="btn btn-green" onclick="alert(\'Action: Publish\')">Publish</button>'}
-                                </td>
-                            </tr>
+                                    `<button class="btn btn-red" onclick="alert('Action: Disable ${mod.name}')">Disable</button>` : 
+                                    `<button class="btn btn-green" onclick="alert('Action: Publish ${mod.name}')">Publish</button>`}
+                                </div>
+                            </div>
                         `;
                     });
                     document.getElementById('module-list').innerHTML = html;
                 }
-            }).catch(e => console.error(e));
+            }).catch(e => console.error("[Admin API] Module Fetch Failed:", e));
     </script>
 </body>
 </html>
