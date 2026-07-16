@@ -14,14 +14,15 @@
         .unlock-btn { background: #FF9933; color: white; border: none; padding: 12px 30px; border-radius: 8px; font-weight: bold; font-size: 1.1rem; cursor: pointer; transition: 0.3s; }
         .unlock-btn:hover { background: #e68a2e; }
         
-        /* Hide the main workspace initially */
         #admin-workspace { display: none; } 
 
-        /* 🟢 NEW: Lottery Workspace Specific Styles */
         .sub-module-btn { width: 100%; text-align: left; padding: 10px; background: rgba(0, 82, 204, 0.08); border: none; border-radius: 8px; color: #0052cc; font-weight: 600; cursor: pointer; margin-top: 5px; transition: all 0.2s ease;}
         .sub-module-btn:hover { background: rgba(0, 82, 204, 0.15) !important; transform: translateX(4px); }
         .glass-card-hover { cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; }
         .glass-card-hover:hover { transform: translateY(-2px); box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.1); }
+        
+        /* 🟢 NEW: Isolated Card Style (To trick the legacy script) */
+        .isolated-card { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.9); border-radius: 16px; box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05); padding: 24px; }
     </style>
 </head>
 <body>
@@ -64,17 +65,13 @@
                     <p>Agriculture & Dairy management hub</p>
                 </div>
         
-                <div class="glass-card glass-card-hover" id="card-digiledger" style="border-left: 4px solid #0052cc;">
+                <div class="isolated-card glass-card-hover" id="card-digiledger" style="border-left: 4px solid #0052cc;">
                     <h3>📊 DigiLedger Workspace</h3>
                     <p>Financial Accounting & Business Modules</p>
                     
                     <div id="digiledger-sub-menu" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 1px dashed rgba(0,0,0,0.1);">
-                        <button class="sub-module-btn" id="btn-load-lottery">
-                            🎟️ Lottery Dispatch ➔
-                        </button>
-                        <button class="sub-module-btn" id="btn-load-payment" style="color: #059669; background: rgba(16, 185, 129, 0.08);">
-                            💸 Receive Payment ➔
-                        </button>
+                        <button class="sub-module-btn" id="btn-load-lottery">🎟️ Lottery Dispatch ➔</button>
+                        <button class="sub-module-btn" id="btn-load-payment" style="color: #059669; background: rgba(16, 185, 129, 0.08);">💸 Receive Payment ➔</button>
                     </div>
                 </div>
             </div>
@@ -110,7 +107,6 @@
     </script>
 
     <script type="module">
-        // Import Lottery UI and Logic (Both Dispatch and Payment)
         import { getDispatchWorkspaceHTML } from '../modules/digiledger/lottery/ui/DispatchWorkspace.js';
         import { initLotteryWorkspace } from '../modules/digiledger/lottery/ui/lottery-app.js';
         import { getPaymentWorkspaceHTML } from '../modules/digiledger/lottery/ui/PaymentWorkspace.js';
@@ -123,25 +119,19 @@
             const loadPaymentBtn = document.getElementById('btn-load-payment');
             const workspaceDock = document.getElementById('dynamic-module-workspace');
 
-            // 🟢 Toggle DigiLedger Sub-Menu (FIXED ALERT ISSUE)
             if (digiLedgerCard) {
                 digiLedgerCard.addEventListener('click', (e) => {
                     e.stopImmediatePropagation(); 
-                    // Make sure clicking the buttons doesn't trigger the toggle
                     if (!e.target.closest('.sub-module-btn')) {
                         const isDisplayed = subMenu.style.display === 'block';
                         subMenu.style.display = isDisplayed ? 'none' : 'block';
-                        console.log("[ORBIS] DigiLedger Sub-Modules Toggled.");
                     }
                 }, true); 
             }
 
-            // Load Lottery Dispatch Workspace on Button Click
             if (loadLotteryBtn) {
                 loadLotteryBtn.addEventListener('click', (e) => {
                     e.stopImmediatePropagation(); 
-                    console.log("[ORBIS] Loading Lottery Dispatch Workspace...");
-                    
                     workspaceDock.innerHTML = `
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                             <h2 style="margin:0; color:#0052cc;">🎟️ Lottery Command Center</h2>
@@ -150,18 +140,14 @@
                         ${getDispatchWorkspaceHTML()}
                     `;
                     workspaceDock.style.display = 'block';
-                    
                     initLotteryWorkspace();
                     workspaceDock.scrollIntoView({ behavior: 'smooth' });
                 });
             }
 
-            // 🟢 Load Payment Settlement Workspace on Button Click
             if (loadPaymentBtn) {
                 loadPaymentBtn.addEventListener('click', (e) => {
                     e.stopImmediatePropagation();
-                    console.log("[ORBIS] Loading Payment Workspace...");
-                    
                     workspaceDock.innerHTML = `
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                             <button onclick="document.getElementById('dynamic-module-workspace').style.display='none'" style="background:transparent; border:none; color:red; font-size:1.5rem; cursor:pointer; margin-left:auto;">×</button>
@@ -169,14 +155,12 @@
                         ${getPaymentWorkspaceHTML()}
                     `;
                     workspaceDock.style.display = 'block';
-                    
                     initPaymentWorkspace();
                     workspaceDock.scrollIntoView({ behavior: 'smooth' });
                 });
             }
         });
     </script>
-
     <script src="/js/admin-registry.js"></script>
     <script src="/js/admin-plugins.js"></script>
     <script src="/js/admin-logic.js"></script>
