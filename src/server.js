@@ -8,6 +8,9 @@ import { getTelemetryData, logRequest, addLog } from './brain/telemetry.js';
 import { BrainController } from './brain/BrainController.js'; 
 import adminRoutes from './routes/adminRoutes.js';
 
+// 🟢 NEW: Lottery Module Route Import (Lego Plug-in)
+import lotteryRoutes from './modules/digiledger/lottery/routes/lotteryRoutes.js';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -93,7 +96,11 @@ app.get('/admin/login', (req, res) => {
     else res.send('<h2 style="text-align:center; margin-top:20%;">Admin Workspace (Coming Soon)</h2>');
 });
 
+// 🟢 Main Platform Routes
 app.use('/api/admin', adminRoutes);
+
+// 🟢 NEW: Lottery Module Connection
+app.use('/api/lottery', lotteryRoutes);
 
 app.get('/api/telemetry', (req, res) => {
     try {
@@ -144,7 +151,6 @@ app.post('/api/chat', async (req, res) => {
 
         const brainResponse = await brain.handleRequest({ type: 'CHAT_MESSAGE', content: prompt, sessionId: sessionId });
 
-        // 🟢 FIX: ইউজার আইডি সিঙ্ক করার পাশাপাশি চ্যাটগুলোকেও ক্লাউডে সেভ করার কোড ফিরিয়ে আনা হলো
         if (supabase) {
             try {
                 await supabase.from('users').upsert({ orb_id: sessionId }, { onConflict: 'orb_id' });

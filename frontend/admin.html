@@ -16,6 +16,12 @@
         
         /* Hide the main workspace initially */
         #admin-workspace { display: none; } 
+
+        /* 🟢 NEW: Lottery Workspace Specific Styles */
+        .sub-module-btn { width: 100%; text-align: left; padding: 10px; background: rgba(0, 82, 204, 0.08); border: none; border-radius: 8px; color: #0052cc; font-weight: 600; cursor: pointer; margin-top: 5px; transition: all 0.2s ease;}
+        .sub-module-btn:hover { background: rgba(0, 82, 204, 0.15) !important; transform: translateX(4px); }
+        .glass-card-hover { cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .glass-card-hover:hover { transform: translateY(-2px); box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.1); }
     </style>
 </head>
 <body>
@@ -46,7 +52,33 @@
                 <div class="stat-box" style="border-left-color: var(--saffron);"><div class="stat-label">System Uptime</div><div class="stat-value" id="live-uptime">00:00:00</div><div class="stat-live">Server Sync</div></div>
             </div>
             <div class="section-title">🚀 Core Modules & Plugins</div>
-            <div class="card-grid" id="dynamic-plugin-grid"></div>
+            
+            <div class="card-grid" id="dynamic-plugin-grid">
+                <div class="glass-card">
+                    <h3>🧠 AI Core Cockpit</h3>
+                    <p>System autonomy and routing control</p>
+                </div>
+        
+                <div class="glass-card">
+                    <h3>🌾 Farmer Brain</h3>
+                    <p>Agriculture & Dairy management hub</p>
+                </div>
+        
+                <div class="glass-card glass-card-hover" id="card-digiledger" style="border-left: 4px solid #0052cc;">
+                    <h3>📊 DigiLedger Workspace</h3>
+                    <p>Financial Accounting & Business Modules</p>
+                    
+                    <div id="digiledger-sub-menu" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 1px dashed rgba(0,0,0,0.1);">
+                        <button class="sub-module-btn" id="btn-load-lottery">
+                            🎟️ Lottery Business Module ➔
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="dynamic-module-workspace" style="display: none; margin-top: 30px; padding: 20px; background: #fff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                </div>
+
         </div>
 
         <div class="detail-panel-container" id="detail-panel">
@@ -56,10 +88,12 @@
             </div>
             <div class="panel-content" id="panel-content-area"></div>
         </div>
-    </div> <script>
+    </div> 
+
+    <script>
         function checkPIN() {
             const pin = document.getElementById('master-pin').value;
-            if(pin === '2026') { // 🔑 MASTER PIN IS SET HERE
+            if(pin === '2026') { 
                 document.getElementById('security-overlay').style.opacity = '0';
                 setTimeout(() => {
                     document.getElementById('security-overlay').style.display = 'none';
@@ -70,6 +104,54 @@
                 document.getElementById('master-pin').value = '';
             }
         }
+    </script>
+
+    <script type="module">
+        // Import Lottery UI and Logic
+        import { getDispatchWorkspaceHTML } from '../modules/digiledger/lottery/ui/DispatchWorkspace.js';
+        import { initLotteryWorkspace } from '../modules/digiledger/lottery/ui/lottery-app.js';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const digiLedgerCard = document.getElementById('card-digiledger');
+            const subMenu = document.getElementById('digiledger-sub-menu');
+            const loadLotteryBtn = document.getElementById('btn-load-lottery');
+            const workspaceDock = document.getElementById('dynamic-module-workspace');
+
+            // Toggle DigiLedger Sub-Menu
+            if (digiLedgerCard) {
+                digiLedgerCard.addEventListener('click', (e) => {
+                    if (e.target.id !== 'btn-load-lottery') {
+                        const isDisplayed = subMenu.style.display === 'block';
+                        subMenu.style.display = isDisplayed ? 'none' : 'block';
+                        console.log("[ORBIS] DigiLedger Sub-Modules Toggled.");
+                    }
+                });
+            }
+
+            // Load Lottery Workspace on Button Click
+            if (loadLotteryBtn) {
+                loadLotteryBtn.addEventListener('click', (e) => {
+                    e.stopPropagation(); 
+                    console.log("[ORBIS] Loading Lottery Dispatch Workspace...");
+                    
+                    // Inject the Workspace UI
+                    workspaceDock.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                            <h2 style="margin:0; color:#0052cc;">🎟️ Lottery Command Center</h2>
+                            <button onclick="document.getElementById('dynamic-module-workspace').style.display='none'" style="background:transparent; border:none; color:red; font-size:1.5rem; cursor:pointer;">×</button>
+                        </div>
+                        ${getDispatchWorkspaceHTML()}
+                    `;
+                    workspaceDock.style.display = 'block';
+                    
+                    // Initialize the calculation and API logic
+                    initLotteryWorkspace();
+                    
+                    // Smooth scroll to the workspace
+                    workspaceDock.scrollIntoView({ behavior: 'smooth' });
+                });
+            }
+        });
     </script>
 
     <script src="/js/admin-registry.js"></script>
