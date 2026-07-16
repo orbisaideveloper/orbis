@@ -5,32 +5,72 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ORBIS Master Command Center</title>
     <link rel="stylesheet" href="/css/admin.css">
+    
+    <style>
+        #security-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; transition: opacity 0.5s ease; }
+        .lock-box { background: rgba(255, 255, 255, 0.05); padding: 40px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.1); text-align: center; backdrop-filter: blur(15px); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .pin-input { font-size: 2rem; width: 180px; text-align: center; letter-spacing: 15px; background: transparent; border: none; border-bottom: 2px solid #FF9933; color: white; outline: none; margin: 20px 0; font-family: monospace; }
+        .pin-input::placeholder { color: rgba(255,255,255,0.2); letter-spacing: 5px; font-size: 1.2rem; }
+        .unlock-btn { background: #FF9933; color: white; border: none; padding: 12px 30px; border-radius: 8px; font-weight: bold; font-size: 1.1rem; cursor: pointer; transition: 0.3s; }
+        .unlock-btn:hover { background: #e68a2e; }
+        
+        /* Hide the main workspace initially */
+        #admin-workspace { display: none; } 
+    </style>
 </head>
 <body>
 
-    <header class="admin-nav">
-        <h1>ORBIS <span>MASTER ADMIN</span></h1>
-        <div class="sys-status-badge"><div class="pulse-dot"></div>SYSTEM LIVE</div>
-    </header>
-
-    <div class="dashboard-container" id="main-dashboard">
-        <div class="quick-stats">
-            <div class="stat-box"><div class="stat-label">Active Users</div><div class="stat-value" id="live-users">--</div><div class="stat-live">Live Sync</div></div>
-            <div class="stat-box" style="border-left-color: var(--green);"><div class="stat-label">Platform RAM</div><div class="stat-value"><span id="live-ram">--</span> MB</div><div class="stat-live">Stable</div></div>
-            <div class="stat-box" style="border-left-color: var(--text-dark);"><div class="stat-label">DB Ping (Latency)</div><div class="stat-value"><span id="live-ping">--</span> ms</div><div class="stat-live">Optimal</div></div>
-            <div class="stat-box" style="border-left-color: var(--saffron);"><div class="stat-label">System Uptime</div><div class="stat-value" id="live-uptime">00:00:00</div><div class="stat-live">Server Sync</div></div>
+    <div id="security-overlay">
+        <div class="lock-box">
+            <div style="font-size: 3rem; margin-bottom: 10px;">🛡️</div>
+            <h2 style="margin: 0 0 5px 0; color: #f8fafc;">RESTRICTED AREA</h2>
+            <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 20px;">ORBIS Master Command Center</p>
+            <input type="password" id="master-pin" class="pin-input" maxlength="4" placeholder="****" onkeydown="if(event.key === 'Enter') checkPIN()">
+            <br>
+            <button class="unlock-btn" onclick="checkPIN()">AUTHORIZE</button>
+            <p id="pin-error" style="color: #ff4d4d; font-size: 0.85rem; margin-top: 15px; display: none;">Access Denied. Incorrect PIN.</p>
         </div>
-        <div class="section-title">🚀 Core Modules & Plugins</div>
-        <div class="card-grid" id="dynamic-plugin-grid"></div>
     </div>
 
-    <div class="detail-panel-container" id="detail-panel">
-        <div class="panel-header">
-            <button class="btn-back" onclick="closePanel()">← Back to Dashboard</button>
-            <h2 class="panel-title" id="panel-title-text">Panel Name</h2>
+    <div id="admin-workspace">
+        <header class="admin-nav">
+            <h1>ORBIS <span>MASTER ADMIN</span></h1>
+            <div class="sys-status-badge"><div class="pulse-dot"></div>SYSTEM LIVE</div>
+        </header>
+
+        <div class="dashboard-container" id="main-dashboard">
+            <div class="quick-stats">
+                <div class="stat-box"><div class="stat-label">Active Users</div><div class="stat-value" id="live-users">--</div><div class="stat-live">Live Sync</div></div>
+                <div class="stat-box" style="border-left-color: var(--green);"><div class="stat-label">Platform RAM</div><div class="stat-value"><span id="live-ram">--</span> MB</div><div class="stat-live">Stable</div></div>
+                <div class="stat-box" style="border-left-color: var(--text-dark);"><div class="stat-label">DB Ping (Latency)</div><div class="stat-value"><span id="live-ping">--</span> ms</div><div class="stat-live">Optimal</div></div>
+                <div class="stat-box" style="border-left-color: var(--saffron);"><div class="stat-label">System Uptime</div><div class="stat-value" id="live-uptime">00:00:00</div><div class="stat-live">Server Sync</div></div>
+            </div>
+            <div class="section-title">🚀 Core Modules & Plugins</div>
+            <div class="card-grid" id="dynamic-plugin-grid"></div>
         </div>
-        <div class="panel-content" id="panel-content-area"></div>
-    </div>
+
+        <div class="detail-panel-container" id="detail-panel">
+            <div class="panel-header">
+                <button class="btn-back" onclick="closePanel()">← Back to Dashboard</button>
+                <h2 class="panel-title" id="panel-title-text">Panel Name</h2>
+            </div>
+            <div class="panel-content" id="panel-content-area"></div>
+        </div>
+    </div> <script>
+        function checkPIN() {
+            const pin = document.getElementById('master-pin').value;
+            if(pin === '2026') { // 🔑 MASTER PIN IS SET HERE
+                document.getElementById('security-overlay').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('security-overlay').style.display = 'none';
+                    document.getElementById('admin-workspace').style.display = 'block';
+                }, 500);
+            } else {
+                document.getElementById('pin-error').style.display = 'block';
+                document.getElementById('master-pin').value = '';
+            }
+        }
+    </script>
 
     <script src="/js/admin-registry.js"></script>
     <script src="/js/admin-plugins.js"></script>
