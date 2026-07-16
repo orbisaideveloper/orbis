@@ -198,11 +198,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!document.getElementById('orbis-lottery-module')) {
                     const script = document.createElement('script');
                     script.id = 'orbis-lottery-module';
-                    // ⚠️ গুরুত্বপূর্ণ: যদি লটারি মডিউল না খোলে, তবে এই পাথটি '/src/modules...' করে ট্রাই করবেন
-                    script.src = '/modules/digiledger/lottery/ui/user-view.js'; 
+                    // 🟢 পাথ আপডেট করা হলো: /src যুক্ত করা হয়েছে
+                    script.src = '/src/modules/digiledger/lottery/ui/user-view.js'; 
                     
                     script.onerror = () => {
-                        alert("Error 404: লটারি ফাইলটি পাওয়া যাচ্ছে না! স্ক্রিপ্টের পাথ (Path) চেক করুন।");
+                        alert("Error 404: লটারি ফাইলটি পাওয়া যাচ্ছে না! সার্ভারের (server.js) রাউটিং চেক করতে হবে।");
                         window.orbisPlatform.unmountModule();
                     };
                     
