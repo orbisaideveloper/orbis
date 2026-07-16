@@ -1,20 +1,26 @@
-// js/ui-voice.js - Speech to Text Engine with Smart Refiner
+// js/ui-voice.js - Speech to Text Engine with Smart Bilingual Refiner
 
-// 🟢 NEW: Smart Voice Refiner (১৯-২০ ভুলগুলো ঠিক করার ফিল্টার)
 window.normalizeVoiceText = function(rawText) {
     let text = rawText.trim();
     
-    // ১. সাধারণ বাংলা উচ্চারণের বা ভয়েস টাইপিংয়ের ভুলগুলো ঠিক করা (Dictionary)
-    // আপনি চাইলে ভবিষ্যতে এখানে আরও শব্দ যোগ করতে পারবেন
+    // 🟢 NEW: Bilingual Dictionary (বাংলা + ইংরেজি মিক্সড কথার ভুলগুলো ঠিক করার ফিল্টার)
     const corrections = {
+        // সাধারণ বাংলা ভুল
         "করতে পারবি": "করতে পারবে",
         "কি রে": "কী",
         "বলতো": "বল তো",
-        "ওয়েদার টা": "ওয়েদারটা",
-        "কিরে": "কী",
         "দ্যাখ": "দেখাও",
-        "ট্রেনিং খবর": "ট্রেন্ডিং খবর", // আগের সার্চের সেই ভুলটা ফিক্স করা হলো
-        "বেস্ট": "সেরা"
+        
+        // মিক্সড ল্যাঙ্গুয়েজ (Benglish) ও ইংরেজি উচ্চারণের ভুলগুলো
+        "ওয়েদার টা": "ওয়েদারটা",
+        "ট্রেনিং খবর": "ট্রেন্ডিং খবর", // Trending-কে Training শুনলে ঠিক করবে
+        "আপডেট দে": "আপডেট দাও",
+        "সার্চ কর": "সার্চ করো",
+        "রিপোর্ট টা": "রিপোর্টটা",
+        "হোয়াটস্যাপ": "WhatsApp",
+        "ইউটিউব": "YouTube",
+        "ফেসবুক": "Facebook",
+        "মেইল টা": "মেইলটা"
     };
     
     for (const [wrong, right] of Object.entries(corrections)) {
@@ -22,10 +28,10 @@ window.normalizeVoiceText = function(rawText) {
         text = text.replace(new RegExp(wrong, 'gi'), right);
     }
     
-    // ২. ডাবল স্পেস বা অপ্রয়োজনীয় ফাঁকা জায়গা রিমুভ করা
+    // ডাবল স্পেস বা অপ্রয়োজনীয় ফাঁকা জায়গা রিমুভ করা
     text = text.replace(/\s+/g, ' ');
     
-    // ৩. বাক্যের শেষে কোনো ফালতু যতিচিহ্ন থাকলে সেটা ঠিক করা
+    // বাক্যের শেষে কোনো ফালতু যতিচিহ্ন থাকলে সেটা ঠিক করা
     text = text.replace(/(\?|!|\.){2,}/g, '$1'); 
     
     return text;
@@ -35,7 +41,6 @@ window.startVoiceEngine = function() {
     window.printLog('INFO', 'Voice: Listening...');
     const btn = document.getElementById('mic-btn');
     
-    // মাইক বাটনে এনিমেশন চালু
     if (btn) btn.classList.add('mic-active'); 
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -49,23 +54,20 @@ window.startVoiceEngine = function() {
 
     const recognition = new SpeechRecognition();
     
-    // ইউজার যদি ল্যাঙ্গুয়েজ সিলেক্ট করে থাকে সেটা নেবে, না হলে ডিফল্ট বাংলা (bn-IN)
     const langSelect = document.getElementById('lang-select');
+    // bn-IN মডেলটি বাংলার সাথে সাধারণ ইংরেজি শব্দও বুঝতে পারে
     recognition.lang = langSelect ? langSelect.value : 'bn-IN';
-    
-    // একটানা শোনার জন্য false রাখা হয়েছে, ইউজার চুপ করলে নিজে থেকেই থেমে যাবে
     recognition.continuous = false; 
     
     recognition.onresult = function(event) {
         const rawText = event.results[0][0].transcript;
         
-        // 🟢 কাঁচা টেক্সটকে রিফাইনারের মাধ্যমে ফিল্টার করে ইনপুট বক্সে বসানো
+        // রিফাইনারের মাধ্যমে মিক্সড ভাষার ভুলগুলো ফিল্টার করা
         const cleanedText = window.normalizeVoiceText(rawText);
         
         const promptBox = document.getElementById('prompt-box');
         if (promptBox) {
             promptBox.value = cleanedText;
-            // কার্সরটাকে একদম টেক্সটের শেষে নিয়ে যাওয়ার জন্য
             promptBox.focus();
             promptBox.setSelectionRange(cleanedText.length, cleanedText.length);
         }
