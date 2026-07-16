@@ -114,7 +114,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const loginTemplate = `<div class="platform-container"><div class="auth-box"><h2 style="margin-top: 0; color: var(--navy); font-size: 1.8rem;">Identity Gateway</h2><p style="color: #64748b; font-size: 0.95rem; margin-bottom: 25px;">Please verify your identity to continue.</p><div class="input-group"><label>Full Name</label><input type="text" id="auth-name" placeholder="Enter your full name" required autocomplete="name"></div><div class="input-group"><label>Mobile Number (Primary)</label><div class="phone-group"><span class="phone-prefix">+91</span><input type="tel" id="auth-mobile" class="phone-input" placeholder="XXXXX XXXXX" maxlength="10" required autocomplete="tel-national" oninput="this.value = this.value.replace(/[^0-9]/g, '')"></div></div><button class="btn-primary" style="width: 100%; margin-top: 10px;" onclick="window.orbisPlatform.processLogin()">Secure Login</button><button class="btn-outline" style="width: 100%; margin-top: 15px; border: none; background: transparent; color: #64748b;" onclick="window.orbisPlatform.navigate('landing')">← Back to Home</button></div></div>`;
 
-    // 🟢 KEEP 3 CARDS: AI Orchestrator, Farmer Brain, DigiLedger (Master Admin is removed!)
     const getDashboardTemplate = () => `
         <div class="platform-container" style="justify-content: flex-start; padding-top: 80px;">
             <div class="nav-top">
@@ -210,7 +209,8 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (moduleId === 'farmer') {
                 alert("The Farmer Brain module is currently in development.\nStatus: Coming Soon!");
             } else if (moduleId === 'ledger') {
-                alert("The DigiLedger module is active but the UI is under construction.");
+                // 🟢 FIX: No more fake alerts! Directly route to the Admin Workspace.
+                window.location.href = '/admin.html';
             }
         }
     };
