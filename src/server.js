@@ -3,7 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs'; 
 
-// 🟢 NEW: Supabase Client Import
+// 🟢 Supabase Client Import
 import { createClient } from '@supabase/supabase-js';
 
 import { getTelemetryData, logRequest, addLog } from './brain/telemetry.js';
@@ -129,7 +129,6 @@ app.get('/api/history', async (req, res) => {
     try {
         const sessionId = req.query.sessionId || 'default_user';
         
-        // যদি Supabase কানেক্টেড থাকে, ক্লাউড থেকে ডেটা আনবে
         if (supabase) {
             const { data, error } = await supabase
                 .from('chat_history')
@@ -144,7 +143,6 @@ app.get('/api/history', async (req, res) => {
             }
         }
 
-        // ক্লাউডে না পেলে বা কানেকশন না থাকলে লোকাল মেমরি থেকে আনবে
         const fallbackHistory = await brain.memory.getRecentConversations(sessionId, 50); 
         logSystemEvent('INFO', 'LocalMemory', `Restored history locally for: ${sessionId}`);
         res.status(200).json({ success: true, data: fallbackHistory || [] });
@@ -167,16 +165,11 @@ app.post('/api/chat', async (req, res) => {
 
         logSystemEvent('INFO', 'Router', `Processing prompt for ORB-ID: ${sessionId}`);
 
-        // ব্রেন থেকে উত্তর জেনারেট করা
         const brainResponse = await brain.handleRequest({ type: 'CHAT_MESSAGE', content: prompt, sessionId: sessionId });
 
-        // 🟢 SUPABASE-এ চ্যাট সেভ করা
         if (supabase) {
             try {
-                // ইউজার না থাকলে তৈরি করবে
                 await supabase.from('users').upsert({ orb_id: sessionId }, { onConflict: 'orb_id' });
-                
-                // চ্যাট ইনসার্ট করবে
                 await supabase.from('chat_history').insert([
                     { orb_id: sessionId, sender: 'YOU', message: prompt },
                     { orb_id: sessionId, sender: 'ORBIS', message: brainResponse }
@@ -202,6 +195,25 @@ app.post('/api/chat', async (req, res) => {
     } catch (error) {
         logSystemEvent('ERR', 'ExecutionChain', `Critical Failure - ${error.message}`);
         res.status(500).json({ success: false, error: "System Architecture Error", details: error.message });
+    }
+});
+
+// 🟢 NEW: 3. চ্যাট হিস্ট্রি ডিলিট করা (Clear History)
+app.post('/api/history/clear', async (req, res) => {
+    const sessionId = req.body.sessionId;
+    if (!sessionId) return res.status(400).json({ success: false, message: "Session ID missing" });
+
+    try {
+        if (supabase) {
+            await supabase.from('chat_history').delete().eq('orb_id', sessionId);
+            logSystemEvent('WARN', 'Cloud', `All history deleted for ORB-ID: ${sessionId}`);
+        } else if (brain.memory) {
+            brain.memory.clearSession(sessionId);
+        }
+        res.status(200).json({ success: true, message: "Memory cleared" });
+    } catch (error) {
+        logSystemEvent('ERR', 'Memory', `Delete failed: ${error.message}`);
+        res.status(500).json({ success: false, error: "Deletion failed" });
     }
 });
 

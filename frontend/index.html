@@ -69,6 +69,8 @@
             <span>ORBIS Core Autonomous Mind</span>
         </div>
         <div class="sys-badges">
+            <button onclick="window.clearUserHistory()" style="background:rgba(255, 77, 77, 0.1); border:1px solid var(--red); color:var(--red); font-size:0.6rem; padding:4px 8px; border-radius:4px; cursor:pointer; font-weight:bold; margin-right:10px; transition: 0.3s;">🗑️ CLEAR</button>
+            
             <button onclick="window.clearContext ? window.clearContext() : location.reload()" style="background:none; border:1px solid var(--border); font-size:0.6rem; padding:2px 6px; cursor:pointer; color:var(--navy-blue); font-weight:bold; margin-right:10px;">RESET BUS</button>
             <span id="glow-dot" class="status-glow online"></span>
             <span id="status-text" style="color:var(--saffron);">CONNECTED</span>
@@ -237,7 +239,6 @@
             const isAdmin = urlParams.get('cockpit_mode') === 'true';
 
             if (isAdmin) {
-                // 🟢 FIX: Only show sidebar and menu if explicitly authenticated as Admin
                 const menuBtn = document.getElementById('mobile-menu-btn');
                 if (menuBtn) menuBtn.style.display = 'block';
 

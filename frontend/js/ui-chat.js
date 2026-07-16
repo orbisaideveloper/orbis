@@ -26,7 +26,6 @@ window.dispatchToAI = async function() {
     window.updateChatUI('YOU', msg);
     promptBox.value = ''; 
 
-    // 🟢 FETCH PERMANENT ORB-ID
     const activeUserId = localStorage.getItem('orbis_uid') || localStorage.getItem('orbis_active_user') || 'guest_user';
 
     try {
@@ -38,14 +37,12 @@ window.dispatchToAI = async function() {
 
         const apiResult = await response.json();
         
-        if (apiResult && apiResult.telemetry) {
-            window.globalEventBus?.emit('TelemetryUpdated', apiResult.telemetry);
-        }
+        if (apiResult && apiResult.telemetry) window.globalEventBus?.emit('TelemetryUpdated', apiResult.telemetry);
 
         if (response.ok && (apiResult.success || apiResult.status === 'success')) {
             const reply = apiResult.reply || apiResult.response || apiResult.data || apiResult.message;
-            if (reply) { window.updateChatUI('ORBIS', reply); } 
-            else { window.updateChatUI('SYSTEM_ERROR', `সার্ভার রেসপন্স দিয়েছে কিন্তু টেক্সট খুঁজে পায়নি।`); }
+            if (reply) window.updateChatUI('ORBIS', reply);
+            else window.updateChatUI('SYSTEM_ERROR', `সার্ভার রেসপন্স দিয়েছে কিন্তু টেক্সট খুঁজে পায়নি।`);
         } else {
             window.updateChatUI('SYSTEM_ERROR', `সার্ভার এরর: ${apiResult?.error || response.statusText}`);
         }
@@ -60,9 +57,7 @@ window.updateChatUI = function(sender, message, timestamp = null) {
     const chatBox = document.getElementById('chat-box');
     if (!chatBox) return;
 
-    if (typeof message === 'object' && message !== null) {
-        message = message.reply || message.response || message.content || JSON.stringify(message);
-    }
+    if (typeof message === 'object' && message !== null) message = message.reply || message.response || message.content || JSON.stringify(message);
 
     const msgDiv = document.createElement('div');
     let timeString = timestamp ? new Date(timestamp).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }) 
@@ -89,15 +84,38 @@ window.renderHistoryMessages = function(historyArray) {
         const messageText = item.content || item.message || item.prompt || item.reply; 
         const dbTime = item.created_at || item.timestamp; 
         
-        if (messageText) { window.updateChatUI(sender, messageText, dbTime); }
+        if (messageText) window.updateChatUI(sender, messageText, dbTime);
     });
+};
+
+// 🟢 NEW: CLEAR HISTORY FUNCTION
+window.clearUserHistory = async function() {
+    if (!confirm("Are you sure you want to permanently delete all your chats?")) return;
+    
+    const activeUserId = localStorage.getItem('orbis_uid') || localStorage.getItem('orbis_active_user') || 'guest_user';
+    const chatBox = document.getElementById('chat-box');
+    
+    // UI থেকে সাথে সাথে মুছে দেওয়া
+    if (chatBox) chatBox.innerHTML = '<div style="text-align:center; color:#64748b; padding:20px; font-size:0.85rem; font-weight:bold;">Memory Cleared Successfully.</div>';
+    
+    try {
+        // সার্ভারকে বলা Supabase থেকে ডিলিট করতে
+        const response = await fetch('/api/history/clear', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sessionId: activeUserId })
+        });
+        
+        const result = await response.json();
+        if (!result.success) alert("Failed to clear cloud memory.");
+    } catch(e) {
+        console.error("Clear memory error:", e);
+    }
 };
 
 if (!window.ChatUIInitialized) {
     document.addEventListener('DOMContentLoaded', async () => {
-        // 🟢 LOAD HISTORY USING PERMANENT ORB-ID
         const activeUserId = localStorage.getItem('orbis_uid') || localStorage.getItem('orbis_active_user') || 'guest_user';
-        
         try {
             const response = await fetch(`/api/history?sessionId=${activeUserId}`);
             if (response.ok) {
@@ -106,9 +124,7 @@ if (!window.ChatUIInitialized) {
                     window.renderHistoryMessages(result.data);
                 }
             }
-        } catch (err) {
-            console.error(`Memory Recovery Failed: ${err.message}`);
-        }
+        } catch (err) { console.error(`Memory Recovery Failed: ${err.message}`); }
     });
     window.ChatUIInitialized = true; 
 }
