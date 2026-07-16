@@ -50,7 +50,7 @@
         </div>
     </div>
 
-    <div id="orbis-platform-root" class="platform-layer"></div>
+    <div id="orbis-platform-root" class="platform-layer" style="display: none;"></div>
 
     <header class="top-nav" style="display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; gap: 10px;">
         <div class="brand" style="display: flex; align-items: center; gap: 8px; font-weight: 800; color: var(--navy-blue); white-space: nowrap;">
@@ -219,8 +219,6 @@
     <script src="/js/ui-core.js?v={{APP_VERSION}}"></script>
     <script src="/js/ui-dashboard.js?v={{APP_VERSION}}"></script>
     
-    <script src="/modules/digiledger/lottery/ui/user-view.js"></script>
-
     <script src="/js/ui-telemetry.js?v={{APP_VERSION}}"></script>
     <script src="/js/ui-chat.js?v={{APP_VERSION}}"></script>
     <script src="/js/ui-voice.js?v={{APP_VERSION}}"></script>
@@ -269,4 +267,5 @@
             installBanner.style.display = 'none';
         }
 
-        if ('serviceWorker' in navig
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load'

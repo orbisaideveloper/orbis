@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let localSystemVersion = localStorage.getItem('orbis_system_version') || '1.4.2';
     let localModules = {
         farmer: 'Coming Soon',
-        ledger: 'Coming Soon'
+        ledger: 'Active' // Changed to Active so the Hub can open
     };
 
     // ==========================================
@@ -99,6 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
             .phone-input { border-radius: 0 6px 6px 0 !important; }
             .module-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; width: 100%; max-width: 900px; margin-top: 30px; }
             .module-card { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(10px); padding: 25px 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid rgba(226, 232, 240, 0.8); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; position: relative; border-bottom: 4px solid var(--green); }
+            .module-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
             .module-icon { font-size: 2.5rem; margin-bottom: 15px; }
             .module-title { font-weight: bold; font-size: 1.15rem; margin-bottom: 8px; color: var(--navy); }
             .module-desc { font-size: 0.8rem; color: #64748b; margin-bottom: 15px; line-height: 1.4; }
@@ -106,6 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
             .status-active { background: #dcfce7; color: var(--green); border: 1px solid var(--green); }
             .status-soon { background: #fef08a; color: #854d0e; border: 1px solid #eab308; }
             .nav-top { position: absolute; top: 20px; right: 20px; display: flex; gap: 10px; align-items: center; }
+            .nav-left { position: absolute; top: 20px; left: 20px; }
             .user-badge { font-size: 0.85rem; font-weight: bold; color: var(--navy); background: rgba(255,255,255,0.9); padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         </style>
     `;
@@ -140,8 +142,41 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="module-card" style="border-bottom-color: ${localModules.ledger === 'Active' ? 'var(--green)' : 'var(--saffron)'};" onclick="window.orbisPlatform.launchModule('ledger')">
                     <div class="module-icon">📒</div>
                     <div class="module-title">DigiLedger</div>
-                    <div class="module-desc">Secure financial tracking and database synchronization.</div>
+                    <div class="module-desc">Secure financial tracking and business logic hub.</div>
                     <div class="module-status ${localModules.ledger === 'Active' ? 'status-active' : 'status-soon'}">${localModules.ledger}</div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // 🟢 NEW: DigiLedger Hub Template
+    const getDigiLedgerHubTemplate = () => `
+        <div class="platform-container" style="justify-content: flex-start; padding-top: 80px;">
+            <div class="nav-left">
+                <button class="btn-outline" style="background: rgba(255,255,255,0.9);" onclick="window.orbisPlatform.navigate('dashboard')">← Main Menu</button>
+            </div>
+            <h2 style="margin-bottom: 5px; font-size: 2.2rem; color: var(--navy); text-shadow: 0 1px 2px rgba(255,255,255,0.8);">DigiLedger Hub</h2>
+            <p style="color: #64748b; margin-bottom: 20px; font-size: 1.1rem; text-shadow: 0 1px 2px rgba(255,255,255,0.8);">Select an accounting or management system</p>
+            <div class="module-grid">
+                <div class="module-card" style="border-bottom-color: var(--green);" onclick="window.orbisPlatform.mountLotteryModule()">
+                    <div class="module-icon">🎟️</div>
+                    <div class="module-title">Lottery Core</div>
+                    <div class="module-desc">Complete standalone lottery management, sales, and settlements.</div>
+                    <div class="module-status status-active">Active</div>
+                </div>
+                
+                <div class="module-card" style="border-bottom-color: var(--saffron); opacity: 0.7;" onclick="alert('Pharmacy Module is under development.')">
+                    <div class="module-icon">💊</div>
+                    <div class="module-title">Pharmacy</div>
+                    <div class="module-desc">Pharmacy billing, stock, and vendor management.</div>
+                    <div class="module-status status-soon">Coming Soon</div>
+                </div>
+
+                <div class="module-card" style="border-bottom-color: var(--saffron); opacity: 0.7;" onclick="alert('Grocery Module is under development.')">
+                    <div class="module-icon">🛒</div>
+                    <div class="module-title">Grocery</div>
+                    <div class="module-desc">Daily inventory and retail sales tracking.</div>
+                    <div class="module-status status-soon">Coming Soon</div>
                 </div>
             </div>
         </div>
@@ -159,6 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (currentState === 'landing') htmlContent += landingTemplate;
             else if (currentState === 'login') htmlContent += loginTemplate;
             else if (currentState === 'dashboard') htmlContent += getDashboardTemplate();
+            else if (currentState === 'digiledger-hub') htmlContent += getDigiLedgerHubTemplate(); // 🟢 Render Hub
 
             platformRoot.innerHTML = htmlContent;
 
@@ -209,9 +245,44 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (moduleId === 'farmer') {
                 alert("The Farmer Brain module is currently in development.\nStatus: Coming Soon!");
             } else if (moduleId === 'ledger') {
-                // 🟢 FIX: No more fake alerts! Directly route to the Admin Workspace.
-                window.location.href = '/admin.html';
+                // 🟢 FIX: Route to DigiLedger Hub instead of Admin page
+                this.navigate('digiledger-hub');
             }
+        },
+
+        // 🟢 NEW: Dynamic Module Loader for Lottery
+        mountLotteryModule: function() {
+            console.log("[ORBIS Core] Mounting external Lottery Module...");
+            startHeartbeat('Lottery Module');
+            
+            // Hide Platform UI Smoothly
+            platformRoot.style.opacity = '0';
+            
+            setTimeout(() => { 
+                platformRoot.style.visibility = 'hidden'; 
+                
+                // Inject Lottery Script Dynamically (Plug-and-Play)
+                if (!document.getElementById('orbis-lottery-module')) {
+                    const script = document.createElement('script');
+                    script.id = 'orbis-lottery-module';
+                    script.src = '/modules/digiledger/lottery/ui/user-view.js';
+                    document.body.appendChild(script);
+                } else {
+                    // If script is already there, trigger its render function
+                    if (window.LotteryApp && typeof window.LotteryApp.render === 'function') {
+                        window.LotteryApp.render();
+                    }
+                }
+            }, 300);
+        },
+
+        // 🟢 NEW: Bridge to return to Platform
+        unmountModule: function() {
+            console.log("[ORBIS Core] Unmounting module, returning to Hub...");
+            startHeartbeat('Dashboard');
+            platformRoot.style.visibility = 'visible';
+            platformRoot.style.opacity = '1';
+            this.navigate('digiledger-hub');
         }
     };
 

@@ -4,7 +4,7 @@
 window.LotteryUserUI = {
     // 🟢 এই ফাংশনটা কল হলেই লটারি মডিউল স্ক্রিনে ভেসে উঠবে
     mount: function() {
-        // ১. মেইন ড্যাশবোর্ড লুকিয়ে ফেলা
+        // ১. মেইন ড্যাশবোর্ড লুকিয়ে ফেলা (সেফটি চেক)
         const platformRoot = document.getElementById('orbis-platform-root');
         if (platformRoot) platformRoot.style.display = 'none';
 
@@ -34,6 +34,10 @@ window.LotteryUserUI = {
                 .btn-back-dash { 
                     background: #e2e8f0; color: #0f172a; border: none; padding: 8px 16px; 
                     border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.9rem;
+                    transition: background 0.2s;
+                }
+                .btn-back-dash:hover {
+                    background: #cbd5e1;
                 }
                 .lottery-main-content { padding: 20px; max-width: 600px; margin: 0 auto; }
                 .ticket-card { 
@@ -44,6 +48,10 @@ window.LotteryUserUI = {
                     background: #10b981; color: white; border: none; padding: 12px 30px;
                     border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer;
                     margin-top: 15px; width: 100%; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);
+                    transition: transform 0.1s;
+                }
+                .buy-btn:active {
+                    transform: scale(0.98);
                 }
             </style>
 
@@ -69,11 +77,23 @@ window.LotteryUserUI = {
 
     // 🔴 এই ফাংশনটা কল হলে লটারি মডিউল বন্ধ হয়ে আবার ড্যাশবোর্ডে ফিরে যাবে
     unmount: function() {
+        // ১. লটারি ওয়ার্কস্পেস লুকিয়ে ফেলা
         const workspace = document.getElementById('lottery-user-workspace');
         if (workspace) workspace.style.display = 'none';
 
-        const platformRoot = document.getElementById('orbis-platform-root');
-        // display: flex ছিল প্ল্যাটফর্মের অরিজিনাল স্টাইল
-        if (platformRoot) platformRoot.style.display = 'flex'; 
+        // ২. মেইন প্ল্যাটফর্মে ফেরার জন্য ORBIS Core-এর ব্রিজ কল করা
+        if (window.orbisPlatform && typeof window.orbisPlatform.unmountModule === 'function') {
+            window.orbisPlatform.unmountModule();
+        } else {
+            // ফলব্যাক (Fallback) যদি কোনো কারণে কোর রুট না পাওয়া যায়
+            const platformRoot = document.getElementById('orbis-platform-root');
+            if (platformRoot) platformRoot.style.display = 'flex'; 
+        }
     }
 };
+
+// 🟢 স্ক্রিপ্টটি প্ল্যাটফর্মে ইনজেক্ট হওয়ামাত্রই যেন লটারি UI অটোমেটিক চালু হয়
+window.LotteryUserUI.mount();
+
+// 🟢 প্ল্যাটফর্ম কোর-এর আগের রেন্ডার কমান্ডের সাথে সংযোগ রাখার জন্য (Bridge)
+window.LotteryApp = { render: window.LotteryUserUI.mount };
