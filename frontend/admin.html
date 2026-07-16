@@ -70,7 +70,10 @@
                     
                     <div id="digiledger-sub-menu" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 1px dashed rgba(0,0,0,0.1);">
                         <button class="sub-module-btn" id="btn-load-lottery">
-                            🎟️ Lottery Business Module ➔
+                            🎟️ Lottery Dispatch ➔
+                        </button>
+                        <button class="sub-module-btn" id="btn-load-payment" style="color: #059669; background: rgba(16, 185, 129, 0.08);">
+                            💸 Receive Payment ➔
                         </button>
                     </div>
                 </div>
@@ -107,35 +110,38 @@
     </script>
 
     <script type="module">
-        // Import Lottery UI and Logic
+        // Import Lottery UI and Logic (Both Dispatch and Payment)
         import { getDispatchWorkspaceHTML } from '../modules/digiledger/lottery/ui/DispatchWorkspace.js';
         import { initLotteryWorkspace } from '../modules/digiledger/lottery/ui/lottery-app.js';
+        import { getPaymentWorkspaceHTML } from '../modules/digiledger/lottery/ui/PaymentWorkspace.js';
+        import { initPaymentWorkspace } from '../modules/digiledger/lottery/ui/payment-app.js';
 
         document.addEventListener('DOMContentLoaded', () => {
             const digiLedgerCard = document.getElementById('card-digiledger');
             const subMenu = document.getElementById('digiledger-sub-menu');
             const loadLotteryBtn = document.getElementById('btn-load-lottery');
+            const loadPaymentBtn = document.getElementById('btn-load-payment');
             const workspaceDock = document.getElementById('dynamic-module-workspace');
 
             // 🟢 Toggle DigiLedger Sub-Menu (FIXED ALERT ISSUE)
             if (digiLedgerCard) {
                 digiLedgerCard.addEventListener('click', (e) => {
-                    e.stopImmediatePropagation(); // 🔴 এই লাইনটাই পুরোনো স্ক্রিপ্টকে ব্লক করবে
-                    if (e.target.id !== 'btn-load-lottery') {
+                    e.stopImmediatePropagation(); 
+                    // Make sure clicking the buttons doesn't trigger the toggle
+                    if (!e.target.closest('.sub-module-btn')) {
                         const isDisplayed = subMenu.style.display === 'block';
                         subMenu.style.display = isDisplayed ? 'none' : 'block';
                         console.log("[ORBIS] DigiLedger Sub-Modules Toggled.");
                     }
-                }, true); // 🔴 true = Capture Phase-এ কাজ করবে
+                }, true); 
             }
 
-            // Load Lottery Workspace on Button Click
+            // Load Lottery Dispatch Workspace on Button Click
             if (loadLotteryBtn) {
                 loadLotteryBtn.addEventListener('click', (e) => {
-                    e.stopImmediatePropagation(); // 🔴 এখানেও ব্লক করা হলো
+                    e.stopImmediatePropagation(); 
                     console.log("[ORBIS] Loading Lottery Dispatch Workspace...");
                     
-                    // Inject the Workspace UI
                     workspaceDock.innerHTML = `
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                             <h2 style="margin:0; color:#0052cc;">🎟️ Lottery Command Center</h2>
@@ -145,10 +151,26 @@
                     `;
                     workspaceDock.style.display = 'block';
                     
-                    // Initialize the calculation and API logic
                     initLotteryWorkspace();
+                    workspaceDock.scrollIntoView({ behavior: 'smooth' });
+                });
+            }
+
+            // 🟢 Load Payment Settlement Workspace on Button Click
+            if (loadPaymentBtn) {
+                loadPaymentBtn.addEventListener('click', (e) => {
+                    e.stopImmediatePropagation();
+                    console.log("[ORBIS] Loading Payment Workspace...");
                     
-                    // Smooth scroll to the workspace
+                    workspaceDock.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                            <button onclick="document.getElementById('dynamic-module-workspace').style.display='none'" style="background:transparent; border:none; color:red; font-size:1.5rem; cursor:pointer; margin-left:auto;">×</button>
+                        </div>
+                        ${getPaymentWorkspaceHTML()}
+                    `;
+                    workspaceDock.style.display = 'block';
+                    
+                    initPaymentWorkspace();
                     workspaceDock.scrollIntoView({ behavior: 'smooth' });
                 });
             }
