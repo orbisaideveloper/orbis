@@ -9,30 +9,7 @@
     <meta name="theme-color" content="#FF9933">
     
     <link rel="stylesheet" href="/css/style.css?v={{APP_VERSION}}">
-    <style>
-        .platform-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #ffffff; z-index: 9999; overflow-y: auto; transition: opacity 0.5s ease, visibility 0.5s ease; }
-        .wf-step { transition: all 0.3s ease; padding: 2px 6px; border-radius: 4px; }
-        .wf-active { background: #00e676 !important; color: #000 !important; font-weight: bold; box-shadow: 0 0 10px #00e676; }
-        .wf-error { background: #ff4d4d !important; color: #fff !important; font-weight: bold; animation: blinker 1s linear infinite; }
-        .live-node-item { font-size: 0.7rem; background: rgba(0,0,0,0.05); padding: 4px; border-left: 3px solid var(--navy-blue); margin-bottom: 4px; border-radius: 2px; }
-        @keyframes blinker { 50% { opacity: 0.5; } }
-        .xray-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 5px; }
-        .xray-card { background: #f8fafc; border: 1px solid #e2e8f0; padding: 6px; border-radius: 4px; font-size: 0.65rem; font-family: monospace; }
-        .xray-status { float: right; font-weight: bold; }
-        .side-by-side-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
-        .side-by-side-row span { color: #64748b; }
-        .sidebar-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.3); z-index: 998; backdrop-filter: blur(1px); }
-        .telemetry-sidebar { z-index: 999 !important; position: relative; }
-        
-        .btn-pill-action { background: transparent; border: 1px solid var(--border); font-size: 0.7rem; padding: 4px 12px; border-radius: 20px; cursor: pointer; color: var(--navy-blue); font-weight: 700; transition: all 0.2s; }
-        .btn-pill-action:hover { background: #f1f5f9; }
-        .btn-pill-clear { background: transparent; border: 1px solid #ef4444; color: #ef4444; font-size: 0.7rem; padding: 4px 12px; border-radius: 20px; cursor: pointer; font-weight: 700; transition: all 0.2s; }
-        .btn-pill-clear:hover { background: #fef2f2; }
-        .live-container-mini { display: flex; align-items: center; gap: 5px; background: #f0fdf4; padding: 4px 10px; border-radius: 20px; border: 1px solid #bbf7d0; }
-        
-        .pwa-banner { display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #ffffff; padding: 15px 20px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border-left: 5px solid #FF9933; z-index: 100000; width: 90%; max-width: 400px; align-items: center; justify-content: space-between; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; animation: slideUpPwa 0.5s ease-out; }
-        @keyframes slideUpPwa { from { bottom: -100px; opacity: 0; } to { bottom: 20px; opacity: 1; } }
-    </style>
+    <link rel="stylesheet" href="/css/platform-ui.css?v={{APP_VERSION}}">
 </head>
 <body>
 
@@ -50,7 +27,7 @@
         </div>
     </div>
 
-    <div id="orbis-platform-root" class="platform-layer" style="display: none;"></div>
+    <div id="orbis-platform-root" class="platform-layer"></div>
 
     <header class="top-nav" style="display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; gap: 10px;">
         <div class="brand" style="display: flex; align-items: center; gap: 8px; font-weight: 800; color: var(--navy-blue); white-space: nowrap;">
@@ -206,66 +183,14 @@
         </main>
     </div>
 
-    <script>
-        window.globalEventBus?.on('TelemetryUpdated', (data) => {
-            if (data.ramUsage) document.getElementById('sys-ram').innerText = data.ramUsage + ' MB';
-            if (data.latency) document.getElementById('prov-gemini-latency')?.innerText = data.latency + ' ms';
-            if (data.memoryNodes) document.getElementById('mem-nodes').innerText = data.memoryNodes;
-            
-            if(window.updateXRay) window.updateXRay(data);
-        });
-    </script>
-
     <script src="/js/ui-core.js?v={{APP_VERSION}}"></script>
     <script src="/js/ui-dashboard.js?v={{APP_VERSION}}"></script>
-    
     <script src="/js/ui-telemetry.js?v={{APP_VERSION}}"></script>
     <script src="/js/ui-chat.js?v={{APP_VERSION}}"></script>
     <script src="/js/ui-voice.js?v={{APP_VERSION}}"></script>
     <script src="/js/platform-core.js?v={{APP_VERSION}}"></script>
+    
+    <script src="/js/platform-init.js?v={{APP_VERSION}}"></script>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const isAdmin = urlParams.get('cockpit_mode') === 'true';
-
-            if (isAdmin) {
-                const devSidebar = document.getElementById('dev-sidebar');
-                if (devSidebar) devSidebar.style.display = 'flex';
-                console.log('[ORBIS SECURITY] Admin Mode Authenticated. Cockpit Unlocked.');
-            } else {
-                const menuBtn = document.getElementById('mobile-menu-btn');
-                if (menuBtn) menuBtn.style.display = 'none';
-                
-                const devSidebar = document.getElementById('dev-sidebar');
-                if (devSidebar) devSidebar.style.display = 'none';
-                
-                console.log('[ORBIS SECURITY] Admin Cockpit Locked for Public View.');
-            }
-            
-            const originalToggleSidebar = window.toggleSidebar;
-            window.toggleSidebar = function() {
-                const isCockpit = new URLSearchParams(window.location.search).get('cockpit_mode') === 'true';
-                if (isCockpit) {
-                    if (typeof originalToggleSidebar === 'function') {
-                        originalToggleSidebar();
-                    } else {
-                        const sidebar = document.getElementById('dev-sidebar');
-                        if (sidebar) sidebar.style.display = sidebar.style.display === 'none' ? 'flex' : 'none';
-                    }
-                } else {
-                    console.warn('[SECURITY] Unauthorized Cockpit sidebar request blocked.');
-                }
-            };
-        });
-
-        let deferredPrompt;
-        const installBanner = document.getElementById('pwa-install-banner');
-        const installBtn = document.getElementById('pwa-install-btn');
-
-        function hideInstallBanner() {
-            installBanner.style.display = 'none';
-        }
-
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load'
+</body>
+</html>

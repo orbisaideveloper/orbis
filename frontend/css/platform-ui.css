@@ -1,0 +1,21 @@
+/* File: frontend/css/platform-ui.css */
+.platform-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #ffffff; z-index: 9999; overflow-y: auto; transition: opacity 0.5s ease, visibility 0.5s ease; }
+.wf-step { transition: all 0.3s ease; padding: 2px 6px; border-radius: 4px; }
+.wf-active { background: #00e676 !important; color: #000 !important; font-weight: bold; box-shadow: 0 0 10px #00e676; }
+.wf-error { background: #ff4d4d !important; color: #fff !important; font-weight: bold; animation: blinker 1s linear infinite; }
+.live-node-item { font-size: 0.7rem; background: rgba(0,0,0,0.05); padding: 4px; border-left: 3px solid var(--navy-blue); margin-bottom: 4px; border-radius: 2px; }
+@keyframes blinker { 50% { opacity: 0.5; } }
+.xray-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 5px; }
+.xray-card { background: #f8fafc; border: 1px solid #e2e8f0; padding: 6px; border-radius: 4px; font-size: 0.65rem; font-family: monospace; }
+.xray-status { float: right; font-weight: bold; }
+.side-by-side-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+.side-by-side-row span { color: #64748b; }
+.sidebar-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.3); z-index: 998; backdrop-filter: blur(1px); }
+.telemetry-sidebar { z-index: 999 !important; position: relative; }
+.btn-pill-action { background: transparent; border: 1px solid var(--border); font-size: 0.7rem; padding: 4px 12px; border-radius: 20px; cursor: pointer; color: var(--navy-blue); font-weight: 700; transition: all 0.2s; }
+.btn-pill-action:hover { background: #f1f5f9; }
+.btn-pill-clear { background: transparent; border: 1px solid #ef4444; color: #ef4444; font-size: 0.7rem; padding: 4px 12px; border-radius: 20px; cursor: pointer; font-weight: 700; transition: all 0.2s; }
+.btn-pill-clear:hover { background: #fef2f2; }
+.live-container-mini { display: flex; align-items: center; gap: 5px; background: #f0fdf4; padding: 4px 10px; border-radius: 20px; border: 1px solid #bbf7d0; }
+.pwa-banner { display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #ffffff; padding: 15px 20px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border-left: 5px solid #FF9933; z-index: 100000; width: 90%; max-width: 400px; align-items: center; justify-content: space-between; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; animation: slideUpPwa 0.5s ease-out; }
+@keyframes slideUpPwa { from { bottom: -100px; opacity: 0; } to { bottom: 20px; opacity: 1; } }
