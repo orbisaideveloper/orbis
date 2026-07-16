@@ -198,8 +198,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!document.getElementById('orbis-lottery-module')) {
                     const script = document.createElement('script');
                     script.id = 'orbis-lottery-module';
-                    // 🟢 পাথ আপডেট করা হলো: /src যুক্ত করা হয়েছে
-                    script.src = '/src/modules/digiledger/lottery/ui/user-view.js'; 
+                    
+                    // 🟢 FIX: পাথ আপডেট করা হলো সার্ভারের নতুন রাউটিং অনুযায়ী
+                    script.src = '/assets/lottery/js/user-view.js'; 
                     
                     script.onerror = () => {
                         alert("Error 404: লটারি ফাইলটি পাওয়া যাচ্ছে না! সার্ভারের (server.js) রাউটিং চেক করতে হবে।");
