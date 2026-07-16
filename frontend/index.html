@@ -233,8 +233,31 @@
                 if (devSidebar) devSidebar.style.display = 'flex';
                 console.log('[ORBIS SECURITY] Admin Mode Authenticated. Cockpit Unlocked.');
             } else {
+                // 🔴 সাধারণ ইউজারের জন্য চ্যাট মেনু বাটন হাইড করা হলো
+                const menuBtn = document.getElementById('mobile-menu-btn');
+                if (menuBtn) menuBtn.style.display = 'none';
+                
+                const devSidebar = document.getElementById('dev-sidebar');
+                if (devSidebar) devSidebar.style.display = 'none';
+                
                 console.log('[ORBIS SECURITY] Admin Cockpit Locked for Public View.');
             }
+            
+            // 🔴 সাইডবার টগল করার ফাংশনটি অ্যাডমিন ছাড়া সবার জন্য লক করা হলো
+            const originalToggleSidebar = window.toggleSidebar;
+            window.toggleSidebar = function() {
+                const isCockpit = new URLSearchParams(window.location.search).get('cockpit_mode') === 'true';
+                if (isCockpit) {
+                    if (typeof originalToggleSidebar === 'function') {
+                        originalToggleSidebar();
+                    } else {
+                        const sidebar = document.getElementById('dev-sidebar');
+                        if (sidebar) sidebar.style.display = sidebar.style.display === 'none' ? 'flex' : 'none';
+                    }
+                } else {
+                    console.warn('[SECURITY] Unauthorized Cockpit sidebar request blocked.');
+                }
+            };
         });
 
         let deferredPrompt;
@@ -242,14 +265,4 @@
         const installBtn = document.getElementById('pwa-install-btn');
 
         function hideInstallBanner() {
-            installBanner.style.display = 'none';
-        }
-
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js').catch(err => console.error('[PWA] Error:', err));
-            });
-        }
-    </script>
-</body>
-</html>
+            installBanner.
