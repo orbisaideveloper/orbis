@@ -115,7 +115,6 @@ app.get('/api/history', async (req, res) => {
                 .order('created_at', { ascending: true })
                 .limit(50);
                 
-            // 🟢 FIX: ডেটা না থাকলেও ফাঁকা অ্যারে পাঠাবে, ক্র্যাশ করবে না
             if (!error && data) {
                 logSystemEvent('INFO', 'Cloud', `Restored ${data.length} messages from Supabase for ORB-ID: ${sessionId}`);
                 return res.status(200).json({ success: true, data: data });
@@ -143,14 +142,17 @@ app.post('/api/chat', async (req, res) => {
 
         logSystemEvent('INFO', 'Router', `Processing prompt for ORB-ID: ${sessionId}`);
 
-        // 🟢 ব্রেন নিজেই এখন ডাটাবেসে সেভ করার কাজ করে (MemoryInterface এর মাধ্যমে)
         const brainResponse = await brain.handleRequest({ type: 'CHAT_MESSAGE', content: prompt, sessionId: sessionId });
 
-        // শুধুমাত্র ইউজার প্রোফাইল আইডি সিঙ্ক করে রাখা হচ্ছে
+        // 🟢 FIX: ইউজার আইডি সিঙ্ক করার পাশাপাশি চ্যাটগুলোকেও ক্লাউডে সেভ করার কোড ফিরিয়ে আনা হলো
         if (supabase) {
             try {
                 await supabase.from('users').upsert({ orb_id: sessionId }, { onConflict: 'orb_id' });
-                logSystemEvent('OK', 'Cloud', 'User ID synced to Supabase securely.');
+                await supabase.from('chat_history').insert([
+                    { orb_id: sessionId, sender: 'YOU', message: prompt },
+                    { orb_id: sessionId, sender: 'ORBIS', message: brainResponse }
+                ]);
+                logSystemEvent('OK', 'Cloud', 'Chat and User ID synced to Supabase securely.');
             } catch (dbError) {
                 logSystemEvent('ERR', 'Cloud', `Supabase sync failed: ${dbError.message}`);
             }

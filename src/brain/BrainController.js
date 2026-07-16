@@ -1,6 +1,6 @@
 /**
  * BrainController: Orchestrates Local NLP, Memory, and Decision Engine.
- * Refactored: Phase 10.5 - Integrated Smart Query Refiner & Multi-lingual Display Engine
+ * Refactored: Phase 12.0 - Integrated Dynamic Self-Doubt, Intent Classifier & Smart Recovery
  */
 import { DecisionEngine } from './DecisionEngine.js';
 import { ExecutionTracer } from './core/ExecutionTracer.js'; 
@@ -15,7 +15,7 @@ export class BrainController {
       provider: 'gemini',
       memoryEnabled: true,
       developerMode: true,
-      confidenceThreshold: 0.95, 
+      confidenceThreshold: 0.90, // কনফিডেন্স এর নিচে নামলেই জেমিনিকে ডাকবে
       ...initialConfig
     };
     
@@ -28,31 +28,30 @@ export class BrainController {
     this.decisionEngine = ExecutionTracer.wrap(baseEngine, 'DecisionEngine');
   }
 
-  // 🟢 NEW: Smart Query Refiner (বড় বাক্য থেকে ফালতু শব্দ মুছে আসল সার্চ টার্ম বের করা)
+  // 🟢 FIXED: Query Refiner Bug (Length-Sorted Filters)
   cleanAndOptimizeQuery(prompt) {
       let clean = prompt.toLowerCase();
       
-      // বাংলা এবং ইংরেজির সাধারণ কথ্য শব্দ বা ফিল্টার (Conversational Fillers)
       const fillers = [
-          'আমি তোমাকে', 'বলতে বলেছি', 'বলতে পারবে', 'বলতো', 'জানাও', 'দাও', 'দেখাও', 'একটু', 'ভাই', 'বল', 'প্লিজ', 'নাকি', 'কী', 'কেমন',
+          'আমি তোমাকে', 'বলতে বলেছি', 'বলতে পারবে', 'বলতো', 'জানাও', 'দাও', 'দেখাও', 'একটু', 'ভাই', 'বল', 'প্লিজ', 'নাকি', 'কী', 'কেমন', 'বলবে', 'রিপোর্টটা', 'আমাকে',
           'please tell me', 'can you show me', 'what is the', 'tell me about', 'show me', 'give me', 'update', 'please', 'can you'
       ];
       
-      // বাক্য থেকে ফিল্টার শব্দগুলো মুছে ফেলা
+      // 🟢 BUG FIX: বড় শব্দগুলো আগে প্রসেস হবে, যাতে শব্দের মাঝখান থেকে কাটতে না পারে
+      fillers.sort((a, b) => b.length - a.length);
+      
       fillers.forEach(filler => {
           clean = clean.split(filler).join(' ');
       });
       
-      // অতিরিক্ত স্পেস মুছে একদম ফ্রেশ কি-ওয়ার্ড রিটার্ন করা
       const optimizedQuery = clean.replace(/\s+/g, ' ').trim();
       addLog('INFO', `QueryRefiner: Optimized "${prompt}" ➔ "${optimizedQuery}"`);
       return optimizedQuery || prompt;
   }
 
   async performLiveWebSearch(query) {
-      // প্রথমে বাক্যটিকে অপ্টিমাইজ বা ফিল্টার করে নেওয়া
       const optimizedQuery = this.cleanAndOptimizeQuery(query);
-      addLog('INFO', `WebRouter: Executing Live Search for -> "${optimizedQuery}"`);
+      addLog('INFO', `WebRouter: Executing Direct Live Search for -> "${optimizedQuery}"`);
       
       try {
           const response = await fetch(`https://html.duckduckgo.com/html/?q=${encodeURIComponent(optimizedQuery)}`, {
@@ -63,11 +62,11 @@ export class BrainController {
           const snippets = [...html.matchAll(/<a class="result__snippet[^>]*>(.*?)<\/a>/gi)]
               .map(m => m[1].replace(/<[^>]+>/g, '').trim())
               .filter(text => text.length > 0)
-              .slice(0, 4); // Top 4 entries for maximum data density
+              .slice(0, 4); 
               
           if (snippets.length > 0) {
               addLog('OK', 'WebRouter: Successfully extracted live data.');
-              return snippets.join(' | ');
+              return snippets; // Array রিটার্ন করছে যাতে সুন্দর করে সাজানো যায়
           }
           return null;
       } catch (error) {
@@ -82,25 +81,49 @@ export class BrainController {
       return triggerWords.some(word => p.includes(word));
   }
 
+  // 🟢 NEW PILLAR 1: Dynamic Self-Doubt & Intent Classifier Engine
+  calculateIntentConfidence(prompt) {
+      const p = prompt.toLowerCase();
+      const complexTriggers = [
+          'code', 'program', 'function', 'write', 'create', 'html', 'javascript', 'backend',
+          'কোড', 'প্রোগ্রাম', 'ফাংশন', 'রচনা', 'বিশ্লেষণ', 'কেন', 'কিভাবে', 'গাণিতিক', 'হিসাব', 'বানিয়ে দাও'
+      ];
+      const isComplex = complexTriggers.some(word => p.includes(word));
+      
+      if (isComplex) {
+          addLog('INFO', 'SelfDoubt: Complex Logic Detected. Lowering confidence to force Gemini.');
+          return { intent: 'COMPLEX_THINKING', confidence: 0.40 }; 
+      }
+      if (this.detectSearchIntent(prompt)) {
+          return { intent: 'LIVE_INFO', confidence: 0.98 }; 
+      }
+      return { intent: 'GENERAL_TALK', confidence: 0.96 };
+  }
+
   async handleRequest(payload) {
     const sessionId = payload.sessionId || 'default_user';
     let userPrompt = payload.content || "";
-    let isLiveSearchExecuted = false;
+    
+    // কগনিটিভ লেয়ারের মাধ্যমে ইন্টেন্ট এবং সেলফ-ডাউট স্কোর হিসাব করা
+    const cognitiveAnalysis = this.calculateIntentConfidence(userPrompt);
     
     try {
-        // ১. FIRST PRIORITY: Agentic Web Router (লাইভ সার্চ ও ন্যাচারাল ল্যাঙ্গুয়েজ ডিটেকশন)
-        if (this.detectSearchIntent(userPrompt)) {
-            const liveData = await this.performLiveWebSearch(userPrompt);
-            if (liveData) {
-                // 🟢 KHR: জেমিনিকে কড়া নির্দেশ যাতে সে ইন্টারনেটের ডেটা পড়ে বাংলায় সুন্দর করে ডিসপ্লে করে
-                userPrompt = `CONTEXT (Live Web Data from Internet): ${liveData}\n\nUSER QUESTION: ${payload.content}\n\nINSTRUCTION: You are ORBIS AI. Analyze the live web context provided. Answer the user's question accurately. CRITICAL: Provide the final display output response in beautifully formatted, clear Bengali (বাংলা) language so it looks professional, regardless of the input search query language.`;
-                isLiveSearchExecuted = true;
-                payload.content = userPrompt; 
+        // 🟢 NEW PILLAR 2: Strict Gate Lock System (Gemini Bypass for Live Search)
+        if (cognitiveAnalysis.intent === 'LIVE_INFO' && cognitiveAnalysis.confidence >= this.config.confidenceThreshold) {
+            const searchResults = await this.performLiveWebSearch(userPrompt);
+            if (searchResults) {
+                addLog('OK', 'Brain: Gate Locked for External Providers. Resolving via Direct Search.');
+                // ব্রেন নিজেই সরাসরি ডেটা ফরম্যাট করে সুন্দর আউটপুট বানিয়ে দিচ্ছে (জেমিনিকে ছাড়া)
+                const directResponse = `🌐 **ORBIS লাইভ আপডেট:**\n\n${searchResults.map((info, index) => `🔹 ${info}`).join('\n\n')}`;
+                
+                await this.saveAutonomousContext(sessionId, userPrompt, directResponse);
+                this.syncLiveTelemetry();
+                return directResponse;
             }
         }
 
-        // ২. SECOND PRIORITY: লোকাল ব্রেইন (NLP) চেক (লাইভ সার্চ না হলে তবেই এটি কাজ করবে)
-        if (userPrompt && !isLiveSearchExecuted) {
+        // লোকাল ব্রেইন (NLP) চেক
+        if (userPrompt && cognitiveAnalysis.intent === 'GENERAL_TALK') {
             const localResponse = await this.localNLP.processLocally(userPrompt, sessionId);
             if (localResponse && localResponse.confidence >= this.config.confidenceThreshold) {
                 addLog('INFO', 'Brain: Answered directly from Local NLP.');
@@ -110,8 +133,8 @@ export class BrainController {
             }
         }
 
-        // ৩. মেমোরি চেক (Unified API)
-        if (this.config.memoryEnabled && payload.content && !isLiveSearchExecuted) {
+        // মেমোরি চেক 
+        if (this.config.memoryEnabled && payload.content && cognitiveAnalysis.intent !== 'LIVE_INFO') {
             try {
                 const cached = await this.memory.searchCognitiveMemory(sessionId, payload.content);
                 if (cached) {
@@ -122,22 +145,30 @@ export class BrainController {
             } catch(e) {}
         }
 
-        // ৪. জেমিনি বা এক্সটার্নাল প্রোভাইডার কল
-        addLog('INFO', `Brain: Sending payload to Gemini Engine... LiveContext: ${isLiveSearchExecuted}`);
+        // ৪. শুধুমাত্র জটিল কাজের জন্য জেমিনি ইঞ্জিন কল
+        addLog('INFO', `Brain: Esculating to Gemini. Intent: ${cognitiveAnalysis.intent} | Confidence: ${cognitiveAnalysis.confidence}`);
         const remoteResponse = await this.decisionEngine.processRequest(payload, this.config);
         addLog('OK', 'Brain: Received successful response from AI Provider.');
         
-        // ৫. সফল হলে সেভ করা
-        const originalPromptForDb = isLiveSearchExecuted ? payload.content.split('USER QUESTION: ')[1].split('\n\nINSTRUCTION:')[0] : payload.content;
-        await this.saveAutonomousContext(sessionId, originalPromptForDb, remoteResponse);
-        
+        await this.saveAutonomousContext(sessionId, payload.content, remoteResponse);
         this.syncLiveTelemetry();
         return remoteResponse;
 
     } catch (error) {
-        addLog('ERR', `AI Provider Failed: ${error.message}`);
-        const dynamicFallback = this.autonomousMind.thinkAndReply(payload.content, []);
+        addLog('ERR', `AI Provider/Execution Failed: ${error.message}`);
+        console.error("[BrainController] 🚨 CRITICAL FAULT ➔ Activating Smart API Recovery Layer.");
+        
+        // 🟢 NEW PILLAR 3: Smart API Recovery (জেমিনির 503 এরর হলে ফলব্যাক)
+        let contextHistory = [];
+        try {
+            contextHistory = await this.memory.loadConversation(sessionId, 5);
+        } catch (memError) {}
+
+        addLog('WARN', 'Brain: Transmitting historical context to Autonomous Mind for synthesis...');
+        const dynamicFallback = this.autonomousMind.thinkAndReply(payload.content, contextHistory);
+        
         await this.saveAutonomousContext(sessionId, payload.content, dynamicFallback);
+        this.syncLiveTelemetry();
         return dynamicFallback;
     }
   }
