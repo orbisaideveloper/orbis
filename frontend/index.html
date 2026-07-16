@@ -33,6 +33,34 @@
         .sidebar-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.3); z-index: 998; backdrop-filter: blur(1px); }
         .telemetry-sidebar { z-index: 999 !important; position: relative; }
 
+        /* 🟢 NEW: Standardized Clean Header Styles */
+        .clean-header {
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 10px 15px; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); 
+            border-bottom: 1px solid rgba(226, 232, 240, 0.5); border-top: 4px solid var(--saffron); gap: 10px;
+        }
+        .header-brand {
+            font-size: 1.1rem; font-weight: 900; color: var(--navy-blue); 
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; display: flex; align-items: center; gap: 8px;
+        }
+        .header-actions {
+            display: flex; gap: 8px; align-items: center; flex-shrink: 0;
+        }
+        .btn-clean-action {
+            background: transparent; border: 1px solid var(--border); font-size: 0.7rem; 
+            padding: 5px 12px; border-radius: 20px; cursor: pointer; color: var(--navy-blue); font-weight: 700; transition: all 0.2s;
+        }
+        .btn-clean-action:hover { background: #f1f5f9; }
+        .btn-clear-chat {
+            background: transparent; border: 1px solid #ef4444; color: #ef4444; font-size: 0.7rem; 
+            padding: 5px 12px; border-radius: 20px; cursor: pointer; font-weight: 700; transition: all 0.2s;
+        }
+        .btn-clear-chat:hover { background: #fef2f2; }
+        .live-badge-mini {
+            display: flex; align-items: center; gap: 5px; background: #f0fdf4; padding: 5px 10px; 
+            border-radius: 20px; border: 1px solid #bbf7d0;
+        }
+
         /* 🟢 PWA Install Banner Style */
         .pwa-banner {
             display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
@@ -63,17 +91,17 @@
 
     <div id="orbis-platform-root" class="platform-layer"></div>
 
-    <header class="top-nav">
-        <div class="brand">
+    <header class="clean-header">
+        <div class="header-brand">
             <button onclick="toggleSidebar()" class="mobile-menu-btn" id="mobile-menu-btn" style="display: none;">☰</button>
-            <span>ORBIS Core Autonomous Mind</span>
-        </div>
-        <div class="sys-badges">
-            <button onclick="window.clearUserHistory()" style="background:rgba(255, 77, 77, 0.1); border:1px solid var(--red); color:var(--red); font-size:0.6rem; padding:4px 8px; border-radius:4px; cursor:pointer; font-weight:bold; margin-right:10px; transition: 0.3s;">🗑️ CLEAR</button>
-            
-            <button onclick="window.clearContext ? window.clearContext() : location.reload()" style="background:none; border:1px solid var(--border); font-size:0.6rem; padding:2px 6px; cursor:pointer; color:var(--navy-blue); font-weight:bold; margin-right:10px;">RESET BUS</button>
-            <span id="glow-dot" class="status-glow online"></span>
-            <span id="status-text" style="color:var(--saffron);">CONNECTED</span>
+            <span>ORBIS AI</span> </div>
+        <div class="header-actions">
+            <button onclick="window.clearUserHistory()" class="btn-clear-chat">Clear Chat</button>
+            <button onclick="window.clearContext ? window.clearContext() : location.reload()" class="btn-clean-action">Reset</button>
+            <div class="live-badge-mini">
+                <span id="glow-dot" class="status-glow online" style="margin:0; width:6px; height:6px;"></span>
+                <span id="status-text" style="color:#166534; font-size:0.65rem; font-weight:800;">LIVE</span>
+            </div>
         </div>
     </header>
 
@@ -265,38 +293,4 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js')
-                .then(registration => {
-                    console.log('[PWA] Service Worker Active. Offline mode ready.');
-                })
-                .catch(err => {
-                    console.error('[PWA] Service Worker Registration Failed:', err);
-                });
-            });
-        }
-
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault(); 
-            deferredPrompt = e; 
-            installBanner.style.display = 'flex';
-            console.log('[PWA] Ready to install. Banner displayed.');
-        });
-
-        if (installBtn) {
-            installBtn.addEventListener('click', async () => {
-                hideInstallBanner();
-                if (deferredPrompt) {
-                    deferredPrompt.prompt(); 
-                    const { outcome } = await deferredPrompt.userChoice;
-                    console.log(`[PWA] Install status: ${outcome}`);
-                    deferredPrompt = null;
-                }
-            });
-        }
-
-        window.addEventListener('appinstalled', () => {
-            hideInstallBanner();
-            console.log('[PWA] ORBIS App successfully installed on device.');
-        });
-    </script>
-</body>
-</html>
+                .then(registra

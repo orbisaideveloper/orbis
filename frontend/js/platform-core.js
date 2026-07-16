@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
             .status-active { background: #dcfce7; color: var(--green); border: 1px solid var(--green); }
             .status-soon { background: #fef08a; color: #854d0e; border: 1px solid #eab308; }
             .nav-top { position: absolute; top: 20px; right: 20px; display: flex; gap: 10px; align-items: center; }
-            .user-badge { font-size: 0.85rem; font-weight: bold; color: var(--white); background: var(--green); padding: 6px 12px; border-radius: 20px; }
+            .user-badge { font-size: 0.85rem; font-weight: bold; color: var(--navy); background: rgba(255,255,255,0.9); padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         </style>
     `;
 
@@ -164,9 +164,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (currentState === 'dashboard') {
                 const storedName = localStorage.getItem('orbis_user_name') || 'Authorized User';
-                const uid = localStorage.getItem('orbis_uid') || '';
-                // 🟢 Shows name and short unique ID like "Rahul (A7X9)"
-                document.getElementById('display-user').innerText = uid ? `${storedName} (${uid.split('-')[1]})` : storedName;
+                // 🟢 NEW: Friendly Welcome Greeting instead of ID
+                const firstName = storedName.split(' ')[0];
+                document.getElementById('display-user').innerText = `Welcome, ${firstName} 👋`;
             }
         },
 
@@ -181,7 +181,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!name) return alert("Please enter your full name.");
             if (!mobile || mobile.length < 10) return alert("Please enter a valid 10-digit mobile number.");
 
-            // 🟢 NEW: GENERATE UNIQUE PERMANENT ID (ORB-ID)
             let uniqueOrbId = localStorage.getItem('orbis_uid');
             if (!uniqueOrbId) {
                 const randomHex = Math.random().toString(36).substring(2, 6).toUpperCase();
@@ -200,7 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
         logout: function() {
             localStorage.removeItem('orbis_active_user');
             localStorage.removeItem('orbis_user_name');
-            // 🟢 WE DO NOT REMOVE 'orbis_uid'. It stays permanent in the browser!
+            // 'orbis_uid' remains permanent in browser
             stopHeartbeat();
             this.navigate('landing');
         },
