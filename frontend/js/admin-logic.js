@@ -18,30 +18,31 @@ function triggerSelfHealing() {
 const ADMIN_AUTH_TOKEN = 'Bearer ORBIS_ADMIN_API_TOKEN';
 
 document.addEventListener('DOMContentLoaded', () => {
-    // 🟢 ERROR DETECTION
+    // 🚀 MASTER FIX: FORCE INJECT DEPLOYMENT PLUGIN IF IT IS MISSING FROM MAP
+    if (window.ORBIS_ADMIN && window.ORBIS_ADMIN.plugins) {
+        if (!window.ORBIS_ADMIN.plugins.has('plugin-deploy')) {
+            window.ORBIS_ADMIN.plugins.set('plugin-deploy', {
+                id: 'plugin-deploy',
+                icon: '🚀',
+                name: 'Deployment Engine',
+                desc: 'Manage production releases, shadow workspaces, and live module publisher pathways.',
+                statusClass: 'status-admin',
+                statusText: 'Core'
+            });
+        }
+    }
+
     if (typeof window.ORBIS_ADMIN === 'undefined') {
         const grid = document.getElementById('dynamic-plugin-grid');
         if (grid) {
-            grid.innerHTML = `
-                <div style="grid-column: 1/-1; background:#fff0f0; border:2px dashed #ff4d4d; padding:30px; border-radius:12px; text-align:center;">
-                    <div style="font-size:3rem; margin-bottom:10px;">🩺</div>
-                    <h3 style="color:#ff4d4d; margin-top:0;">System UI Pipeline Blocked</h3>
-                    <p style="color:#d32f2f;">A background cache conflict prevented core registry files from loading.</p>
-                    <button onclick="triggerSelfHealing()" style="background:#ff4d4d; color:#fff; border:none; padding:12px 24px; border-radius:6px; font-weight:bold; cursor:pointer;">⚡ Run Self-Healing Sequence</button>
-                </div>
-            `;
+            grid.innerHTML = `<div style="grid-column: 1/-1; background:#fff0f0; border:2px dashed #ff4d4d; padding:30px; border-radius:12px; text-align:center;"><div style="font-size:3rem; margin-bottom:10px;">🩺</div><h3 style="color:#ff4d4d; margin-top:0;">System UI Pipeline Blocked</h3><p style="color:#d32f2f;">A background cache conflict prevented core registry files from loading.</p><button onclick="triggerSelfHealing()" style="background:#ff4d4d; color:#fff; border:none; padding:12px 24px; border-radius:6px; font-weight:bold; cursor:pointer;">⚡ Run Self-Healing Sequence</button></div>`;
         }
         return; 
     }
 
-    // 🟢 NORMAL EXECUTION WITH AUTHENTICATION
     window.ORBIS_ADMIN.registerProvider('sys-metrics', async () => {
         try {
-            // 🔧 FIX: Sending the exact token the backend expects
-            const response = await fetch('/api/admin/health', { 
-                headers: { 'Authorization': ADMIN_AUTH_TOKEN } 
-            });
-            
+            const response = await fetch('/api/admin/health', { headers: { 'Authorization': ADMIN_AUTH_TOKEN } });
             const result = await response.json();
             if(result.status === 'OK') {
                 const ramMB = Math.round(result.memoryUsage.rss / (1024 * 1024));
@@ -57,20 +58,14 @@ document.addEventListener('DOMContentLoaded', () => {
 function renderPlugins() {
     const grid = document.getElementById('dynamic-plugin-grid');
     if (!grid) return;
-    window.ORBIS_ADMIN.plugins.forEach(plugin => {
+    grid.innerHTML = ''; // Clear previous to prevent duplicates
+    window.ORBIS_ADMIN.plugins.forEach((plugin, id) => {
+        const pId = plugin.id || id;
         const card = document.createElement('div');
         card.className = 'admin-card';
-        if(plugin.id === 'plugin-public') { card.style.border = '2px solid #e2e8f0'; card.style.background = 'transparent'; card.style.boxShadow = 'none'; }
-        card.onclick = () => openPanel(plugin.id);
-        card.innerHTML = `
-            <div class="card-icon">${plugin.icon}</div>
-            <div class="card-title">${plugin.name}</div>
-            <div class="card-desc">${plugin.desc}</div>
-            <div class="card-footer">
-                <span class="card-status ${plugin.statusClass}">${plugin.statusText}</span>
-                <span style="color:var(--text-muted); font-size:1.2rem;">➔</span>
-            </div>
-        `;
+        if(pId === 'plugin-public') { card.style.border = '2px solid #e2e8f0'; card.style.background = 'transparent'; card.style.boxShadow = 'none'; }
+        card.onclick = () => openPanel(pId);
+        card.innerHTML = `<div class="card-icon">${plugin.icon}</div><div class="card-title">${plugin.name}</div><div class="card-desc">${plugin.desc}</div><div class="card-footer"><span class="card-status ${plugin.statusClass}">${plugin.statusText}</span><span style="color:var(--text-muted); font-size:1.2rem;">➔</span></div>`;
         grid.appendChild(card);
     });
 }
@@ -94,14 +89,7 @@ function startTelemetryPolling() {
 }
 
 async function fetchSystemState() {
-    try { 
-        // 🔧 FIX: Sending the exact token
-        const res = await fetch('/api/admin/system-state', { 
-            headers: { 'Authorization': ADMIN_AUTH_TOKEN } 
-        }); 
-        const data = await res.json(); 
-        return data.state; 
-    } catch(e) { return null; }
+    try { const res = await fetch('/api/admin/system-state', { headers: { 'Authorization': ADMIN_AUTH_TOKEN } }); const data = await res.json(); return data.state; } catch(e) { return null; }
 }
 
 async function openPanel(pluginId) {
@@ -115,86 +103,52 @@ async function openPanel(pluginId) {
     if (pluginId === 'plugin-cockpit') {
         contentArea.style.padding = '0';
         contentArea.innerHTML = `<iframe src="/index.html?cockpit_mode=true" style="width: 100%; height: 100%; border: none; background: #0f172a;"></iframe>`;
-    } 
-    else if (pluginId === 'plugin-radar') {
+    } else if (pluginId === 'plugin-radar') {
         contentArea.style.padding = '20px';
-        contentArea.innerHTML = `
-            <div style="background:#fff; padding:20px; border-radius:10px; max-width:900px; margin:0 auto; box-shadow: var(--shadow);">
-                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:15px;">
-                    <h3 style="margin:0; color:var(--text-dark);">Active Sessions Map</h3>
-                    <span style="font-size:0.85rem; background:#dcfce7; color:var(--green); padding:4px 10px; border-radius:20px; font-weight:bold;">
-                        <span class="live-dot"></span> Live Tracking
-                    </span>
-                </div>
-                <div id="radar-table-container">
-                    <p style="text-align:center; color:var(--text-muted); padding:20px;">Scanning network...</p>
-                </div>
-            </div>
-        `;
+        contentArea.innerHTML = `<div style="background:#fff; padding:20px; border-radius:10px; max-width:900px; margin:0 auto; box-shadow: var(--shadow);"><div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:15px;"><h3 style="margin:0; color:var(--text-dark);">Active Sessions Map</h3><span style="font-size:0.85rem; background:#dcfce7; color:var(--green); padding:4px 10px; border-radius:20px; font-weight:bold;"><span class="live-dot"></span> Live Tracking</span></div><div id="radar-table-container"><p style="text-align:center; color:var(--text-muted); padding:20px;">Scanning network...</p></div></div>`;
         const fetchRadarData = async () => {
             try {
-                // 🔧 FIX: Sending the exact token
-                const res = await fetch('/api/admin/radar', { 
-                    headers: { 'Authorization': ADMIN_AUTH_TOKEN } 
-                }); 
-                const data = await res.json();
-                
+                const res = await fetch('/api/admin/radar', { headers: { 'Authorization': ADMIN_AUTH_TOKEN } }); const data = await res.json();
                 const container = document.getElementById('radar-table-container'); if (!container) return; 
                 if (data.success && data.users.length > 0) {
                     let tableHTML = `<div class="radar-table-wrapper"><table class="radar-table"><thead><tr><th>Identity (Phone)</th><th>Name</th><th>Active Module</th><th>Status</th></tr></thead><tbody>`;
-                    data.users.forEach(user => { 
-                        tableHTML += `
-                            <tr>
-                                <td style="font-family:monospace; font-weight:bold;">${user.mobile}</td>
-                                <td>${user.name}</td>
-                                <td><span style="background:#f1f5f9; padding:4px 8px; border-radius:4px; font-size:0.8rem;">${user.module}</span></td>
-                                <td><span style="color:var(--green); font-size:0.85rem; font-weight:bold;"><span class="live-dot"></span> Online</span></td>
-                            </tr>
-                        `; 
-                    });
+                    data.users.forEach(user => { tableHTML += `<tr><td style="font-family:monospace; font-weight:bold;">${user.mobile}</td><td>${user.name}</td><td><span style="background:#f1f5f9; padding:4px 8px; border-radius:4px; font-size:0.8rem;">${user.module}</span></td><td><span style="color:var(--green); font-size:0.85rem; font-weight:bold;"><span class="live-dot"></span> Online</span></td></tr>`; });
                     tableHTML += `</tbody></table></div>`; container.innerHTML = tableHTML;
                 } else { container.innerHTML = `<p style="text-align:center; color:var(--text-muted); padding:30px;">No active users found.</p>`; }
             } catch (e) {}
         };
         fetchRadarData(); activeRadarInterval = setInterval(fetchRadarData, 3000);
-    } 
-    else if (pluginId === 'plugin-deploy') {
+    } else if (pluginId === 'plugin-deploy') {
         const sysState = await fetchSystemState();
-        const currentVer = sysState ? sysState.version : '1.0.0';
+        const currentVer = sysState ? sysState.version : '1.4.2';
         const shadowVer = '1.5.0-beta';
         contentArea.style.padding = '20px';
         
         contentArea.innerHTML = `
             <div style="background:#fff; border:1px solid #e2e8f0; padding:20px; border-radius:10px; max-width:800px; margin:0 auto; box-shadow: var(--shadow);">
                 <h3 style="margin-top:0; color:var(--text-dark); border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">Deployment Branches</h3>
-                
                 <div style="display:flex; justify-content:space-between; margin-bottom:15px; padding:15px; background:#f4f7f6; border-radius:8px; border-left:4px solid var(--green);">
                     <div><strong>Live Production</strong><br><span style="font-size:0.85rem; color:var(--text-muted);">Currently visible to users.</span></div>
                     <div style="font-weight:bold; color:var(--green); font-size:1.2rem;" id="ui-live-version">v${currentVer}</div>
                 </div>
-                
                 <div style="display:flex; justify-content:space-between; margin-bottom:25px; padding:15px; background:#fffbeb; border-radius:8px; border-left:4px solid var(--saffron);">
                     <div><strong>Shadow Environment</strong><br><span style="font-size:0.85rem; color:var(--text-muted);">Active workspace.</span></div>
                     <div style="font-weight:bold; color:#d97706; font-size:1.2rem;">v${shadowVer}</div>
                 </div>
-                
                 <button onclick="publishNewVersion('${shadowVer}')" style="background:var(--saffron); color:white; border:none; padding:12px 24px; border-radius:6px; font-weight:bold; cursor:pointer; width:100%; font-size:1rem;">🚀 Publish Shadow to Production</button>
                 
                 <h3 style="margin-top:40px; color:var(--text-dark); border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">Module Publisher</h3>
-                
                 <div style="display:flex; justify-content:space-between; align-items:center; padding:15px 0; border-bottom:1px solid #f1f5f9;">
                     <div><div style="font-weight:bold;">🌾 Farmer Brain</div><div style="font-size:0.8rem; color:var(--text-muted);">Intelligent agriculture.</div></div>
                     <button class="toggle-btn ${sysState && sysState.modules.farmer === 'Active' ? 'active' : ''}" onclick="toggleModule('farmer', this)">${sysState && sysState.modules.farmer === 'Active' ? 'Active' : 'Coming Soon'}</button>
                 </div>
-                
                 <div style="display:flex; justify-content:space-between; align-items:center; padding:15px 0;">
                     <div><div style="font-weight:bold;">📒 DigiLedger</div><div style="font-size:0.8rem; color:var(--text-muted);">Secure financial tracking.</div></div>
                     <button class="toggle-btn ${sysState && sysState.modules.ledger === 'Active' ? 'active' : ''}" onclick="toggleModule('ledger', this)">${sysState && sysState.modules.ledger === 'Active' ? 'Active' : 'Coming Soon'}</button>
                 </div>
             </div>
         `;
-    } 
-    else {
+    } else {
         contentArea.style.padding = '20px';
         contentArea.innerHTML = `<div class="placeholder-box" style="border-color: var(--saffron);"><h3 style="color: var(--saffron); margin-top:0;">Loading...</h3></div>`;
     }
@@ -202,15 +156,7 @@ async function openPanel(pluginId) {
 
 async function publishNewVersion(ver) {
     if(confirm('Push this update to all live users?')) {
-        // 🔧 FIX: Added Authorization Token
-        const res = await fetch('/api/admin/publish-version', { 
-            method: 'POST', 
-            headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': ADMIN_AUTH_TOKEN
-            }, 
-            body: JSON.stringify({ newVersion: ver }) 
-        });
+        const res = await fetch('/api/admin/publish-version', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': ADMIN_AUTH_TOKEN }, body: JSON.stringify({ newVersion: ver }) });
         const data = await res.json();
         if(data.success) { document.getElementById('ui-live-version').innerText = 'v' + data.version; alert('Success! Apps will refresh automatically.'); }
     }
@@ -218,16 +164,7 @@ async function publishNewVersion(ver) {
 
 async function toggleModule(moduleId, btnElement) {
     const currentStatus = btnElement.innerText === 'Active' ? 'Coming Soon' : 'Active';
-    
-    // 🔧 FIX: Added Authorization Token
-    const res = await fetch('/api/admin/toggle-module', { 
-        method: 'POST', 
-        headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': ADMIN_AUTH_TOKEN
-        }, 
-        body: JSON.stringify({ moduleId: moduleId, status: currentStatus }) 
-    });
+    const res = await fetch('/api/admin/toggle-module', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': ADMIN_AUTH_TOKEN }, body: JSON.stringify({ moduleId: moduleId, status: currentStatus }) });
     const data = await res.json();
     if(data.success) {
         if(currentStatus === 'Active') { btnElement.innerText = 'Active'; btnElement.classList.add('active'); } 
