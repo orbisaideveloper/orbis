@@ -8,7 +8,7 @@ import { getTelemetryData, logRequest, addLog } from './brain/telemetry.js';
 import { BrainController } from './brain/BrainController.js'; 
 import adminRoutes from './routes/adminRoutes.js';
 
-// 🟢 NEW: Lottery Module Route Import (Lego Plug-in)
+// 🟢 Lottery Module Route Import
 import lotteryRoutes from './modules/digiledger/lottery/routes/lotteryRoutes.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -56,7 +56,7 @@ app.use('/admin.html', (req, res, next) => {
 // Platform static assets
 app.use(express.static(path.join(__dirname, '../frontend'), { index: false }));
 
-// 🟢 FIX: Lottery Module Static Routing (Added this)
+// 🟢 Lottery Module Static Routing (Fix)
 app.use('/assets/lottery', express.static(path.join(__dirname, '../modules/digiledger/lottery/public')));
 
 const getAppVersion = () => {
@@ -100,10 +100,8 @@ app.get('/admin/login', (req, res) => {
     else res.send('<h2 style="text-align:center; margin-top:20%;">Admin Workspace (Coming Soon)</h2>');
 });
 
-// 🟢 Main Platform Routes
+// Main Platform Routes
 app.use('/api/admin', adminRoutes);
-
-// 🟢 NEW: Lottery Module Connection
 app.use('/api/lottery', lotteryRoutes);
 
 app.get('/api/telemetry', (req, res) => {

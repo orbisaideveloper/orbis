@@ -4,15 +4,19 @@ export function initLotteryWorkspace() {
     console.log("[ORBIS] Lottery Workspace Engine Initialized.");
 
     const gridBody = document.getElementById('lottery-grid-body');
-    if (!gridBody) return;
+    if (!gridBody) {
+        console.warn("[ORBIS] Lottery Grid Body not found, skipping grid events.");
+        return;
+    }
 
     // 🟢 1. Event Delegation for Auto-Calculation
-    // স্প্রেডশিটের যেকোনো ঘরে কিছু লিখলেই এই ইভেন্ট নিজে নিজে ফায়ার হবে
     gridBody.addEventListener('input', function(e) {
         if (e.target.classList.contains('spreadsheet-input')) {
             const currentRow = e.target.closest('tr');
-            calculateRow(currentRow);
-            calculateTotals();
+            if (currentRow) {
+                calculateRow(currentRow);
+                calculateTotals();
+            }
         }
     });
 
@@ -20,21 +24,25 @@ export function initLotteryWorkspace() {
     const fetchPartyBtn = document.getElementById('btn-fetch-party');
     const partyInput = document.getElementById('party-mobile-input');
     
-    if (fetchPartyBtn) {
+    if (fetchPartyBtn && partyInput) {
         fetchPartyBtn.addEventListener('click', () => {
             const mobile = partyInput.value.trim();
             if (mobile.length >= 10) {
                 const infoDisplay = document.getElementById('party-info-display');
                 const partyNameSpan = document.getElementById('active-party-name');
                 
-                infoDisplay.style.display = 'block';
-                partyNameSpan.style.color = '#f59e0b';
-                partyNameSpan.innerText = "Searching ORB-ID Data...";
+                if (infoDisplay) infoDisplay.style.display = 'block';
+                if (partyNameSpan) {
+                    partyNameSpan.style.color = '#f59e0b';
+                    partyNameSpan.innerText = "Searching ORB-ID Data...";
+                }
                 
-                // 🟢 Future: এখানে ব্যাকএন্ড API কল হবে। আপাতত UI টেস্টের জন্য ডামি রেসপন্স।
+                // Backend API Call Simulation
                 setTimeout(() => {
-                    partyNameSpan.style.color = '#059669';
-                    partyNameSpan.innerText = "Verified Party - " + mobile;
+                    if (partyNameSpan) {
+                        partyNameSpan.style.color = '#059669';
+                        partyNameSpan.innerText = "Verified Party - " + mobile;
+                    }
                 }, 600);
             } else {
                 alert("দয়া করে সঠিক ১০ ডিজিটের মোবাইল নম্বর দিন।");
@@ -54,16 +62,13 @@ function calculateRow(row) {
     const commPercent = parseFloat(commStr.replace('%', '')) || 0;
 
     // মূল লজিক: (Dispatch - Return) * Rate
-    const netQty = dispatch - returnQty;
+    const netQty = Math.max(0, dispatch - returnQty);
     const grossAmount = netQty * rate;
     
     // কমিশন মাইনাস করা
     const commAmount = grossAmount * (commPercent / 100);
     let netPay = grossAmount - commAmount;
     
-    // যদি রিটার্ন ডেসপ্যাচের চেয়ে বেশি হয়, তাহলে মাইনাস ফিগার এড়ানোর জন্য
-    if (netPay < 0) netPay = 0; 
-
     // রেজাল্ট ডিসপ্লে করা
     const outputField = row.querySelector('.net-pay-output');
     if (outputField) {
@@ -83,16 +88,20 @@ function calculateTotals() {
         totalReturn += parseInt(row.querySelector('.return-input')?.value) || 0;
         
         const netPayStr = row.querySelector('.net-pay-output')?.value || "0";
-        const netPay = parseFloat(netPayStr.replace('₹ ', '').replace(/,/g, '')) || 0;
+        // Clean currency format: ₹ 1,200.00 -> 1200
+        const netPay = parseFloat(netPayStr.replace(/[₹ ,]/g, '')) || 0;
         totalNet += netPay;
     });
 
     // কার্ডগুলোতে ভ্যালু পুশ করা
-    document.getElementById('val-dispatch').innerText = totalDispatch;
-    document.getElementById('val-return').innerText = totalReturn;
+    const elDispatch = document.getElementById('val-dispatch');
+    const elReturn = document.getElementById('val-return');
+    const elNet = document.getElementById('val-net');
+
+    if (elDispatch) elDispatch.innerText = totalDispatch;
+    if (elReturn) elReturn.innerText = totalReturn;
     
-    // টাকাকে সুন্দর ফরম্যাটে দেখানোর জন্য (যেমন: 1,500.00)
-    document.getElementById('val-net').innerText = `₹ ${totalNet.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    
-    // 🟢 Future: লাইভ আউটস্ট্যান্ডিং (বকেয়া) ব্যাকএন্ড থেকে আসবে।
+    if (elNet) {
+        elNet.innerText = `₹ ${totalNet.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
 }
