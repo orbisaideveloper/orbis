@@ -58,9 +58,21 @@ document.addEventListener('DOMContentLoaded', () => {
 function renderPlugins() {
     const grid = document.getElementById('dynamic-plugin-grid');
     if (!grid) return;
-    grid.innerHTML = ''; // Clear previous to prevent duplicates
+    
+    // 🔴 CULPRIT FOUND & REMOVED: grid.innerHTML = '';
+    // এর বদলে আমরা শুধু পুরোনো ডাইনামিক কার্ডগুলো মুছব, যাতে আমাদের নতুন ডিজাইন সেভ থাকে!
+    const existingDynamicCards = grid.querySelectorAll('.admin-card');
+    existingDynamicCards.forEach(card => card.remove());
+
     window.ORBIS_ADMIN.plugins.forEach((plugin, id) => {
         const pId = plugin.id || id;
+        const nameCheck = (plugin.name || "").toLowerCase();
+
+        // 🟢 NINJA BYPASS: পুরোনো মডিউলগুলোকে স্ক্রিনে আসতে দেওয়া হবে না!
+        if (nameCheck.includes('core') || nameCheck.includes('farmer') || nameCheck.includes('digiledger') || nameCheck.includes('ledger')) {
+            return; // এদেরকে স্কিপ করে যাও!
+        }
+
         const card = document.createElement('div');
         card.className = 'admin-card';
         if(pId === 'plugin-public') { card.style.border = '2px solid #e2e8f0'; card.style.background = 'transparent'; card.style.boxShadow = 'none'; }
