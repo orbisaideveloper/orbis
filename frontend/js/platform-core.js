@@ -1,18 +1,19 @@
 // ==================================================================
-// ORBIS PLATFORM CORE LOGIC (Sprint-1)
-// Advanced Dynamic Loader & Persistent ORB-ID Authentication
+// ORBIS PLATFORM CORE LOGIC (Sprint-1.1 - Added Routing & Layer Control)
 // ==================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
     const platformRoot = document.getElementById('orbis-platform-root');
-    
-    // 🟢 MAGIC: ADMIN COCKPIT BYPASS
+    const chatLayout = document.querySelector('.main-layout'); // 🟢 AI Chat Container
+
+    // 🟢 বাই-ডিফল্ট AI Chat লুকিয়ে রাখা হলো, যাতে পেছনের স্ক্রিন সামনে না আসে
+    if (chatLayout) chatLayout.style.display = 'none';
+
+    // অ্যাডমিন বাইপাস
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('cockpit_mode') === 'true') {
-        if (platformRoot) {
-            platformRoot.style.display = 'none';
-            platformRoot.innerHTML = '';
-        }
+        if (platformRoot) platformRoot.style.display = 'none';
+        if (chatLayout) chatLayout.style.display = 'flex'; // শুধু অ্যাডমিনের জন্য চ্যাট ওপেন
         return; 
     }
 
@@ -21,73 +22,40 @@ document.addEventListener('DOMContentLoaded', () => {
     const activeUser = localStorage.getItem('orbis_active_user');
     let currentState = activeUser ? 'dashboard' : 'landing';
 
-    // 🟢 LOCAL STATE MEMORY (3 Modules Preserved)
     let localSystemVersion = localStorage.getItem('orbis_system_version') || '1.4.2';
-    let localModules = {
-        farmer: 'Coming Soon',
-        ledger: 'Active' // Changed to Active so the Hub can open
-    };
+    let localModules = { farmer: 'Coming Soon', ledger: 'Active' };
 
-    // ==========================================
-    // 📡 TELEMETRY HEARTBEAT & STATE SYNC
-    // ==========================================
     let heartbeatInterval = null;
-
     function startHeartbeat(currentModule = 'Dashboard') {
         if (heartbeatInterval) clearInterval(heartbeatInterval);
-        
         const sendPulse = async () => {
             const mobile = localStorage.getItem('orbis_active_user');
             const name = localStorage.getItem('orbis_user_name');
             if (mobile && name) {
                 try {
                     const response = await fetch('/api/admin/heartbeat', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ mobile, name, currentModule })
                     });
                     const data = await response.json();
-                    
                     if (data.success && data.systemState) {
                         if (data.systemState.version !== localSystemVersion) {
-                            console.log(`[ORBIS Sync] New version detected: ${data.systemState.version}. Refreshing App...`);
                             localStorage.setItem('orbis_system_version', data.systemState.version);
                             window.location.reload(true); 
-                        }
-                        
-                        let modulesChanged = false;
-                        if (data.systemState.modules.farmer !== localModules.farmer) {
-                            localModules.farmer = data.systemState.modules.farmer;
-                            modulesChanged = true;
-                        }
-                        if (data.systemState.modules.ledger !== localModules.ledger) {
-                            localModules.ledger = data.systemState.modules.ledger;
-                            modulesChanged = true;
-                        }
-                        
-                        if(modulesChanged && currentState === 'dashboard') {
-                            window.orbisPlatform.render();
                         }
                     }
                 } catch(e) {}
             }
         };
-
         sendPulse(); 
         heartbeatInterval = setInterval(sendPulse, 15000); 
     }
+    function stopHeartbeat() { if (heartbeatInterval) clearInterval(heartbeatInterval); }
 
-    function stopHeartbeat() {
-        if (heartbeatInterval) clearInterval(heartbeatInterval);
-    }
-
-    // ==========================================
-    // 🎨 UI TEMPLATES & STYLES
-    // ==========================================
     const styles = `
         <style>
             :root { --saffron: #FF9933; --white: #FFFFFF; --green: #138808; --navy: #0f172a; --gray-light: transparent; }
-            .platform-container { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: var(--gray-light); color: var(--navy); text-align: center; padding: 20px; box-sizing: border-box; }
+            .platform-container { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: var(--gray-light); color: var(--navy); text-align: center; padding: 20px; box-sizing: border-box; }
             .btn-primary { background: var(--saffron); color: var(--white); border: none; padding: 12px 24px; font-size: 1rem; border-radius: 6px; cursor: pointer; margin-top: 15px; font-weight: bold; transition: background 0.3s; box-shadow: 0 4px 6px rgba(255, 153, 51, 0.3); }
             .btn-outline { background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(5px); border: 2px solid var(--saffron); color: var(--saffron); padding: 8px 16px; border-radius: 6px; cursor: pointer; transition: all 0.2s; font-weight: bold; }
             .auth-box { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(15px); padding: 35px 30px; border-radius: 12px; box-shadow: 0 10px 25px -3px rgba(0,0,0,0.15); border-top: 5px solid var(--saffron); width: 100%; max-width: 400px; }
@@ -99,7 +67,6 @@ document.addEventListener('DOMContentLoaded', () => {
             .phone-input { border-radius: 0 6px 6px 0 !important; }
             .module-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; width: 100%; max-width: 900px; margin-top: 30px; }
             .module-card { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(10px); padding: 25px 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid rgba(226, 232, 240, 0.8); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; position: relative; border-bottom: 4px solid var(--green); }
-            .module-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
             .module-icon { font-size: 2.5rem; margin-bottom: 15px; }
             .module-title { font-weight: bold; font-size: 1.15rem; margin-bottom: 8px; color: var(--navy); }
             .module-desc { font-size: 0.8rem; color: #64748b; margin-bottom: 15px; line-height: 1.4; }
@@ -113,117 +80,86 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
 
     const landingTemplate = `<div class="platform-container"><h1 style="font-size: 4rem; color: var(--navy); margin-bottom: 5px; font-weight: 900; letter-spacing: -1px;">ORBIS</h1><p style="font-size: 1.2rem; color: #64748b; margin-bottom: 40px; font-weight: 500; text-shadow: 0 1px 2px rgba(255,255,255,0.8);">The Lego Modular AI Business Platform</p><button class="btn-primary" style="font-size: 1.1rem; padding: 14px 32px;" onclick="window.orbisPlatform.navigate('login')">Enter Platform ➔</button></div>`;
-
-    const loginTemplate = `<div class="platform-container"><div class="auth-box"><h2 style="margin-top: 0; color: var(--navy); font-size: 1.8rem;">Identity Gateway</h2><p style="color: #64748b; font-size: 0.95rem; margin-bottom: 25px;">Please verify your identity to continue.</p><div class="input-group"><label>Full Name</label><input type="text" id="auth-name" placeholder="Enter your full name" required autocomplete="name"></div><div class="input-group"><label>Mobile Number (Primary)</label><div class="phone-group"><span class="phone-prefix">+91</span><input type="tel" id="auth-mobile" class="phone-input" placeholder="XXXXX XXXXX" maxlength="10" required autocomplete="tel-national" oninput="this.value = this.value.replace(/[^0-9]/g, '')"></div></div><button class="btn-primary" style="width: 100%; margin-top: 10px;" onclick="window.orbisPlatform.processLogin()">Secure Login</button><button class="btn-outline" style="width: 100%; margin-top: 15px; border: none; background: transparent; color: #64748b;" onclick="window.orbisPlatform.navigate('landing')">← Back to Home</button></div></div>`;
-
+    const loginTemplate = `<div class="platform-container"><div class="auth-box"><h2 style="margin-top: 0; color: var(--navy); font-size: 1.8rem;">Identity Gateway</h2><p style="color: #64748b; font-size: 0.95rem; margin-bottom: 25px;">Please verify your identity to continue.</p><div class="input-group"><label>Full Name</label><input type="text" id="auth-name" placeholder="Enter your full name"></div><div class="input-group"><label>Mobile Number</label><div class="phone-group"><span class="phone-prefix">+91</span><input type="tel" id="auth-mobile" class="phone-input" placeholder="XXXXX XXXXX" maxlength="10"></div></div><button class="btn-primary" style="width: 100%; margin-top: 10px;" onclick="window.orbisPlatform.processLogin()">Secure Login</button><button class="btn-outline" style="width: 100%; margin-top: 15px; border: none; background: transparent; color: #64748b;" onclick="window.orbisPlatform.navigate('landing')">← Back to Home</button></div></div>`;
+    
     const getDashboardTemplate = () => `
         <div class="platform-container" style="justify-content: flex-start; padding-top: 80px;">
             <div class="nav-top">
                 <span class="user-badge" id="display-user">User</span>
                 <button class="btn-outline" onclick="window.orbisPlatform.logout()">Logout</button>
             </div>
-            <h2 style="margin-bottom: 5px; font-size: 2.2rem; color: var(--navy); text-shadow: 0 1px 2px rgba(255,255,255,0.8);">Platform Modules</h2>
-            <p style="color: #64748b; margin-bottom: 20px; font-size: 1.1rem; text-shadow: 0 1px 2px rgba(255,255,255,0.8);">Select a business module to launch</p>
+            <h2 style="margin-bottom: 5px; font-size: 2.2rem; color: var(--navy);">Platform Modules</h2>
             <div class="module-grid">
                 <div class="module-card" onclick="window.orbisPlatform.launchModule('orchestrator')">
-                    <div class="module-icon">🧠</div>
-                    <div class="module-title">AI Orchestrator</div>
-                    <div class="module-desc">Core cognitive engine, telemetry, and live execution bus.</div>
+                    <div class="module-icon">🧠</div><div class="module-title">AI Orchestrator</div>
                     <div class="module-status status-active">Active</div>
                 </div>
-                
-                <div class="module-card" style="border-bottom-color: ${localModules.farmer === 'Active' ? 'var(--green)' : 'var(--saffron)'};" onclick="window.orbisPlatform.launchModule('farmer')">
-                    <div class="module-icon">🌾</div>
-                    <div class="module-title">Farmer Brain</div>
-                    <div class="module-desc">Intelligent agricultural management and analytics.</div>
-                    <div class="module-status ${localModules.farmer === 'Active' ? 'status-active' : 'status-soon'}">${localModules.farmer}</div>
+                <div class="module-card" onclick="alert('Farmer Brain Coming Soon!')">
+                    <div class="module-icon">🌾</div><div class="module-title">Farmer Brain</div>
+                    <div class="module-status status-soon">Coming Soon</div>
                 </div>
-
-                <div class="module-card" style="border-bottom-color: ${localModules.ledger === 'Active' ? 'var(--green)' : 'var(--saffron)'};" onclick="window.orbisPlatform.launchModule('ledger')">
-                    <div class="module-icon">📒</div>
-                    <div class="module-title">DigiLedger</div>
-                    <div class="module-desc">Secure financial tracking and business logic hub.</div>
-                    <div class="module-status ${localModules.ledger === 'Active' ? 'status-active' : 'status-soon'}">${localModules.ledger}</div>
+                <div class="module-card" style="border-bottom-color: var(--green);" onclick="window.orbisPlatform.navigate('digiledger-hub')">
+                    <div class="module-icon">📒</div><div class="module-title">DigiLedger</div>
+                    <div class="module-status status-active">Active</div>
                 </div>
             </div>
         </div>
     `;
 
-    // 🟢 NEW: DigiLedger Hub Template
     const getDigiLedgerHubTemplate = () => `
         <div class="platform-container" style="justify-content: flex-start; padding-top: 80px;">
             <div class="nav-left">
                 <button class="btn-outline" style="background: rgba(255,255,255,0.9);" onclick="window.orbisPlatform.navigate('dashboard')">← Main Menu</button>
             </div>
-            <h2 style="margin-bottom: 5px; font-size: 2.2rem; color: var(--navy); text-shadow: 0 1px 2px rgba(255,255,255,0.8);">DigiLedger Hub</h2>
-            <p style="color: #64748b; margin-bottom: 20px; font-size: 1.1rem; text-shadow: 0 1px 2px rgba(255,255,255,0.8);">Select an accounting or management system</p>
+            <h2 style="margin-bottom: 5px; font-size: 2.2rem; color: var(--navy);">DigiLedger Hub</h2>
             <div class="module-grid">
                 <div class="module-card" style="border-bottom-color: var(--green);" onclick="window.orbisPlatform.mountLotteryModule()">
-                    <div class="module-icon">🎟️</div>
-                    <div class="module-title">Lottery Core</div>
-                    <div class="module-desc">Complete standalone lottery management, sales, and settlements.</div>
+                    <div class="module-icon">🎟️</div><div class="module-title">Lottery Core</div>
                     <div class="module-status status-active">Active</div>
                 </div>
-                
-                <div class="module-card" style="border-bottom-color: var(--saffron); opacity: 0.7;" onclick="alert('Pharmacy Module is under development.')">
-                    <div class="module-icon">💊</div>
-                    <div class="module-title">Pharmacy</div>
-                    <div class="module-desc">Pharmacy billing, stock, and vendor management.</div>
-                    <div class="module-status status-soon">Coming Soon</div>
-                </div>
-
-                <div class="module-card" style="border-bottom-color: var(--saffron); opacity: 0.7;" onclick="alert('Grocery Module is under development.')">
-                    <div class="module-icon">🛒</div>
-                    <div class="module-title">Grocery</div>
-                    <div class="module-desc">Daily inventory and retail sales tracking.</div>
+                <div class="module-card" style="opacity: 0.7;" onclick="alert('Pharmacy Coming Soon')">
+                    <div class="module-icon">💊</div><div class="module-title">Pharmacy</div>
                     <div class="module-status status-soon">Coming Soon</div>
                 </div>
             </div>
         </div>
     `;
 
-    // ==========================================
-    // ⚙️ CORE LOGIC & NAVIGATION
-    // ==========================================
     window.orbisPlatform = {
         render: function() {
+            platformRoot.style.display = 'block';
             platformRoot.style.visibility = 'visible';
             platformRoot.style.opacity = '1';
+            
+            if (chatLayout) chatLayout.style.display = 'none';
 
             let htmlContent = styles;
             if (currentState === 'landing') htmlContent += landingTemplate;
             else if (currentState === 'login') htmlContent += loginTemplate;
             else if (currentState === 'dashboard') htmlContent += getDashboardTemplate();
-            else if (currentState === 'digiledger-hub') htmlContent += getDigiLedgerHubTemplate(); // 🟢 Render Hub
+            else if (currentState === 'digiledger-hub') htmlContent += getDigiLedgerHubTemplate();
 
             platformRoot.innerHTML = htmlContent;
 
             if (currentState === 'dashboard') {
                 const storedName = localStorage.getItem('orbis_user_name') || 'Authorized User';
-                const firstName = storedName.split(' ')[0];
-                document.getElementById('display-user').innerText = `Welcome, ${firstName} 👋`;
+                document.getElementById('display-user').innerText = `Welcome, ${storedName.split(' ')[0]} 👋`;
             }
         },
 
-        navigate: function(state) {
+        navigate: function(state, pushHistory = true) {
             currentState = state;
             this.render();
+            // 🟢 মোবাইলের ব্যাক বাটনের জন্য ব্রাউজার হিস্ট্রি পুশ করা
+            if (pushHistory) history.pushState({ page: state }, "", `?view=${state}`);
         },
 
         processLogin: function() {
             const name = document.getElementById('auth-name').value.trim();
             const mobile = document.getElementById('auth-mobile').value.trim();
-            if (!name) return alert("Please enter your full name.");
-            if (!mobile || mobile.length < 10) return alert("Please enter a valid 10-digit mobile number.");
-
-            let uniqueOrbId = localStorage.getItem('orbis_uid');
-            if (!uniqueOrbId) {
-                const randomHex = Math.random().toString(36).substring(2, 6).toUpperCase();
-                const year = new Date().getFullYear();
-                uniqueOrbId = `ORB-${randomHex}-${year}`;
-                localStorage.setItem('orbis_uid', uniqueOrbId);
-            }
-
+            if (!name || mobile.length < 10) return alert("Valid name and 10-digit mobile required.");
+            
+            if (!localStorage.getItem('orbis_uid')) localStorage.setItem('orbis_uid', 'ORB-' + Math.random().toString(36).substring(2, 6).toUpperCase());
             localStorage.setItem('orbis_active_user', mobile);
             localStorage.setItem('orbis_user_name', name);
             this.navigate('dashboard');
@@ -241,53 +177,76 @@ document.addEventListener('DOMContentLoaded', () => {
             if (moduleId === 'orchestrator') {
                 startHeartbeat('AI Orchestrator'); 
                 platformRoot.style.opacity = '0';
-                setTimeout(() => { platformRoot.style.visibility = 'hidden'; platformRoot.innerHTML = ''; }, 500); 
-            } else if (moduleId === 'farmer') {
-                alert("The Farmer Brain module is currently in development.\nStatus: Coming Soon!");
-            } else if (moduleId === 'ledger') {
-                // 🟢 FIX: Route to DigiLedger Hub instead of Admin page
-                this.navigate('digiledger-hub');
+                setTimeout(() => { 
+                    platformRoot.style.display = 'none'; 
+                    if (chatLayout) chatLayout.style.display = 'flex'; // 🟢 শুধুমাত্র এখানেই AI চ্যাট খুলবে
+                }, 300); 
             }
         },
 
-        // 🟢 NEW: Dynamic Module Loader for Lottery
         mountLotteryModule: function() {
-            console.log("[ORBIS Core] Mounting external Lottery Module...");
+            console.log("[ORBIS] Mounting Lottery Module...");
             startHeartbeat('Lottery Module');
             
-            // Hide Platform UI Smoothly
-            platformRoot.style.opacity = '0';
+            // 🟢 মোবাইলের ব্যাক বাটনের জন্য লটারি পেজটিকে হিস্ট্রিতে সেভ করা
+            history.pushState({ page: 'lottery-app' }, "", "?view=lottery");
             
+            platformRoot.style.opacity = '0';
             setTimeout(() => { 
-                platformRoot.style.visibility = 'hidden'; 
+                platformRoot.style.display = 'none'; 
                 
-                // Inject Lottery Script Dynamically (Plug-and-Play)
                 if (!document.getElementById('orbis-lottery-module')) {
                     const script = document.createElement('script');
                     script.id = 'orbis-lottery-module';
-                    script.src = '/modules/digiledger/lottery/ui/user-view.js';
+                    // ⚠️ গুরুত্বপূর্ণ: যদি লটারি মডিউল না খোলে, তবে এই পাথটি '/src/modules...' করে ট্রাই করবেন
+                    script.src = '/modules/digiledger/lottery/ui/user-view.js'; 
+                    
+                    script.onerror = () => {
+                        alert("Error 404: লটারি ফাইলটি পাওয়া যাচ্ছে না! স্ক্রিপ্টের পাথ (Path) চেক করুন।");
+                        window.orbisPlatform.unmountModule();
+                    };
+                    
                     document.body.appendChild(script);
                 } else {
-                    // If script is already there, trigger its render function
-                    if (window.LotteryApp && typeof window.LotteryApp.render === 'function') {
-                        window.LotteryApp.render();
+                    if (window.LotteryUserUI && typeof window.LotteryUserUI.mount === 'function') {
+                        window.LotteryUserUI.mount();
                     }
                 }
             }, 300);
         },
 
-        // 🟢 NEW: Bridge to return to Platform
         unmountModule: function() {
-            console.log("[ORBIS Core] Unmounting module, returning to Hub...");
+            console.log("[ORBIS] Unmounting module...");
             startHeartbeat('Dashboard');
-            platformRoot.style.visibility = 'visible';
-            platformRoot.style.opacity = '1';
-            this.navigate('digiledger-hub');
+            // লটারির পেজ হাইড করা
+            const workspace = document.getElementById('lottery-user-workspace');
+            if (workspace) workspace.style.display = 'none';
+            
+            this.navigate('digiledger-hub', false);
         }
     };
 
+    // 🟢 মোবাইলের হার্ডওয়্যার (Hardware) Back Button কন্ট্রোলার
+    window.addEventListener('popstate', (event) => {
+        const workspace = document.getElementById('lottery-user-workspace');
+        if (event.state && event.state.page) {
+            if (event.state.page !== 'lottery-app' && workspace) {
+                workspace.style.display = 'none'; // লটারি থেকে ব্যাক করলে লটারি হাইড হবে
+            }
+            if (event.state.page !== 'lottery-app') {
+                currentState = event.state.page;
+                window.orbisPlatform.render();
+            }
+        } else {
+            if (localStorage.getItem('orbis_active_user')) {
+                if (workspace) workspace.style.display = 'none';
+                currentState = 'dashboard';
+                window.orbisPlatform.render();
+            }
+        }
+    });
+
+    history.replaceState({ page: currentState }, "", `?view=${currentState}`);
     window.orbisPlatform.render();
-    if (currentState === 'dashboard') {
-        startHeartbeat('Dashboard');
-    }
+    if (currentState === 'dashboard') startHeartbeat('Dashboard');
 });
