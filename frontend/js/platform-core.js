@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const activeUser = localStorage.getItem('orbis_active_user');
     let currentState = activeUser ? 'dashboard' : 'landing';
 
-    // 🟢 LOCAL STATE MEMORY
+    // 🟢 LOCAL STATE MEMORY (3 Modules Preserved)
     let localSystemVersion = localStorage.getItem('orbis_system_version') || '1.4.2';
     let localModules = {
         farmer: 'Coming Soon',
@@ -114,6 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const loginTemplate = `<div class="platform-container"><div class="auth-box"><h2 style="margin-top: 0; color: var(--navy); font-size: 1.8rem;">Identity Gateway</h2><p style="color: #64748b; font-size: 0.95rem; margin-bottom: 25px;">Please verify your identity to continue.</p><div class="input-group"><label>Full Name</label><input type="text" id="auth-name" placeholder="Enter your full name" required autocomplete="name"></div><div class="input-group"><label>Mobile Number (Primary)</label><div class="phone-group"><span class="phone-prefix">+91</span><input type="tel" id="auth-mobile" class="phone-input" placeholder="XXXXX XXXXX" maxlength="10" required autocomplete="tel-national" oninput="this.value = this.value.replace(/[^0-9]/g, '')"></div></div><button class="btn-primary" style="width: 100%; margin-top: 10px;" onclick="window.orbisPlatform.processLogin()">Secure Login</button><button class="btn-outline" style="width: 100%; margin-top: 15px; border: none; background: transparent; color: #64748b;" onclick="window.orbisPlatform.navigate('landing')">← Back to Home</button></div></div>`;
 
+    // 🟢 KEEP 3 CARDS: AI Orchestrator, Farmer Brain, DigiLedger (Master Admin is removed!)
     const getDashboardTemplate = () => `
         <div class="platform-container" style="justify-content: flex-start; padding-top: 80px;">
             <div class="nav-top">
@@ -136,19 +137,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="module-desc">Intelligent agricultural management and analytics.</div>
                     <div class="module-status ${localModules.farmer === 'Active' ? 'status-active' : 'status-soon'}">${localModules.farmer}</div>
                 </div>
-                
+
                 <div class="module-card" style="border-bottom-color: ${localModules.ledger === 'Active' ? 'var(--green)' : 'var(--saffron)'};" onclick="window.orbisPlatform.launchModule('ledger')">
                     <div class="module-icon">📒</div>
                     <div class="module-title">DigiLedger</div>
                     <div class="module-desc">Secure financial tracking and database synchronization.</div>
                     <div class="module-status ${localModules.ledger === 'Active' ? 'status-active' : 'status-soon'}">${localModules.ledger}</div>
-                </div>
-
-                <div class="module-card" style="border-bottom-color: #ef4444; background: #fff5f5;" onclick="window.location.href='/admin.html'">
-                    <div class="module-icon">🛡️</div>
-                    <div class="module-title" style="color: #ef4444;">Master Admin</div>
-                    <div class="module-desc">Secure system overrides, live database, and telemetry.</div>
-                    <div class="module-status" style="background:#fef2f2; color:#ef4444; border: 1px solid #ef4444;">RESTRICTED</div>
                 </div>
             </div>
         </div>
@@ -213,12 +207,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 startHeartbeat('AI Orchestrator'); 
                 platformRoot.style.opacity = '0';
                 setTimeout(() => { platformRoot.style.visibility = 'hidden'; platformRoot.innerHTML = ''; }, 500); 
-            } else {
-                if(localModules[moduleId] === 'Active') {
-                    alert(`The ${moduleId} module is active but the UI is under construction.`);
-                } else {
-                    alert("This module is currently in development.\nStatus: Coming Soon!");
-                }
+            } else if (moduleId === 'farmer') {
+                alert("The Farmer Brain module is currently in development.\nStatus: Coming Soon!");
+            } else if (moduleId === 'ledger') {
+                alert("The DigiLedger module is active but the UI is under construction.");
             }
         }
     };
