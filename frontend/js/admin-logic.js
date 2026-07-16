@@ -32,7 +32,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // 🟢 NORMAL EXECUTION
     window.ORBIS_ADMIN.registerProvider('sys-metrics', async () => {
         try {
-            const response = await fetch('/api/admin/health');
+            // 🔧 FIX: Added Authorization Token
+            const headers = window.StorageEngine ? { 'Authorization': `Bearer ${window.StorageEngine.getAuthToken()}` } : {};
+            const response = await fetch('/api/admin/health', { headers });
+            
             const result = await response.json();
             if(result.status === 'OK') {
                 const ramMB = Math.round(result.memoryUsage.rss / (1024 * 1024));
@@ -85,7 +88,13 @@ function startTelemetryPolling() {
 }
 
 async function fetchSystemState() {
-    try { const res = await fetch('/api/admin/system-state'); const data = await res.json(); return data.state; } catch(e) { return null; }
+    try { 
+        // 🔧 FIX: Added Authorization Token
+        const headers = window.StorageEngine ? { 'Authorization': `Bearer ${window.StorageEngine.getAuthToken()}` } : {};
+        const res = await fetch('/api/admin/system-state', { headers }); 
+        const data = await res.json(); 
+        return data.state; 
+    } catch(e) { return null; }
 }
 
 async function openPanel(pluginId) {
@@ -117,7 +126,11 @@ async function openPanel(pluginId) {
         `;
         const fetchRadarData = async () => {
             try {
-                const res = await fetch('/api/admin/radar'); const data = await res.json();
+                // 🔧 FIX: Added Authorization Token
+                const headers = window.StorageEngine ? { 'Authorization': `Bearer ${window.StorageEngine.getAuthToken()}` } : {};
+                const res = await fetch('/api/admin/radar', { headers }); 
+                const data = await res.json();
+                
                 const container = document.getElementById('radar-table-container'); if (!container) return; 
                 if (data.success && data.users.length > 0) {
                     let tableHTML = `<div class="radar-table-wrapper"><table class="radar-table"><thead><tr><th>Identity (Phone)</th><th>Name</th><th>Active Module</th><th>Status</th></tr></thead><tbody>`;
@@ -181,7 +194,15 @@ async function openPanel(pluginId) {
 
 async function publishNewVersion(ver) {
     if(confirm('Push this update to all live users?')) {
-        const res = await fetch('/api/admin/publish-version', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ newVersion: ver }) });
+        // 🔧 FIX: Added Authorization Token for POST request
+        const headers = { 'Content-Type': 'application/json' };
+        if (window.StorageEngine) headers['Authorization'] = `Bearer ${window.StorageEngine.getAuthToken()}`;
+        
+        const res = await fetch('/api/admin/publish-version', { 
+            method: 'POST', 
+            headers: headers, 
+            body: JSON.stringify({ newVersion: ver }) 
+        });
         const data = await res.json();
         if(data.success) { document.getElementById('ui-live-version').innerText = 'v' + data.version; alert('Success! Apps will refresh automatically.'); }
     }
@@ -189,7 +210,16 @@ async function publishNewVersion(ver) {
 
 async function toggleModule(moduleId, btnElement) {
     const currentStatus = btnElement.innerText === 'Active' ? 'Coming Soon' : 'Active';
-    const res = await fetch('/api/admin/toggle-module', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ moduleId: moduleId, status: currentStatus }) });
+    
+    // 🔧 FIX: Added Authorization Token for POST request
+    const headers = { 'Content-Type': 'application/json' };
+    if (window.StorageEngine) headers['Authorization'] = `Bearer ${window.StorageEngine.getAuthToken()}`;
+    
+    const res = await fetch('/api/admin/toggle-module', { 
+        method: 'POST', 
+        headers: headers, 
+        body: JSON.stringify({ moduleId: moduleId, status: currentStatus }) 
+    });
     const data = await res.json();
     if(data.success) {
         if(currentStatus === 'Active') { btnElement.innerText = 'Active'; btnElement.classList.add('active'); } 
@@ -203,4 +233,3 @@ function closePanel() {
     document.getElementById('main-dashboard').style.display = 'block';
     document.getElementById('panel-content-area').innerHTML = ''; 
 }
-
