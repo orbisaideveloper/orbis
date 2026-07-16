@@ -53,7 +53,11 @@ app.use('/admin.html', (req, res, next) => {
     }
 });
 
+// Platform static assets
 app.use(express.static(path.join(__dirname, '../frontend'), { index: false }));
+
+// 🟢 FIX: Lottery Module Static Routing (Added this)
+app.use('/assets/lottery', express.static(path.join(__dirname, '../modules/digiledger/lottery/public')));
 
 const getAppVersion = () => {
     if (process.env.SYSTEM_MODE === 'PRODUCTION') return process.env.FINAL_VERSION || '10.0-STABLE';
