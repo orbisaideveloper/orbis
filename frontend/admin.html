@@ -77,7 +77,7 @@
             </div>
 
             <div id="dynamic-module-workspace" style="display: none; margin-top: 30px; padding: 20px; background: #fff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-                </div>
+            </div>
 
         </div>
 
@@ -117,21 +117,22 @@
             const loadLotteryBtn = document.getElementById('btn-load-lottery');
             const workspaceDock = document.getElementById('dynamic-module-workspace');
 
-            // Toggle DigiLedger Sub-Menu
+            // 🟢 Toggle DigiLedger Sub-Menu (FIXED ALERT ISSUE)
             if (digiLedgerCard) {
                 digiLedgerCard.addEventListener('click', (e) => {
+                    e.stopImmediatePropagation(); // 🔴 এই লাইনটাই পুরোনো স্ক্রিপ্টকে ব্লক করবে
                     if (e.target.id !== 'btn-load-lottery') {
                         const isDisplayed = subMenu.style.display === 'block';
                         subMenu.style.display = isDisplayed ? 'none' : 'block';
                         console.log("[ORBIS] DigiLedger Sub-Modules Toggled.");
                     }
-                });
+                }, true); // 🔴 true = Capture Phase-এ কাজ করবে
             }
 
             // Load Lottery Workspace on Button Click
             if (loadLotteryBtn) {
                 loadLotteryBtn.addEventListener('click', (e) => {
-                    e.stopPropagation(); 
+                    e.stopImmediatePropagation(); // 🔴 এখানেও ব্লক করা হলো
                     console.log("[ORBIS] Loading Lottery Dispatch Workspace...");
                     
                     // Inject the Workspace UI
