@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================================
-    // 🎨 UI TEMPLATES & STYLES (Glassmorphism Auth Screens)
+    // 🎨 UI TEMPLATES & STYLES
     // ==========================================
     const styles = `
         <style>
@@ -143,6 +143,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="module-desc">Secure financial tracking and database synchronization.</div>
                     <div class="module-status ${localModules.ledger === 'Active' ? 'status-active' : 'status-soon'}">${localModules.ledger}</div>
                 </div>
+
+                <div class="module-card" style="border-bottom-color: #ef4444; background: #fff5f5;" onclick="window.location.href='/admin.html'">
+                    <div class="module-icon">🛡️</div>
+                    <div class="module-title" style="color: #ef4444;">Master Admin</div>
+                    <div class="module-desc">Secure system overrides, live database, and telemetry.</div>
+                    <div class="module-status" style="background:#fef2f2; color:#ef4444; border: 1px solid #ef4444;">RESTRICTED</div>
+                </div>
             </div>
         </div>
     `;
@@ -164,7 +171,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (currentState === 'dashboard') {
                 const storedName = localStorage.getItem('orbis_user_name') || 'Authorized User';
-                // 🟢 NEW: Friendly Welcome Greeting instead of ID
                 const firstName = storedName.split(' ')[0];
                 document.getElementById('display-user').innerText = `Welcome, ${firstName} 👋`;
             }
@@ -187,7 +193,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const year = new Date().getFullYear();
                 uniqueOrbId = `ORB-${randomHex}-${year}`;
                 localStorage.setItem('orbis_uid', uniqueOrbId);
-                console.log(`[Identity Gateway] New Permanent Identity Created: ${uniqueOrbId}`);
             }
 
             localStorage.setItem('orbis_active_user', mobile);
@@ -199,7 +204,6 @@ document.addEventListener('DOMContentLoaded', () => {
         logout: function() {
             localStorage.removeItem('orbis_active_user');
             localStorage.removeItem('orbis_user_name');
-            // 'orbis_uid' remains permanent in browser
             stopHeartbeat();
             this.navigate('landing');
         },
