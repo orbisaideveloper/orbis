@@ -1,3 +1,5 @@
+// frontend/js/admin-logic.js
+
 // 🩺 SELF-HEALING LOGIC (Emergency Cache Wiping)
 function triggerSelfHealing() {
     console.log("[Self-Healing] Activating emergency cache wipe...");
@@ -11,6 +13,9 @@ function triggerSelfHealing() {
     alert('Self-Healing Complete! The system will now reboot.');
     setTimeout(() => { window.location.reload(true); }, 500);
 }
+
+// 🟢 THE MASTER KEY FOR BACKEND AUTHENTICATION
+const ADMIN_AUTH_TOKEN = 'Bearer ORBIS_ADMIN_API_TOKEN';
 
 document.addEventListener('DOMContentLoaded', () => {
     // 🟢 ERROR DETECTION
@@ -29,12 +34,13 @@ document.addEventListener('DOMContentLoaded', () => {
         return; 
     }
 
-    // 🟢 NORMAL EXECUTION
+    // 🟢 NORMAL EXECUTION WITH AUTHENTICATION
     window.ORBIS_ADMIN.registerProvider('sys-metrics', async () => {
         try {
-            // 🔧 FIX: Added Authorization Token
-            const headers = window.StorageEngine ? { 'Authorization': `Bearer ${window.StorageEngine.getAuthToken()}` } : {};
-            const response = await fetch('/api/admin/health', { headers });
+            // 🔧 FIX: Sending the exact token the backend expects
+            const response = await fetch('/api/admin/health', { 
+                headers: { 'Authorization': ADMIN_AUTH_TOKEN } 
+            });
             
             const result = await response.json();
             if(result.status === 'OK') {
@@ -89,9 +95,10 @@ function startTelemetryPolling() {
 
 async function fetchSystemState() {
     try { 
-        // 🔧 FIX: Added Authorization Token
-        const headers = window.StorageEngine ? { 'Authorization': `Bearer ${window.StorageEngine.getAuthToken()}` } : {};
-        const res = await fetch('/api/admin/system-state', { headers }); 
+        // 🔧 FIX: Sending the exact token
+        const res = await fetch('/api/admin/system-state', { 
+            headers: { 'Authorization': ADMIN_AUTH_TOKEN } 
+        }); 
         const data = await res.json(); 
         return data.state; 
     } catch(e) { return null; }
@@ -126,9 +133,10 @@ async function openPanel(pluginId) {
         `;
         const fetchRadarData = async () => {
             try {
-                // 🔧 FIX: Added Authorization Token
-                const headers = window.StorageEngine ? { 'Authorization': `Bearer ${window.StorageEngine.getAuthToken()}` } : {};
-                const res = await fetch('/api/admin/radar', { headers }); 
+                // 🔧 FIX: Sending the exact token
+                const res = await fetch('/api/admin/radar', { 
+                    headers: { 'Authorization': ADMIN_AUTH_TOKEN } 
+                }); 
                 const data = await res.json();
                 
                 const container = document.getElementById('radar-table-container'); if (!container) return; 
@@ -194,13 +202,13 @@ async function openPanel(pluginId) {
 
 async function publishNewVersion(ver) {
     if(confirm('Push this update to all live users?')) {
-        // 🔧 FIX: Added Authorization Token for POST request
-        const headers = { 'Content-Type': 'application/json' };
-        if (window.StorageEngine) headers['Authorization'] = `Bearer ${window.StorageEngine.getAuthToken()}`;
-        
+        // 🔧 FIX: Added Authorization Token
         const res = await fetch('/api/admin/publish-version', { 
             method: 'POST', 
-            headers: headers, 
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': ADMIN_AUTH_TOKEN
+            }, 
             body: JSON.stringify({ newVersion: ver }) 
         });
         const data = await res.json();
@@ -211,13 +219,13 @@ async function publishNewVersion(ver) {
 async function toggleModule(moduleId, btnElement) {
     const currentStatus = btnElement.innerText === 'Active' ? 'Coming Soon' : 'Active';
     
-    // 🔧 FIX: Added Authorization Token for POST request
-    const headers = { 'Content-Type': 'application/json' };
-    if (window.StorageEngine) headers['Authorization'] = `Bearer ${window.StorageEngine.getAuthToken()}`;
-    
+    // 🔧 FIX: Added Authorization Token
     const res = await fetch('/api/admin/toggle-module', { 
         method: 'POST', 
-        headers: headers, 
+        headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': ADMIN_AUTH_TOKEN
+        }, 
         body: JSON.stringify({ moduleId: moduleId, status: currentStatus }) 
     });
     const data = await res.json();
