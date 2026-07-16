@@ -3,12 +3,9 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs'; 
 
-// 🟢 Supabase Client Import
 import { createClient } from '@supabase/supabase-js';
-
 import { getTelemetryData, logRequest, addLog } from './brain/telemetry.js';
 import { BrainController } from './brain/BrainController.js'; 
-
 import adminRoutes from './routes/adminRoutes.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -19,18 +16,10 @@ const PORT = process.env.PORT || 10000;
 
 const brain = new BrainController(); 
 
-// ==========================================
-// 🟢 CLOUD DATABASE SETUP (Supabase)
-// ==========================================
 const supabaseUrl = process.env.SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_KEY || '';
-// চাবি থাকলে কানেক্ট হবে, না থাকলে লোকাল মেমরি ব্যবহার করবে
 const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supabaseKey) : null;
 
-
-// ==========================================
-// 🟢 Global Error Tracker & Telemetry Logger
-// ==========================================
 const logSystemEvent = (level, source, message) => {
     const timestamp = new Date().toLocaleTimeString('en-IN', { hour12: false });
     const formattedLog = `[${timestamp}] [${level}] [${source}]: ${message}`;
@@ -48,9 +37,6 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
-// ==========================================
-// 🟢 ADMIN ROUTE PROTECTION
-// ==========================================
 app.use('/admin.html', (req, res, next) => {
     logSystemEvent('INFO', 'Security', `Admin page access attempt from ${req.ip}`);
     const cookieHeader = req.headers.cookie || '';
@@ -82,9 +68,6 @@ app.get('/', (req, res) => {
     });
 });
 
-// ==========================================
-// 🟢 AUTH & IDENTITY SYSTEM
-// ==========================================
 app.post('/api/auth/login', (req, res) => {
     const { mobile, password } = req.body;
     logSystemEvent('INFO', 'Auth', `Login attempt for identity: ${mobile}`);
@@ -120,11 +103,6 @@ app.get('/api/telemetry', (req, res) => {
     }
 });
 
-// ==========================================
-// 🟢 SUPABASE CLOUD MEMORY SYSTEM
-// ==========================================
-
-// 1. চ্যাট হিস্ট্রি রিস্টোর করা (Load History)
 app.get('/api/history', async (req, res) => {
     try {
         const sessionId = req.query.sessionId || 'default_user';
@@ -137,7 +115,8 @@ app.get('/api/history', async (req, res) => {
                 .order('created_at', { ascending: true })
                 .limit(50);
                 
-            if (!error && data && data.length > 0) {
+            // 🟢 FIX: ডেটা না থাকলেও ফাঁকা অ্যারে পাঠাবে, ক্র্যাশ করবে না
+            if (!error && data) {
                 logSystemEvent('INFO', 'Cloud', `Restored ${data.length} messages from Supabase for ORB-ID: ${sessionId}`);
                 return res.status(200).json({ success: true, data: data });
             }
@@ -153,7 +132,6 @@ app.get('/api/history', async (req, res) => {
     }
 });
 
-// 2. চ্যাট করা এবং ক্লাউডে সেভ করা (Chat & Save)
 app.post('/api/chat', async (req, res) => {
     const startTime = Date.now();
     try {
@@ -165,16 +143,14 @@ app.post('/api/chat', async (req, res) => {
 
         logSystemEvent('INFO', 'Router', `Processing prompt for ORB-ID: ${sessionId}`);
 
+        // 🟢 ব্রেন নিজেই এখন ডাটাবেসে সেভ করার কাজ করে (MemoryInterface এর মাধ্যমে)
         const brainResponse = await brain.handleRequest({ type: 'CHAT_MESSAGE', content: prompt, sessionId: sessionId });
 
+        // শুধুমাত্র ইউজার প্রোফাইল আইডি সিঙ্ক করে রাখা হচ্ছে
         if (supabase) {
             try {
                 await supabase.from('users').upsert({ orb_id: sessionId }, { onConflict: 'orb_id' });
-                await supabase.from('chat_history').insert([
-                    { orb_id: sessionId, sender: 'YOU', message: prompt },
-                    { orb_id: sessionId, sender: 'ORBIS', message: brainResponse }
-                ]);
-                logSystemEvent('OK', 'Cloud', 'Chat synced to Supabase securely.');
+                logSystemEvent('OK', 'Cloud', 'User ID synced to Supabase securely.');
             } catch (dbError) {
                 logSystemEvent('ERR', 'Cloud', `Supabase sync failed: ${dbError.message}`);
             }
@@ -198,7 +174,6 @@ app.post('/api/chat', async (req, res) => {
     }
 });
 
-// 🟢 NEW: 3. চ্যাট হিস্ট্রি ডিলিট করা (Clear History)
 app.post('/api/history/clear', async (req, res) => {
     const sessionId = req.body.sessionId;
     if (!sessionId) return res.status(400).json({ success: false, message: "Session ID missing" });

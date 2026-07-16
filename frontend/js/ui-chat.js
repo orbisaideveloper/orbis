@@ -1,6 +1,5 @@
-// frontend/js/ui-chat.js
 /**
- * UI Chat Module: Direct Fetch API Integration with Permanent ORB-ID
+ * UI Chat Module: Direct Fetch API Integration with Permanent ORB-ID & Guaranteed History Recovery
  */
 
 window.ChatStateLock = {
@@ -88,18 +87,15 @@ window.renderHistoryMessages = function(historyArray) {
     });
 };
 
-// 🟢 NEW: CLEAR HISTORY FUNCTION
 window.clearUserHistory = async function() {
     if (!confirm("Are you sure you want to permanently delete all your chats?")) return;
     
     const activeUserId = localStorage.getItem('orbis_uid') || localStorage.getItem('orbis_active_user') || 'guest_user';
     const chatBox = document.getElementById('chat-box');
     
-    // UI থেকে সাথে সাথে মুছে দেওয়া
     if (chatBox) chatBox.innerHTML = '<div style="text-align:center; color:#64748b; padding:20px; font-size:0.85rem; font-weight:bold;">Memory Cleared Successfully.</div>';
     
     try {
-        // সার্ভারকে বলা Supabase থেকে ডিলিট করতে
         const response = await fetch('/api/history/clear', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -113,18 +109,25 @@ window.clearUserHistory = async function() {
     }
 };
 
-if (!window.ChatUIInitialized) {
-    document.addEventListener('DOMContentLoaded', async () => {
-        const activeUserId = localStorage.getItem('orbis_uid') || localStorage.getItem('orbis_active_user') || 'guest_user';
-        try {
-            const response = await fetch(`/api/history?sessionId=${activeUserId}`);
-            if (response.ok) {
-                const result = await response.json();
-                if (result && (result.status === 'success' || result.success) && result.data) {
-                    window.renderHistoryMessages(result.data);
-                }
+// 🟢 MAGIC FIX: Guaranteed History Load (Even if DOM is already ready)
+window.loadChatHistory = async function() {
+    const activeUserId = localStorage.getItem('orbis_uid') || localStorage.getItem('orbis_active_user') || 'guest_user';
+    try {
+        const response = await fetch(`/api/history?sessionId=${activeUserId}`);
+        if (response.ok) {
+            const result = await response.json();
+            if (result && (result.status === 'success' || result.success) && result.data) {
+                window.renderHistoryMessages(result.data);
             }
-        } catch (err) { console.error(`Memory Recovery Failed: ${err.message}`); }
-    });
+        }
+    } catch (err) { console.error(`Memory Recovery Failed: ${err.message}`); }
+};
+
+if (!window.ChatUIInitialized) {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', window.loadChatHistory);
+    } else {
+        window.loadChatHistory(); // যদি পেজ অলরেডি লোড হয়ে গিয়ে থাকে, সাথে সাথে ফায়ার করবে
+    }
     window.ChatUIInitialized = true; 
 }
