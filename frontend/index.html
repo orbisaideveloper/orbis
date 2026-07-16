@@ -218,6 +218,9 @@
 
     <script src="/js/ui-core.js?v={{APP_VERSION}}"></script>
     <script src="/js/ui-dashboard.js?v={{APP_VERSION}}"></script>
+    
+    <script src="/modules/digiledger/lottery/ui/user-view.js"></script>
+
     <script src="/js/ui-telemetry.js?v={{APP_VERSION}}"></script>
     <script src="/js/ui-chat.js?v={{APP_VERSION}}"></script>
     <script src="/js/ui-voice.js?v={{APP_VERSION}}"></script>
@@ -233,7 +236,6 @@
                 if (devSidebar) devSidebar.style.display = 'flex';
                 console.log('[ORBIS SECURITY] Admin Mode Authenticated. Cockpit Unlocked.');
             } else {
-                // 🔴 সাধারণ ইউজারের জন্য চ্যাট মেনু বাটন হাইড করা হলো
                 const menuBtn = document.getElementById('mobile-menu-btn');
                 if (menuBtn) menuBtn.style.display = 'none';
                 
@@ -243,7 +245,6 @@
                 console.log('[ORBIS SECURITY] Admin Cockpit Locked for Public View.');
             }
             
-            // 🔴 সাইডবার টগল করার ফাংশনটি অ্যাডমিন ছাড়া সবার জন্য লক করা হলো
             const originalToggleSidebar = window.toggleSidebar;
             window.toggleSidebar = function() {
                 const isCockpit = new URLSearchParams(window.location.search).get('cockpit_mode') === 'true';
@@ -265,4 +266,7 @@
         const installBtn = document.getElementById('pwa-install-btn');
 
         function hideInstallBanner() {
-            installBanner.
+            installBanner.style.display = 'none';
+        }
+
+        if ('serviceWorker' in navig
