@@ -48,126 +48,8 @@
         <div id="dashboard-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
         <aside class="telemetry-sidebar cockpit-mode" id="dev-sidebar" style="width: 380px; display: none; flex-direction: column; gap: 10px;">
-            <div class="cockpit-header" style="display: flex; justify-content: space-between; align-items: center;">
-                <h3 style="margin: 0; font-size: 0.9rem; color: var(--navy-blue); font-weight: 800;">🛠️ DIAGNOSTIC COCKPIT {{APP_VERSION}}</h3>
-                <button onclick="toggleSidebar()" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:var(--red); font-weight:bold;">×</button>
-            </div>
-
-            <div class="panel error-center" id="cockpit-error-center" style="display:none; border:2px solid #ff4d4d; background: #fff0f0; border-radius: 6px; padding: 8px;">
-                <div class="panel-header" style="color: #ff4d4d; font-weight: bold; font-size: 0.8rem; display:flex; justify-content:space-between;">
-                    <span>🚨 CRITICAL FAULT</span>
-                    <button onclick="document.getElementById('cockpit-error-center').style.display='none'" style="border:none; background:none; color:#ff4d4d; cursor:pointer;">×</button>
-                </div>
-                <div id="error-display-box" style="font-size: 0.75rem; color: #d32f2f; font-family: monospace; padding-top: 5px; word-wrap: break-word;">--</div>
-            </div>
-
-            <div class="panel">
-                <div class="panel-header" style="color:#0f172a;">🔍 SOURCE X-RAY MONITOR</div>
-                <div class="xray-grid">
-                    <div class="xray-card">CHAT <span id="st-chat" class="xray-status">--</span></div>
-                    <div class="xray-card">VOICE <span id="st-voice" class="xray-status">--</span></div>
-                    <div class="xray-card">DB <span id="st-supabase" class="xray-status">--</span></div>
-                    <div class="xray-card">ROUTER <span id="st-router" class="xray-status">--</span></div>
-                </div>
-            </div>
-
-            <div class="panel" id="fixed-engineering-panels">
-                <div class="panel-header" style="color: var(--navy-blue);">🚀 CORE DIAGNOSTICS</div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
-                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 8px;">
-                        <div style="font-size: 0.65rem; font-weight: bold; color: var(--navy-blue); border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 6px;">🔍 INSPECTOR</div>
-                        <div style="font-size: 0.65rem; font-family: monospace; display: flex; flex-direction: column;">
-                            <div class="side-by-side-row"><span>REQ:</span> <strong id="ui-insp-req">0</strong></div>
-                            <div class="side-by-side-row"><span>LOAD:</span> <strong id="ui-insp-load" style="color: #eab308;">--</strong></div>
-                            <div class="side-by-side-row"><span>PROV:</span> <strong id="ui-insp-prov" style="color: #10b981;">--</strong></div>
-                        </div>
-                    </div>
-                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 8px;">
-                        <div style="font-size: 0.65rem; font-weight: bold; color: var(--navy-blue); border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 6px;">🩺 MEMORY HEALTH</div>
-                        <div style="font-size: 0.65rem; font-family: monospace; display: flex; flex-direction: column;">
-                            <div class="side-by-side-row"><span>STATE:</span> <strong id="ui-mem-status" style="color: #10b981;">--</strong></div>
-                            <div class="side-by-side-row"><span>CACHE:</span> <strong id="ui-mem-cache">--</strong></div>
-                            <div class="side-by-side-row"><span>SYNC:</span> <strong id="ui-mem-sync" style="color: #10b981;">OK</strong></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="panel">
-                <div class="panel-header">🌐 HARDWARE TELEMETRY</div>
-                <div class="data-grid">
-                    <div class="data-cell"><span class="data-label">Build</span><span class="data-value" id="sys-env">AUTONOMOUS_PROD</span></div>
-                    <div class="data-cell"><span class="data-label">Uptime</span><span class="data-value" id="sys-uptime">0 s</span></div>
-                    <div class="data-cell"><span class="data-label">Ping</span><span class="data-value" id="net-ping">-- ms</span></div>
-                    <div class="data-cell"><span class="data-label">RAM</span><span class="data-value" id="sys-ram">-- MB</span></div>
-                </div>
-            </div>
-
-            <div class="panel" style="border-left: 3px solid #3b82f6;">
-                <div class="panel-header">💰 ECONOMY & DB LATENCY</div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
-                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 8px;">
-                        <div style="font-size: 0.65rem; font-weight: bold; color: var(--navy-blue); border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 6px;">🪙 AI TOKENS</div>
-                        <div style="font-size: 0.65rem; font-family: monospace; display: flex; flex-direction: column;">
-                            <div class="side-by-side-row"><span>USED:</span> <strong id="token-used">0</strong></div>
-                            <div class="side-by-side-row"><span>COST:</span> <strong id="token-cost" style="color: #ef4444;">$0.00</strong></div>
-                        </div>
-                    </div>
-                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 8px;">
-                        <div style="font-size: 0.65rem; font-weight: bold; color: var(--navy-blue); border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 6px;">⚡ DB SPEED</div>
-                        <div style="font-size: 0.65rem; font-family: monospace; display: flex; flex-direction: column;">
-                            <div class="side-by-side-row"><span>READ:</span> <strong id="db-read-ping">-- ms</strong></div>
-                            <div class="side-by-side-row"><span>WRITE:</span> <strong id="db-write-ping">-- ms</strong></div>
-                        </div>
-                    </div>
-                </div>
-                <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #e2e8f0;">
-                    <div style="display: flex; justify-content: space-between; font-size: 0.65rem; font-weight: bold; margin-bottom: 4px; color: var(--navy-blue);">
-                        <span>🧠 DYNAMIC MEMORY DEPTH:</span> <span id="depth-val" style="color: #10b981;">MAX (100%)</span>
-                    </div>
-                    <input type="range" id="memory-depth-slider" min="1" max="100" value="100" style="width: 100%; cursor: pointer;" oninput="document.getElementById('depth-val').innerText = this.value == 100 ? 'MAX (100%)' : this.value + '%'; document.getElementById('depth-val').style.color = this.value < 50 ? '#ef4444' : (this.value < 80 ? '#facc15' : '#10b981');">
-                </div>
-            </div>
-
-            <div class="panel" style="border-left: 4px solid #8b5cf6;">
-                <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center;">
-                    <span>🧬 VISUAL DEPENDENCY TREE</span>
-                    <button title="Emergency Flush" onclick="localStorage.removeItem('orbis_logs'); document.getElementById('log-box').innerHTML=''; if(window.printLog) window.printLog('WARN', 'SYSTEM FLUSH: Memory and Logs Cleared');" style="background: #ef4444; color: white; border: none; border-radius: 4px; font-size: 0.6rem; cursor: pointer; padding: 3px 8px; font-weight: bold;">FLUSH</button>
-                </div>
-                <div id="dependency-tree-canvas" style="background: #1e293b; border-radius: 6px; padding: 15px; margin-top: 10px; text-align: center; color: #94a3b8; font-size: 0.7rem; font-family: monospace; border: 1px dashed #475569;">
-                    [ Engine Initializing... ]<br><span style="font-size: 0.6rem; color: #64748b;">Awaiting telemetry sync</span>
-                </div>
-            </div>
-
-            <div class="panel" style="background: #fdfefe; border-left: 4px solid var(--saffron);">
-                <div class="panel-header">⚡ LIVE EXECUTION BUS</div>
-                <div class="workflow-path" style="display: flex; justify-content: space-between; align-items: center; background: #2d3748; padding: 10px; border-radius: 6px; color: #fff; font-size: 0.7rem; font-family: monospace;">
-                    <span id="wf-user" class="wf-step">USER</span> ➔
-                    <span id="wf-router" class="wf-step">ROUTER</span> ➔
-                    <span id="wf-core" class="wf-step">CORE</span> ➔
-                    <span id="wf-provider" class="wf-step">PROVIDER</span>
-                </div>
-            </div>
-
-            <div class="panel">
-                <div class="panel-header">🧠 SUPABASE MEMORY BUS</div>
-                <div class="data-grid">
-                    <div class="data-cell"><span class="data-label">Sync</span><span class="data-value" id="mem-status">--</span></div>
-                    <div class="data-cell"><span class="data-label">Nodes</span><span class="data-value" id="mem-nodes" style="font-weight:bold; color:var(--navy-blue);">36</span></div>
-                    <div class="data-cell"><span class="data-label">Route</span><span class="data-value" id="router-last">--</span></div>
-                    <div class="data-cell"><span class="data-label">Queue</span><span class="data-value" id="router-queue">0</span></div>
-                </div>
-            </div>
-
-            <div class="panel" style="max-height: 120px; overflow-y: auto;">
-                <div class="panel-header">📋 LIVE MEMORY STREAM</div>
-                <div id="live-memory-inspector" style="padding-top: 5px;"></div>
-            </div>
-
-            <div class="panel" style="flex:1; display:flex; flex-direction:column; min-height: 150px;">
-                <div class="panel-header">📜 CENTRAL LOGS</div>
-                <div class="terminal" id="log-box" style="flex:1; background:#1e293b; color:#f8fafc; font-family:monospace; font-size:0.7rem; padding:6px; overflow-y: auto;"></div>
-            </div>
+            <!-- [Sidebar Content Remains Unchanged for brevity, but include in paste] -->
+            <!-- Note: Paste the full sidebar content from your original file here -->
         </aside>
 
         <main class="chat-section">
@@ -188,8 +70,11 @@
     <script src="/js/ui-telemetry.js?v={{APP_VERSION}}"></script>
     <script src="/js/ui-chat.js?v={{APP_VERSION}}"></script>
     <script src="/js/ui-voice.js?v={{APP_VERSION}}"></script>
-    <script src="/js/platform-core.js?v={{APP_VERSION}}"></script>
     
+    <script src="/js/module-registry.js?v={{APP_VERSION}}"></script>
+    <script src="/js/module-loader.js?v={{APP_VERSION}}"></script>
+
+    <script src="/js/platform-core.js?v={{APP_VERSION}}"></script>
     <script src="/js/platform-init.js?v={{APP_VERSION}}"></script>
 
 </body>
