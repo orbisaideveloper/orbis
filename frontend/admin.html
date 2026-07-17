@@ -8,16 +8,21 @@
     <link rel="stylesheet" href="/css/style.css?v={{APP_VERSION}}">
     
     <style>
+        /* Security & Layout Styles */
         #security-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; transition: opacity 0.5s ease; }
         .lock-box { background: rgba(255, 255, 255, 0.05); padding: 40px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.1); text-align: center; backdrop-filter: blur(15px); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .pin-input { font-size: 2rem; width: 180px; text-align: center; letter-spacing: 15px; background: transparent; border: none; border-bottom: 2px solid #FF9933; color: white; outline: none; margin: 20px 0; font-family: monospace; }
         .unlock-btn { background: #FF9933; color: white; border: none; padding: 12px 30px; border-radius: 8px; font-weight: bold; font-size: 1.1rem; cursor: pointer; transition: 0.3s; }
         #admin-workspace { display: none; } 
-        .isolated-card { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.9); border-radius: 16px; box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05); padding: 24px; }
+        .main-layout { display: flex; height: 100vh; overflow: hidden; }
+        .telemetry-sidebar { width: 320px; background: #0f172a; color: #fff; padding: 15px; overflow-y: auto; }
+        .dashboard-container { flex: 1; padding: 20px; overflow-y: auto; background: #f8fafc; }
+        .isolated-card { background: rgba(255, 255, 255, 0.85); border-radius: 12px; padding: 20px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
 
+    <!-- Security Gate -->
     <div id="security-overlay">
         <div class="lock-box">
             <div style="font-size: 3rem; margin-bottom: 10px;">🛡️</div>
@@ -29,24 +34,27 @@
         </div>
     </div>
 
+    <!-- Admin Content -->
     <div id="admin-workspace">
-        <header class="admin-nav">
+        <header class="admin-nav" style="background: #1e293b; padding: 15px; color: white; display: flex; justify-content: space-between;">
             <h1>ORBIS <span>MASTER ADMIN</span></h1>
             <div class="sys-status-badge"><div class="pulse-dot"></div>SYSTEM LIVE</div>
         </header>
 
         <div class="main-layout">
-            <!-- Cockpit/Sidebar Section (Restored) -->
-            <aside class="telemetry-sidebar cockpit-mode" id="dev-sidebar" style="width: 350px; display: flex; flex-direction: column; gap: 10px; padding: 10px;">
+            <!-- Full Cockpit Restored -->
+            <aside class="telemetry-sidebar" id="dev-sidebar">
                 <div class="panel-header">🚀 CORE DIAGNOSTICS</div>
+                <div class="data-cell"><span class="data-label">Active Users</span><span class="data-value" id="live-users">--</span></div>
                 <div class="data-cell"><span class="data-label">RAM</span><span class="data-value" id="live-ram">-- MB</span></div>
                 <div class="data-cell"><span class="data-label">Ping</span><span class="data-value" id="live-ping">-- ms</span></div>
-                <div class="panel-header">📜 CENTRAL LOGS</div>
-                <div class="terminal" id="log-box" style="height: 200px; background:#1e293b; color:#f8fafc; font-family:monospace; font-size:0.7rem; padding:6px; overflow-y: auto;"></div>
+                <div class="data-cell"><span class="data-label">Uptime</span><span class="data-value" id="live-uptime">00:00:00</span></div>
+                <div class="panel-header" style="margin-top:20px;">📜 CENTRAL LOGS</div>
+                <div class="terminal" id="log-box" style="height: 300px; background:#000; color:#0f0; font-family:monospace; font-size:0.7rem; padding:6px; overflow-y: auto;"></div>
             </aside>
 
             <!-- Dashboard Content -->
-            <div class="dashboard-container" id="main-dashboard" style="flex:1;">
+            <div class="dashboard-container" id="main-dashboard">
                 <div class="section-title">💼 Business Workspaces</div>
                 <div class="card-grid">
                     <div class="isolated-card" id="card-digiledger" style="border-left: 4px solid #0052cc;">
@@ -56,7 +64,8 @@
                         </div>
                     </div>
                 </div>
-                <div id="dynamic-module-workspace" style="display: none; margin-top: 30px; padding: 20px; background: #fff; border-radius: 12px;"></div>
+                <!-- Dynamic Module Output -->
+                <div id="dynamic-module-workspace" style="display: none; margin-top: 30px; padding: 20px; background: #fff; border-radius: 12px; border: 1px solid #e2e8f0;"></div>
             </div>
         </div>
     </div> 
