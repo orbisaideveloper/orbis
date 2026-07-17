@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ORBIS Master Command Center</title>
-    <link rel="stylesheet" href="/css/admin.css?v={{APP_VERSION}}">
+    <link rel="stylesheet" href="/css/admin.css">
     
     <style>
         #security-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; transition: opacity 0.5s ease; }
@@ -14,14 +14,8 @@
         .unlock-btn { background: #FF9933; color: white; border: none; padding: 12px 30px; border-radius: 8px; font-weight: bold; font-size: 1.1rem; cursor: pointer; transition: 0.3s; }
         .unlock-btn:hover { background: #e68a2e; }
         
+        /* Hide the main workspace initially */
         #admin-workspace { display: none; } 
-
-        .sub-module-btn { width: 100%; text-align: left; padding: 10px; background: rgba(0, 82, 204, 0.08); border: none; border-radius: 8px; color: #0052cc; font-weight: 600; cursor: pointer; margin-top: 5px; transition: all 0.2s ease;}
-        .sub-module-btn:hover { background: rgba(0, 82, 204, 0.15) !important; transform: translateX(4px); }
-        .glass-card-hover { cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; }
-        .glass-card-hover:hover { transform: translateY(-2px); box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.1); }
-        
-        .isolated-card { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.9); border-radius: 16px; box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05); padding: 24px; }
     </style>
 </head>
 <body>
@@ -51,24 +45,8 @@
                 <div class="stat-box" style="border-left-color: var(--text-dark);"><div class="stat-label">DB Ping (Latency)</div><div class="stat-value"><span id="live-ping">--</span> ms</div><div class="stat-live">Optimal</div></div>
                 <div class="stat-box" style="border-left-color: var(--saffron);"><div class="stat-label">System Uptime</div><div class="stat-value" id="live-uptime">00:00:00</div><div class="stat-live">Server Sync</div></div>
             </div>
-            
-            <div class="section-title">💼 Business Workspaces</div>
-            <div class="card-grid" style="margin-bottom: 30px;">
-                <div class="isolated-card glass-card-hover" id="card-digiledger" style="border-left: 4px solid #0052cc;">
-                    <h3 style="margin-top:0;">📊 DigiLedger Workspace</h3>
-                    <p style="color: #64748b; font-size: 0.9rem;">Financial Accounting & Business Modules</p>
-                    
-                    <div id="digiledger-sub-menu" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 1px dashed rgba(0,0,0,0.1);">
-                        <button class="sub-module-btn" id="btn-load-lottery">🎟️ Lottery Dispatch ➔</button>
-                        <button class="sub-module-btn" id="btn-load-payment" style="color: #059669; background: rgba(16, 185, 129, 0.08);">💸 Receive Payment ➔</button>
-                    </div>
-                </div>
-            </div>
-
             <div class="section-title">🚀 Core Modules & Plugins</div>
             <div class="card-grid" id="dynamic-plugin-grid"></div>
-
-            <div id="dynamic-module-workspace" style="display: none; margin-top: 30px; padding: 20px; background: #fff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);"></div>
         </div>
 
         <div class="detail-panel-container" id="detail-panel">
@@ -78,12 +56,10 @@
             </div>
             <div class="panel-content" id="panel-content-area"></div>
         </div>
-    </div> 
-
-    <script>
+    </div> <script>
         function checkPIN() {
             const pin = document.getElementById('master-pin').value;
-            if(pin === '2026') { 
+            if(pin === '2026') { // 🔑 MASTER PIN IS SET HERE
                 document.getElementById('security-overlay').style.opacity = '0';
                 setTimeout(() => {
                     document.getElementById('security-overlay').style.display = 'none';
@@ -96,68 +72,8 @@
         }
     </script>
 
-    <script type="module">
-        import { getDispatchWorkspaceHTML } from '../modules/digiledger/lottery/ui/DispatchWorkspace.js';
-        import { initLotteryWorkspace } from '../modules/digiledger/lottery/ui/lottery-app.js';
-        import { getPaymentWorkspaceHTML } from '../modules/digiledger/lottery/ui/PaymentWorkspace.js';
-        import { initPaymentWorkspace } from '../modules/digiledger/lottery/ui/payment-app.js';
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const digiLedgerCard = document.getElementById('card-digiledger');
-            const subMenu = document.getElementById('digiledger-sub-menu');
-            const loadLotteryBtn = document.getElementById('btn-load-lottery');
-            const loadPaymentBtn = document.getElementById('btn-load-payment');
-            const workspaceDock = document.getElementById('dynamic-module-workspace');
-
-            if (digiLedgerCard) {
-                digiLedgerCard.addEventListener('click', (e) => {
-                    e.stopImmediatePropagation(); 
-                    if (!e.target.closest('.sub-module-btn')) {
-                        const isDisplayed = subMenu.style.display === 'block';
-                        subMenu.style.display = isDisplayed ? 'none' : 'block';
-                    }
-                }, true); 
-            }
-
-            if (loadLotteryBtn) {
-                loadLotteryBtn.addEventListener('click', (e) => {
-                    e.stopImmediatePropagation(); 
-                    workspaceDock.innerHTML = `
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                            <h2 style="margin:0; color:#0052cc;">🎟️ Lottery Command Center</h2>
-                            <button onclick="document.getElementById('dynamic-module-workspace').style.display='none'" style="background:transparent; border:none; color:red; font-size:1.5rem; cursor:pointer;">×</button>
-                        </div>
-                        ${getDispatchWorkspaceHTML()}
-                    `;
-                    workspaceDock.style.display = 'block';
-                    initLotteryWorkspace();
-                    workspaceDock.scrollIntoView({ behavior: 'smooth' });
-                });
-            }
-
-            if (loadPaymentBtn) {
-                loadPaymentBtn.addEventListener('click', (e) => {
-                    e.stopImmediatePropagation();
-                    workspaceDock.innerHTML = `
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                            <button onclick="document.getElementById('dynamic-module-workspace').style.display='none'" style="background:transparent; border:none; color:red; font-size:1.5rem; cursor:pointer; margin-left:auto;">×</button>
-                        </div>
-                        ${getPaymentWorkspaceHTML()}
-                    `;
-                    workspaceDock.style.display = 'block';
-                    initPaymentWorkspace();
-                    workspaceDock.scrollIntoView({ behavior: 'smooth' });
-                });
-            }
-        });
-    </script>
-    
-    <!-- নতুন আর্কিটেকচারাল স্ক্রিপ্টস -->
-    <script src="/js/module-registry.js?v={{APP_VERSION}}"></script>
-    <script src="/js/module-loader.js?v={{APP_VERSION}}"></script>
-
-    <!-- পুরাতন লজিক ফাইল -->
-    <script src="/js/admin-logic.js?v={{APP_VERSION}}"></script>
-    <script src="/js/admin-plugins.js?v={{APP_VERSION}}"></script>
+    <script src="/js/admin-registry.js"></script>
+    <script src="/js/admin-plugins.js"></script>
+    <script src="/js/admin-logic.js"></script>
 </body>
 </html>
