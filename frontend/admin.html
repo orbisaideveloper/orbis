@@ -4,24 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ORBIS Master Command Center</title>
-    <link rel="stylesheet" href="/css/admin.css">
+    <link rel="stylesheet" href="/css/admin.css?v={{APP_VERSION}}">
+    <link rel="stylesheet" href="/css/style.css?v={{APP_VERSION}}">
     
     <style>
         #security-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; transition: opacity 0.5s ease; }
         .lock-box { background: rgba(255, 255, 255, 0.05); padding: 40px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.1); text-align: center; backdrop-filter: blur(15px); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .pin-input { font-size: 2rem; width: 180px; text-align: center; letter-spacing: 15px; background: transparent; border: none; border-bottom: 2px solid #FF9933; color: white; outline: none; margin: 20px 0; font-family: monospace; }
-        .pin-input::placeholder { color: rgba(255,255,255,0.2); letter-spacing: 5px; font-size: 1.2rem; }
         .unlock-btn { background: #FF9933; color: white; border: none; padding: 12px 30px; border-radius: 8px; font-weight: bold; font-size: 1.1rem; cursor: pointer; transition: 0.3s; }
-        .unlock-btn:hover { background: #e68a2e; }
-        
         #admin-workspace { display: none; } 
-
-        .sub-module-btn { width: 100%; text-align: left; padding: 10px; background: rgba(0, 82, 204, 0.08); border: none; border-radius: 8px; color: #0052cc; font-weight: 600; cursor: pointer; margin-top: 5px; transition: all 0.2s ease;}
-        .sub-module-btn:hover { background: rgba(0, 82, 204, 0.15) !important; transform: translateX(4px); }
-        .glass-card-hover { cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; }
-        .glass-card-hover:hover { transform: translateY(-2px); box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.1); }
-        
-        /* 🟢 NEW: Isolated Card Style (To trick the legacy script) */
         .isolated-card { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.9); border-radius: 16px; box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05); padding: 24px; }
     </style>
 </head>
@@ -31,11 +22,10 @@
         <div class="lock-box">
             <div style="font-size: 3rem; margin-bottom: 10px;">🛡️</div>
             <h2 style="margin: 0 0 5px 0; color: #f8fafc;">RESTRICTED AREA</h2>
-            <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 20px;">ORBIS Master Command Center</p>
             <input type="password" id="master-pin" class="pin-input" maxlength="4" placeholder="****" onkeydown="if(event.key === 'Enter') checkPIN()">
             <br>
             <button class="unlock-btn" onclick="checkPIN()">AUTHORIZE</button>
-            <p id="pin-error" style="color: #ff4d4d; font-size: 0.85rem; margin-top: 15px; display: none;">Access Denied. Incorrect PIN.</p>
+            <p id="pin-error" style="color: #ff4d4d; font-size: 0.85rem; margin-top: 15px; display: none;">Access Denied.</p>
         </div>
     </div>
 
@@ -45,42 +35,29 @@
             <div class="sys-status-badge"><div class="pulse-dot"></div>SYSTEM LIVE</div>
         </header>
 
-        <div class="dashboard-container" id="main-dashboard">
-            <div class="quick-stats">
-                <div class="stat-box"><div class="stat-label">Active Users</div><div class="stat-value" id="live-users">--</div><div class="stat-live">Live Sync</div></div>
-                <div class="stat-box" style="border-left-color: var(--green);"><div class="stat-label">Platform RAM</div><div class="stat-value"><span id="live-ram">--</span> MB</div><div class="stat-live">Stable</div></div>
-                <div class="stat-box" style="border-left-color: var(--text-dark);"><div class="stat-label">DB Ping (Latency)</div><div class="stat-value"><span id="live-ping">--</span> ms</div><div class="stat-live">Optimal</div></div>
-                <div class="stat-box" style="border-left-color: var(--saffron);"><div class="stat-label">System Uptime</div><div class="stat-value" id="live-uptime">00:00:00</div><div class="stat-live">Server Sync</div></div>
-            </div>
-            
-            <div class="section-title">💼 Business Workspaces</div>
-            <div class="card-grid" style="margin-bottom: 30px;">
-                <div class="isolated-card glass-card-hover" id="card-digiledger" style="border-left: 4px solid #0052cc;">
-                    <h3 style="margin-top:0;">📊 DigiLedger Workspace</h3>
-                    <p style="color: #64748b; font-size: 0.9rem;">Financial Accounting & Business Modules</p>
-                    
-                    <div id="digiledger-sub-menu" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 1px dashed rgba(0,0,0,0.1);">
-                        <button class="sub-module-btn" id="btn-load-lottery">🎟️ Lottery Dispatch ➔</button>
-                        <button class="sub-module-btn" id="btn-load-payment" style="color: #059669; background: rgba(16, 185, 129, 0.08);">💸 Receive Payment ➔</button>
+        <div class="main-layout">
+            <!-- Cockpit/Sidebar Section (Restored) -->
+            <aside class="telemetry-sidebar cockpit-mode" id="dev-sidebar" style="width: 350px; display: flex; flex-direction: column; gap: 10px; padding: 10px;">
+                <div class="panel-header">🚀 CORE DIAGNOSTICS</div>
+                <div class="data-cell"><span class="data-label">RAM</span><span class="data-value" id="live-ram">-- MB</span></div>
+                <div class="data-cell"><span class="data-label">Ping</span><span class="data-value" id="live-ping">-- ms</span></div>
+                <div class="panel-header">📜 CENTRAL LOGS</div>
+                <div class="terminal" id="log-box" style="height: 200px; background:#1e293b; color:#f8fafc; font-family:monospace; font-size:0.7rem; padding:6px; overflow-y: auto;"></div>
+            </aside>
+
+            <!-- Dashboard Content -->
+            <div class="dashboard-container" id="main-dashboard" style="flex:1;">
+                <div class="section-title">💼 Business Workspaces</div>
+                <div class="card-grid">
+                    <div class="isolated-card" id="card-digiledger" style="border-left: 4px solid #0052cc;">
+                        <h3>📊 DigiLedger Workspace</h3>
+                        <div id="digiledger-sub-menu">
+                            <button class="sub-module-btn" onclick="window.EventBus.emit('NavigateTo', { target: 'lottery' })">🎟️ Lottery Dispatch</button>
+                        </div>
                     </div>
                 </div>
+                <div id="dynamic-module-workspace" style="display: none; margin-top: 30px; padding: 20px; background: #fff; border-radius: 12px;"></div>
             </div>
-
-            <div class="section-title">🚀 Core Modules & Plugins</div>
-            <div class="card-grid" id="dynamic-plugin-grid">
-                </div>
-
-            <div id="dynamic-module-workspace" style="display: none; margin-top: 30px; padding: 20px; background: #fff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-            </div>
-
-        </div>
-
-        <div class="detail-panel-container" id="detail-panel">
-            <div class="panel-header">
-                <button class="btn-back" onclick="closePanel()">← Back to Dashboard</button>
-                <h2 class="panel-title" id="panel-title-text">Panel Name</h2>
-            </div>
-            <div class="panel-content" id="panel-content-area"></div>
         </div>
     </div> 
 
@@ -95,68 +72,16 @@
                 }, 500);
             } else {
                 document.getElementById('pin-error').style.display = 'block';
-                document.getElementById('master-pin').value = '';
             }
         }
     </script>
 
-    <script type="module">
-        import { getDispatchWorkspaceHTML } from '../modules/digiledger/lottery/ui/DispatchWorkspace.js';
-        import { initLotteryWorkspace } from '../modules/digiledger/lottery/ui/lottery-app.js';
-        import { getPaymentWorkspaceHTML } from '../modules/digiledger/lottery/ui/PaymentWorkspace.js';
-        import { initPaymentWorkspace } from '../modules/digiledger/lottery/ui/payment-app.js';
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const digiLedgerCard = document.getElementById('card-digiledger');
-            const subMenu = document.getElementById('digiledger-sub-menu');
-            const loadLotteryBtn = document.getElementById('btn-load-lottery');
-            const loadPaymentBtn = document.getElementById('btn-load-payment');
-            const workspaceDock = document.getElementById('dynamic-module-workspace');
-
-            if (digiLedgerCard) {
-                digiLedgerCard.addEventListener('click', (e) => {
-                    e.stopImmediatePropagation(); 
-                    if (!e.target.closest('.sub-module-btn')) {
-                        const isDisplayed = subMenu.style.display === 'block';
-                        subMenu.style.display = isDisplayed ? 'none' : 'block';
-                    }
-                }, true); 
-            }
-
-            if (loadLotteryBtn) {
-                loadLotteryBtn.addEventListener('click', (e) => {
-                    e.stopImmediatePropagation(); 
-                    workspaceDock.innerHTML = `
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                            <h2 style="margin:0; color:#0052cc;">🎟️ Lottery Command Center</h2>
-                            <button onclick="document.getElementById('dynamic-module-workspace').style.display='none'" style="background:transparent; border:none; color:red; font-size:1.5rem; cursor:pointer;">×</button>
-                        </div>
-                        ${getDispatchWorkspaceHTML()}
-                    `;
-                    workspaceDock.style.display = 'block';
-                    initLotteryWorkspace();
-                    workspaceDock.scrollIntoView({ behavior: 'smooth' });
-                });
-            }
-
-            if (loadPaymentBtn) {
-                loadPaymentBtn.addEventListener('click', (e) => {
-                    e.stopImmediatePropagation();
-                    workspaceDock.innerHTML = `
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                            <button onclick="document.getElementById('dynamic-module-workspace').style.display='none'" style="background:transparent; border:none; color:red; font-size:1.5rem; cursor:pointer; margin-left:auto;">×</button>
-                        </div>
-                        ${getPaymentWorkspaceHTML()}
-                    `;
-                    workspaceDock.style.display = 'block';
-                    initPaymentWorkspace();
-                    workspaceDock.scrollIntoView({ behavior: 'smooth' });
-                });
-            }
-        });
-    </script>
-    <script src="/js/admin-registry.js"></script>
-    <script src="/js/admin-plugins.js"></script>
-    <script src="/js/admin-logic.js"></script>
+    <!-- নতুন আর্কিটেকচারাল স্ক্রিপ্টস -->
+    <script src="/js/module-registry.js?v={{APP_VERSION}}"></script>
+    <script src="/js/module-loader.js?v={{APP_VERSION}}"></script>
+    
+    <!-- পুরাতন লজিক ফাইল -->
+    <script src="/js/admin-logic.js?v={{APP_VERSION}}"></script>
+    <script src="/js/admin-plugins.js?v={{APP_VERSION}}"></script>
 </body>
 </html>

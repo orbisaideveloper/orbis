@@ -1,4 +1,4 @@
-// 📝 user-view.js (UPDATED: Batch Pre-loader Engine)
+// 📝 user-view.js (UPDATED: Robust Mount Engine)
 
 window.LotteryUserUI = {
     db: {
@@ -26,30 +26,34 @@ window.LotteryUserUI = {
     },
 
     mount: function() {
-        // ১. আগে সব মডিউল লোড করে নিচ্ছি
+        // ১. সব মডিউল প্রিলোড করা
         this.preloadModules();
 
-        // ২. UI মাউন্ট করছি
+        // ২. মেইন প্ল্যাটফর্ম হাইড করা
         const platformRoot = document.getElementById('orbis-platform-root');
         if (platformRoot) platformRoot.style.display = 'none';
 
+        // ৩. ওয়ার্কস্পেস তৈরি বা আপডেট করা
         let workspace = document.getElementById('lottery-user-workspace');
         if (!workspace) {
             workspace = document.createElement('div');
             workspace.id = 'lottery-user-workspace';
+            workspace.innerHTML = `
+                <div id="erp-back-btn" style="padding: 10px; cursor: pointer; background: #eee;">← Back</div>
+                <div id="erp-dynamic-view"></div>
+            `;
             document.body.appendChild(workspace);
         }
         workspace.style.display = 'block';
         
-        // ... (আপনার আগের HTML কোডটি এখানে থাকবে)
+        // ৪. ড্যাশবোর্ড নেভিগেট করা
         this.navigate('dashboard');
     },
 
     navigate: function(view) {
         const contentBox = document.getElementById('erp-dynamic-view');
-        const backBtn = document.getElementById('erp-back-btn');
+        if (!contentBox) return; // নিরাপত্তা চেক
 
-        // এখন আর আলাদা করে ফাইল ফেচ করতে হবে না, শুধু মাউন্ট করব!
         if (view === 'sales') {
             if (window.LotterySalesApp) {
                 window.LotterySalesApp.mount(contentBox);
@@ -64,9 +68,15 @@ window.LotteryUserUI = {
                 contentBox.innerHTML = "<h3>⏳ Loading Payment Module...</h3>";
             }
         }
-        else {
-            // ... (অন্যান্য রুট)
+        else if (view === 'dashboard') {
+            contentBox.innerHTML = "<h3>Welcome to Lottery Dashboard</h3><button onclick='window.LotteryUserUI.navigate(\"sales\")'>Sales</button>";
         }
     },
-    // ... (বাকি ফাংশনগুলো একই থাকবে)
+    
+    unmount: function() {
+        const workspace = document.getElementById('lottery-user-workspace');
+        if (workspace) workspace.style.display = 'none';
+        const platformRoot = document.getElementById('orbis-platform-root');
+        if (platformRoot) platformRoot.style.display = 'block';
+    }
 };
