@@ -1,5 +1,5 @@
 // File: src/modules/digiledger/lottery/ui/user-view.js
-// 📊 DigiLedger: Master Accounting Engine (V2.1 - ORBIS ID & Hierarchy Integration)
+// 📊 DigiLedger: Master Accounting Engine (V2.1 - ORBIS ID & Hierarchy Integration + Universal Chain)
 
 window.LotteryUserUI = {
     // 🗄️ ইন্টারনাল লোকাল ডাটাবেস
@@ -10,6 +10,14 @@ window.LotteryUserUI = {
             localStorage.setItem('dl_parties', JSON.stringify(data));
             this.parties = data;
         }
+    },
+
+    // 👤 বর্তমান লগ-ইন করা ইউজার (Role Switcher-এর জন্য)
+    currentUser: {
+        orb_id: 'ORB-ADMIN',
+        name: 'Arkadip Saha',
+        role: 'ADMIN', // অপশন: 'ADMIN', 'SELLER'
+        mahajan_name: null // মহাজন থাকলে তার নাম
     },
 
     mount: function() {
@@ -48,12 +56,24 @@ window.LotteryUserUI = {
                 .data-table th, .data-table td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #e2e8f0; }
                 .data-table th { background: #f8fafc; font-size: 0.85rem; color: #64748b; text-transform: uppercase; }
                 .orb-badge { background: #e0e7ff; color: #3730a3; padding: 3px 8px; border-radius: 4px; font-family: monospace; font-weight: bold; font-size: 0.8rem; }
+                
+                /* New CSS for Role Switcher & Chain Banner */
+                .role-switcher { background: #1e293b; color: #fbbf24; border: 1px solid #475569; padding: 6px 12px; border-radius: 6px; font-weight: bold; outline: none; }
+                .chain-banner { background: #e0f2fe; border: 1px dashed #0284c7; padding: 10px 15px; border-radius: 8px; margin-bottom: 20px; color: #0369a1; font-weight: 600; display: flex; justify-content: space-between; align-items: center;}
             </style>
             <div class="erp-container">
                 <div class="erp-topbar">
                     <button class="btn-action" id="erp-back-btn" onclick="window.LotteryUserUI.unmount()">← Exit System</button>
-                    <h2 style="margin:0; font-size: 1.4rem; font-weight: 800;">DigiLedger <span style="color: #FF9933;">Lottery</span></h2>
-                    <div style="font-size: 0.9rem; opacity: 0.8;" id="erp-current-view">Dashboard</div>
+                    <div style="text-align: center;">
+                        <h2 style="margin:0; font-size: 1.4rem; font-weight: 800;">DigiLedger <span style="color: #FF9933;">Lottery</span></h2>
+                        <div style="font-size: 0.8rem; opacity: 0.8;" id="user-greeting">Welcome, ${this.currentUser.name}</div>
+                    </div>
+                    
+                    <!-- 🧪 Testing Role Switcher -->
+                    <select class="role-switcher" onchange="window.LotteryUserUI.switchRole(this.value)">
+                        <option value="ADMIN" ${this.currentUser.role === 'ADMIN' ? 'selected' : ''}>👑 Top Master (Admin)</option>
+                        <option value="SELLER" ${this.currentUser.role === 'SELLER' ? 'selected' : ''}>🛒 Seller (Middle Chain)</option>
+                    </select>
                 </div>
                 <div class="erp-content" id="erp-dynamic-view"></div>
             </div>
@@ -62,21 +82,36 @@ window.LotteryUserUI = {
         this.navigate('dashboard');
     },
 
+    // 🔄 রোল সুইচ করার লজিক (Universal Chain Testing)
+    switchRole: function(newRole) {
+        this.currentUser.role = newRole;
+        
+        if (newRole === 'SELLER') {
+            this.currentUser.name = "Rahul Agency (Seller)";
+            this.currentUser.orb_id = "ORB-SELLER-123";
+            this.currentUser.mahajan_name = "Arkadip Saha"; 
+        } else {
+            this.currentUser.name = "Arkadip Saha";
+            this.currentUser.orb_id = "ORB-ADMIN";
+            this.currentUser.mahajan_name = null;
+        }
+        
+        document.getElementById('user-greeting').innerText = `Welcome, ${this.currentUser.name}`;
+        this.navigate('dashboard');
+    },
+
     navigate: function(view) {
         const contentBox = document.getElementById('erp-dynamic-view');
         const backBtn = document.getElementById('erp-back-btn');
-        const viewTitle = document.getElementById('erp-current-view');
 
         if (view === 'dashboard') {
             backBtn.innerText = '← Exit System';
             backBtn.onclick = () => this.unmount();
-            viewTitle.innerText = 'Admin Terminal';
             this.renderDashboard(contentBox);
         } 
         else if (view === 'party_manager') {
             backBtn.innerText = '← Back to Dashboard';
             backBtn.onclick = () => this.navigate('dashboard');
-            viewTitle.innerText = 'Party Management';
             this.renderPartyManager(contentBox);
         }
         else {
@@ -85,7 +120,16 @@ window.LotteryUserUI = {
     },
 
     renderDashboard: function(container) {
+        // চেইন ব্যানার (যদি কেউ সেলার হয়, তার মহাজনের নাম দেখাবে)
+        const chainBannerHTML = this.currentUser.mahajan_name 
+            ? `<div class="chain-banner">
+                <span>🔗 Linked Mahajan: <span style="color:#0f172a; font-weight:800;">${this.currentUser.mahajan_name}</span></span>
+                <span style="color: #ef4444;">My Due: ₹ 0.00</span>
+               </div>` 
+            : '';
+
         container.innerHTML = `
+            ${chainBannerHTML}
             <div class="summary-grid">
                 <div class="summary-card" style="border-left-color: #3b82f6;"><h4>Stock</h4><h2>0 <span style="font-size: 1rem;">pcs</span></h2></div>
                 <div class="summary-card" style="border-left-color: #10b981;"><h4>Today's Sales</h4><h2>₹ 0</h2></div>
@@ -213,8 +257,8 @@ window.LotteryUserUI = {
 
         if (!name || !mobile) return alert("Party Name and Mobile Number are required!");
 
-        // আপনার (অ্যাডমিন) ORB-ID টা নিয়ে আসা (বর্তমানে যে লগিন আছে)
-        const myAdminOrbId = localStorage.getItem('orbis_uid') || 'ORB-ADMIN';
+        // ডায়নামিক রোল অনুযায়ী ORB-ID ফেচ করা (যাতে টেস্টিংয়ে কাজ করে)
+        const myAdminOrbId = this.currentUser.orb_id;
 
         // নতুন ORB-ID জেনারেট করা (যদি আগে থেকে না থাকে)
         const newOrbId = 'ORB-' + Math.floor(100000 + Math.random() * 900000);
@@ -232,7 +276,7 @@ window.LotteryUserUI = {
         const updatedParties = [...this.db.parties, newParty];
         this.db.saveParties(updatedParties);
         
-        alert(`✅ Party Saved Successfully!\n\nName: ${name}\nORB-ID: ${newOrbId}\nLinked Mahajan: ${myAdminOrbId}`);
+        alert(`✅ Party Saved Successfully!\n\nName: ${name}\nORB-ID: ${newOrbId}\nLinked Mahajan: ${this.currentUser.name}`);
         
         this.navigate('party_manager');
     },
