@@ -14,6 +14,9 @@ import lotteryRoutes from './modules/digiledger/lottery/routes/lotteryRoutes.js'
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// 🟢 MASTER FIX: Absolute Project Root (গ্যারান্টিড পাথ)
+const ROOT_DIR = process.cwd(); 
+
 const app = express();
 const PORT = process.env.PORT || 10000; 
 
@@ -53,12 +56,20 @@ app.use('/admin.html', (req, res, next) => {
     }
 });
 
-// Platform static assets (Frontend is outside src)
-app.use(express.static(path.join(__dirname, '../frontend'), { index: false }));
+// ==============================================================
+// 🟢 BULLETPROOF STATIC ROUTING (আর কোনো 404 হবে না)
+// ==============================================================
 
-// 🟢 FIX: Lottery Module Static Routing (Removed '../' because modules is inside src)
-app.use('/assets/lottery', express.static(path.join(__dirname, 'modules/digiledger/lottery/public')));
-app.use('/assets/lottery/ui', express.static(path.join(__dirname, 'modules/digiledger/lottery/ui')));
+// ১. ফ্রন্টএন্ড ফাইল
+app.use(express.static(path.join(ROOT_DIR, 'frontend'), { index: false }));
+
+// ২. লটারির নতুন পাথ (New Path)
+app.use('/assets/lottery', express.static(path.join(ROOT_DIR, 'src/modules/digiledger/lottery/public')));
+app.use('/assets/lottery/ui', express.static(path.join(ROOT_DIR, 'src/modules/digiledger/lottery/ui')));
+
+// ৩. লটারির পুরনো পাথ (Fallback - যদি ব্রাউজারে পুরনো ক্যাশ থাকে, তবে এটি কাজ করবে)
+app.use('/src/modules/digiledger/lottery/ui', express.static(path.join(ROOT_DIR, 'src/modules/digiledger/lottery/ui')));
+// ==============================================================
 
 const getAppVersion = () => {
     if (process.env.SYSTEM_MODE === 'PRODUCTION') return process.env.FINAL_VERSION || '10.0-STABLE';
@@ -66,7 +77,7 @@ const getAppVersion = () => {
 };
 
 app.get('/', (req, res) => {
-    const indexPath = path.join(__dirname, '../frontend/index.html');
+    const indexPath = path.join(ROOT_DIR, 'frontend/index.html');
     fs.readFile(indexPath, 'utf8', (err, data) => {
         if (err) {
             logSystemEvent('ERR', 'Server', 'Failed to load index.html');
@@ -96,7 +107,7 @@ app.post('/api/auth/logout', (req, res) => {
 });
 
 app.get('/admin/login', (req, res) => {
-    const adminPath = path.join(__dirname, '../frontend/admin.html');
+    const adminPath = path.join(ROOT_DIR, 'frontend/admin.html');
     if (fs.existsSync(adminPath)) res.sendFile(adminPath);
     else res.send('<h2 style="text-align:center; margin-top:20%;">Admin Workspace (Coming Soon)</h2>');
 });
