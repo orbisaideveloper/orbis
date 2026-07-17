@@ -47,9 +47,29 @@
     <div class="main-layout">
         <div id="dashboard-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
-        <aside class="telemetry-sidebar cockpit-mode" id="dev-sidebar" style="width: 380px; display: none; flex-direction: column; gap: 10px;">
-            <!-- [Sidebar Content Remains Unchanged for brevity, but include in paste] -->
-            <!-- Note: Paste the full sidebar content from your original file here -->
+        <!-- Diagnostic Cockpit Enabled -->
+        <aside class="telemetry-sidebar cockpit-mode" id="dev-sidebar" style="width: 380px; display: flex; flex-direction: column; gap: 10px; padding: 15px; background: #0f172a; color: #fff; font-family: monospace;">
+            <h3 style="color: #FF9933; margin-top:0;">Diagnostic Cockpit</h3>
+            
+            <div id="xray-err-trace" style="display:none; padding:10px; background:#fee2e2; color:#b91c1c; font-size:0.7rem; border-radius:4px;"></div>
+
+            <div style="font-size: 0.8rem; line-height: 1.6;">
+                <strong>RAM:</strong> <span id="sys-ram">-- MB</span><br>
+                <strong>Ping:</strong> <span id="net-ping">-- ms</span><br>
+                <strong>Latency:</strong> <span id="prov-gemini-latency">-- ms</span><br>
+                <strong>Memory Nodes:</strong> <span id="mem-nodes">0</span><br>
+                <strong>Last Route:</strong> <span id="router-last">None</span>
+            </div>
+
+            <div style="border-top:1px solid #334155; margin-top:10px; padding-top:10px;">
+                <p><strong>System Status:</strong></p>
+                <div style="display:flex; justify-content:space-between;"><span>Chat:</span> <span id="st-chat" class="xray-status">...</span></div>
+                <div style="display:flex; justify-content:space-between;"><span>Voice:</span> <span id="st-voice" class="xray-status">...</span></div>
+                <div style="display:flex; justify-content:space-between;"><span>DB:</span> <span id="st-supabase" class="xray-status">...</span></div>
+                <div style="display:flex; justify-content:space-between;"><span>Router:</span> <span id="st-router" class="xray-status">...</span></div>
+                <div style="display:flex; justify-content:space-between;"><span>Telemetry:</span> <span id="st-telemetry" class="xray-status">...</span></div>
+            </div>
+            <p style="font-size: 0.7rem; color: #64748b; margin-top: 20px;">Memory Status: <span id="mem-status">Checking...</span></p>
         </aside>
 
         <main class="chat-section">
