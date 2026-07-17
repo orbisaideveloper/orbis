@@ -1,5 +1,5 @@
 // File: src/modules/digiledger/lottery/ui/user-view.js
-// 📊 DigiLedger: Master Accounting Engine (V2.1 - ORBIS ID & Hierarchy Integration + Universal Chain)
+// 📊 DigiLedger: Master Accounting Engine (V2.2 - Universal Chain + Dynamic Module Loader)
 
 window.LotteryUserUI = {
     // 🗄️ ইন্টারনাল লোকাল ডাটাবেস
@@ -100,6 +100,7 @@ window.LotteryUserUI = {
         this.navigate('dashboard');
     },
 
+    // 🔀 আপডেট করা রাউটার: এখন এটি অন্যান্য ফাইল কল করতে পারে!
     navigate: function(view) {
         const contentBox = document.getElementById('erp-dynamic-view');
         const backBtn = document.getElementById('erp-back-btn');
@@ -112,11 +113,58 @@ window.LotteryUserUI = {
         else if (view === 'party_manager') {
             backBtn.innerText = '← Back to Dashboard';
             backBtn.onclick = () => this.navigate('dashboard');
-            this.renderPartyManager(contentBox);
+            this.renderPartyManager(contentBox); // পুরনো পার্টি ম্যানেজার একদম সেইফ আছে
+        }
+        else if (view === 'sales') {
+            backBtn.innerText = '← Back to Dashboard';
+            backBtn.onclick = () => this.navigate('dashboard');
+            // 🟢 নতুন লজিক: 외부 (External) ফাইল লোড করা
+            this.loadExternalModule('/assets/lottery/ui/lottery-app.js', 'LotterySalesApp', contentBox);
+        }
+        else if (view === 'payment') {
+            backBtn.innerText = '← Back to Dashboard';
+            backBtn.onclick = () => this.navigate('dashboard');
+            this.loadExternalModule('/assets/lottery/ui/payment-app.js', 'LotteryPaymentApp', contentBox);
         }
         else {
-            alert("This module is under construction in the next Sprint!");
+            contentBox.innerHTML = `<div style="text-align:center; padding: 50px; color:#64748b;"><h3>🚧 This module is under construction in the next Sprint!</h3></div>`;
         }
+    },
+
+    // 🚀 NEW: ডাইনামিক স্ক্রিপ্ট লোডার (External File Injector)
+    loadExternalModule: function(scriptUrl, moduleObjectName, container) {
+        container.innerHTML = `<div style="text-align:center; padding: 50px; color:#3b82f6;"><h3>⏳ Loading Module...</h3></div>`;
+
+        // ফাইলটি যদি আগে থেকেই ব্রাউজারে লোড করা থাকে
+        if (window[moduleObjectName]) {
+            window[moduleObjectName].mount(container);
+            return;
+        }
+
+        // ফাইলটি না থাকলে সার্ভার থেকে রিকোয়েস্ট করে নিয়ে আসবে
+        const script = document.createElement('script');
+        script.src = scriptUrl + '?v=' + new Date().getTime(); // Cache Buster
+        
+        script.onload = () => {
+            if (window[moduleObjectName] && typeof window[moduleObjectName].mount === 'function') {
+                window[moduleObjectName].mount(container); // সাকসেসফুলি লোড হলে স্ক্রিনে দেখাবে
+            } else {
+                container.innerHTML = `<div style="color:#ef4444; text-align:center; padding:50px; background:white; border-radius:8px;">
+                    <h3>⚠️ Module Linking Error</h3>
+                    <p>ফাইল লোড হয়েছে কিন্তু <b>${moduleObjectName}</b> অবজেক্টটি পাওয়া যায়নি!</p>
+                </div>`;
+            }
+        };
+
+        script.onerror = () => {
+            container.innerHTML = `<div style="color:#ef4444; text-align:center; padding:50px; background:white; border-radius:8px; box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+                <h2 style="margin:0 0 10px 0;">❌ 404 Not Found</h2>
+                <p><b>${scriptUrl}</b> ফাইলটি পাওয়া যাচ্ছে না।</p>
+                <p style="font-size:0.9rem; color:#64748b;">দয়া করে চেক করুন ফোল্ডারে ফাইলটি আছে কি না।</p>
+            </div>`;
+        };
+
+        document.body.appendChild(script);
     },
 
     renderDashboard: function(container) {
@@ -147,10 +195,17 @@ window.LotteryUserUI = {
                     <div style="font-weight: bold; font-size: 1.1rem;">Purchase</div>
                     <div style="font-size: 0.8rem; color: #64748b;">Stock Entry</div>
                 </div>
+                <!-- 🟢 Sales Flow বাটনে ক্লিক করলে এখন 'sales' রাউটে যাবে -->
                 <div class="erp-module-card" onclick="window.LotteryUserUI.navigate('sales')">
                     <div style="font-size: 2.5rem; margin-bottom: 10px;">📤</div>
                     <div style="font-weight: bold; font-size: 1.1rem;">Sales Flow</div>
                     <div style="font-size: 0.8rem; color: #64748b;">Dispatch & Returns</div>
+                </div>
+                <!-- 🟢 Payment বাটনে ক্লিক করলে এখন 'payment' রাউটে যাবে -->
+                <div class="erp-module-card" onclick="window.LotteryUserUI.navigate('payment')">
+                    <div style="font-size: 2.5rem; margin-bottom: 10px;">💸</div>
+                    <div style="font-weight: bold; font-size: 1.1rem;">Payment</div>
+                    <div style="font-size: 0.8rem; color: #64748b;">Receipts & Expenses</div>
                 </div>
                 <div class="erp-module-card" onclick="window.LotteryUserUI.navigate('ledger')">
                     <div style="font-size: 2.5rem; margin-bottom: 10px;">📒</div>
@@ -230,7 +285,6 @@ window.LotteryUserUI = {
         `;
     },
 
-    // 🔍 মোবাইল নম্বর দিলে ORB-ID চেক করার ফেক/ডেমো লজিক
     checkExistingOrbId: function() {
         const mobile = document.getElementById('p_mobile').value;
         const statusText = document.getElementById('orb-status');
@@ -240,7 +294,6 @@ window.LotteryUserUI = {
             statusText.innerText = `🔍 Checking ORBIS Network...`;
             
             setTimeout(() => {
-                // এখানে পরবর্তীতে ডাটাবেস এপিআই বসবে
                 statusText.innerText = `✅ Network Checked: New ORB-ID will be generated.`;
             }, 800);
         } else {
@@ -248,7 +301,6 @@ window.LotteryUserUI = {
         }
     },
 
-    // 💾 ডাটাবেসে পার্টি সেভ এবং মহাজন লিংক করার লজিক
     saveNewParty: function() {
         const name = document.getElementById('p_name').value.trim();
         const mobile = document.getElementById('p_mobile').value.trim();
@@ -257,10 +309,7 @@ window.LotteryUserUI = {
 
         if (!name || !mobile) return alert("Party Name and Mobile Number are required!");
 
-        // ডায়নামিক রোল অনুযায়ী ORB-ID ফেচ করা (যাতে টেস্টিংয়ে কাজ করে)
         const myAdminOrbId = this.currentUser.orb_id;
-
-        // নতুন ORB-ID জেনারেট করা (যদি আগে থেকে না থাকে)
         const newOrbId = 'ORB-' + Math.floor(100000 + Math.random() * 900000);
 
         const newParty = {
@@ -269,7 +318,7 @@ window.LotteryUserUI = {
             mobile: mobile,
             type: type,
             opening_balance: balance,
-            linked_master: myAdminOrbId, // 🟢 এখানেই আপনি তার 'মহাজন' হিসেবে সেভ হয়ে গেলেন
+            linked_master: myAdminOrbId, 
             created_at: new Date().toISOString()
         };
 
