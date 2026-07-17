@@ -44,7 +44,7 @@ export function getDispatchWorkspaceHTML() {
         margin-top: 8px;
       }
     
-      /* Party Search Box (ORB-ID) */
+      /* Party Search Box (ORB-ID) - For Quick Lookup */
       .party-search-section {
         display: flex;
         gap: 15px;
@@ -79,6 +79,24 @@ export function getDispatchWorkspaceHTML() {
         cursor: pointer;
         box-shadow: 0 4px 15px rgba(0, 82, 204, 0.3);
       }
+
+      /* Add Row Button */
+      .btn-secondary {
+        background: rgba(0, 82, 204, 0.1);
+        color: #0052cc;
+        border: 2px dashed #0052cc;
+        padding: 12px;
+        border-radius: 8px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        width: 100%;
+        margin-top: 12px;
+        transition: all 0.2s;
+      }
+      .btn-secondary:hover {
+        background: rgba(0, 82, 204, 0.2);
+      }
     
       /* Spreadsheet Entry Grid */
       .spreadsheet-container {
@@ -90,45 +108,56 @@ export function getDispatchWorkspaceHTML() {
         width: 100%;
         border-collapse: separate;
         border-spacing: 0;
+        min-width: 1200px; /* Ensure horizontal scroll for many columns */
       }
     
       .spreadsheet-table th {
         text-align: left;
-        padding: 16px;
+        padding: 14px 10px;
         color: #6b7280;
         font-weight: 600;
-        font-size: 14px;
+        font-size: 13px;
         text-transform: uppercase;
         letter-spacing: 0.5px;
         border-bottom: 2px solid #e5e7eb;
+        white-space: nowrap;
       }
     
       .spreadsheet-table td {
-        padding: 12px 16px;
+        padding: 8px;
         border-bottom: 1px solid #f3f4f6;
       }
     
       .spreadsheet-input {
         width: 100%;
         border: 1px solid transparent;
-        background: transparent;
-        padding: 8px;
-        font-size: 16px;
+        background: rgba(255, 255, 255, 0.5);
+        padding: 10px;
+        font-size: 15px;
         border-radius: 6px;
         font-weight: 500;
+        transition: all 0.2s;
       }
     
       .spreadsheet-input:focus {
         background: white;
         border: 1px solid #0052cc;
         outline: none;
+        box-shadow: 0 0 5px rgba(0, 82, 204, 0.2);
       }
     
       /* Auto-calculated field styling */
       .calc-field {
-        color: #10b981;
         font-weight: 700;
         background: transparent !important;
+        pointer-events: none; /* Prevents manual typing */
+      }
+      .text-success { color: #10b981; }
+      .text-warning { color: #f59e0b; }
+      
+      /* Negative value warning */
+      .negative-val {
+        color: #ef4444 !important; /* Red */
       }
     </style>
     
@@ -153,43 +182,50 @@ export function getDispatchWorkspaceHTML() {
         </div>
       </div>
     
-      <!-- 2. Party Search (ORB-ID Integration) -->
+      <!-- 2. Party Lookup (Optional for single check) -->
       <div class="glass-card" style="margin-bottom: 24px;">
         <div class="party-search-section">
-          <input type="tel" class="glass-input" placeholder="🔍 Enter Mobile Number to Search or Create Party..." id="party-mobile-input">
-          <button class="btn-primary" id="btn-fetch-party">Load Ledger</button>
-        </div>
-        <div id="party-info-display" style="display: none; color: #059669; font-weight: 600;">
-          ✓ Party Loaded: <span id="active-party-name">Stockist A</span>
+          <input type="tel" class="glass-input" placeholder="🔍 Quick Lookup: Mobile Number / ORB-ID..." id="party-mobile-input">
+          <button class="btn-primary" id="btn-fetch-party">Check Profile</button>
         </div>
       </div>
     
-      <!-- 3. Spreadsheet Workspace -->
+      <!-- 3. Spreadsheet Workspace (BULK ENTRY) -->
       <div class="glass-card">
         <div class="spreadsheet-container">
           <table class="spreadsheet-table">
             <thead>
               <tr>
-                <th>Ticket Name</th>
-                <th>Rate (₹)</th>
-                <th>Dispatch Qty</th>
-                <th>Return Qty</th>
-                <th>Comm. (%)</th>
-                <th>Net Pay (Auto)</th>
+                <th style="width: 15%">Party Name</th>
+                <th style="width: 8%">Rate (₹)</th>
+                <th style="width: 9%">Dispatch</th>
+                <th style="width: 9%">Return</th>
+                <th style="width: 9%">Net Tkt</th>
+                <th style="width: 8%">Comm (%)</th>
+                <th style="width: 8%">TDS (%)</th>
+                <th style="width: 11%">Net Pay</th>
+                <th style="width: 11%">Prev Bal</th>
+                <th style="width: 12%">Curr Bal</th>
               </tr>
             </thead>
             <tbody id="lottery-grid-body">
+              <!-- Row 1 -->
               <tr>
-                <td><input type="text" class="spreadsheet-input" placeholder="e.g. Morning Star"></td>
-                <td><input type="number" class="spreadsheet-input rate-input" placeholder="0.00"></td>
+                <td><input type="text" class="spreadsheet-input party-input" placeholder="Search/Select Party"></td>
+                <td><input type="number" class="spreadsheet-input rate-input" placeholder="0"></td>
                 <td><input type="number" class="spreadsheet-input dispatch-input" placeholder="0"></td>
                 <td><input type="number" class="spreadsheet-input return-input" placeholder="0"></td>
-                <td><input type="number" class="spreadsheet-input comm-input" placeholder="0%"></td>
-                <td><input type="text" class="spreadsheet-input calc-field net-pay-output" readonly value="₹ 0.00"></td>
+                <td><input type="text" class="spreadsheet-input calc-field net-tkt-output" readonly value="0"></td>
+                <td><input type="number" class="spreadsheet-input comm-input" placeholder="0"></td>
+                <td><input type="number" class="spreadsheet-input tds-input" placeholder="0"></td>
+                <td><input type="text" class="spreadsheet-input calc-field net-pay-output text-success" readonly value="₹ 0.00"></td>
+                <td><input type="number" class="spreadsheet-input prev-bal-input" placeholder="0.00"></td>
+                <td><input type="text" class="spreadsheet-input calc-field curr-bal-output text-warning" readonly value="₹ 0.00"></td>
               </tr>
             </tbody>
           </table>
         </div>
+        <button class="btn-secondary" id="btn-add-row">+ Add More Party</button>
       </div>
     </div>
     `;

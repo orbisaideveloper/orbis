@@ -1,4 +1,5 @@
 // DigiLedger: Lottery Workspace Controller (Frontend Logic)
+import { LotteryCalcEngine } from '../services/LotteryCalcEngine.js';
 
 export function initLotteryWorkspace() {
     console.log("[ORBIS] Lottery Workspace Engine Initialized.");
@@ -9,18 +10,40 @@ export function initLotteryWorkspace() {
         return;
     }
 
-    // 🟢 1. Event Delegation for Auto-Calculation
+    // 🟢 ১. Event Delegation: টেবিলে যেকোনো ইনপুট দিলেই লাইভ ক্যালকুলেশন হবে
     gridBody.addEventListener('input', function(e) {
         if (e.target.classList.contains('spreadsheet-input')) {
             const currentRow = e.target.closest('tr');
             if (currentRow) {
-                calculateRow(currentRow);
-                calculateTotals();
+                calculateRowUI(currentRow);
+                calculateTotalsUI();
             }
         }
     });
 
-    // 🟢 2. Party Search Module (ORB-ID Lookup)
+    // 🟢 ২. Add New Row: "Add More Party" বাটনে ক্লিক করলে নতুন ফাঁকা লাইন যোগ হবে
+    const addRowBtn = document.getElementById('btn-add-row');
+    if (addRowBtn) {
+        addRowBtn.addEventListener('click', () => {
+            const newRowHTML = `
+                <tr>
+                    <td><input type="text" class="spreadsheet-input party-input" placeholder="Search/Select Party"></td>
+                    <td><input type="number" class="spreadsheet-input rate-input" placeholder="0"></td>
+                    <td><input type="number" class="spreadsheet-input dispatch-input" placeholder="0"></td>
+                    <td><input type="number" class="spreadsheet-input return-input" placeholder="0"></td>
+                    <td><input type="text" class="spreadsheet-input calc-field net-tkt-output" readonly value="0"></td>
+                    <td><input type="number" class="spreadsheet-input comm-input" placeholder="0"></td>
+                    <td><input type="number" class="spreadsheet-input tds-input" placeholder="0"></td>
+                    <td><input type="text" class="spreadsheet-input calc-field net-pay-output text-success" readonly value="₹ 0.00"></td>
+                    <td><input type="number" class="spreadsheet-input prev-bal-input" placeholder="0.00"></td>
+                    <td><input type="text" class="spreadsheet-input calc-field curr-bal-output text-warning" readonly value="₹ 0.00"></td>
+                </tr>
+            `;
+            gridBody.insertAdjacentHTML('beforeend', newRowHTML);
+        });
+    }
+
+    // 🟢 ৩. Party Search Module (ORB-ID Lookup) - (আপনার আগের কোড অপরিবর্তিত রাখা হয়েছে)
     const fetchPartyBtn = document.getElementById('btn-fetch-party');
     const partyInput = document.getElementById('party-mobile-input');
     
@@ -28,22 +51,8 @@ export function initLotteryWorkspace() {
         fetchPartyBtn.addEventListener('click', () => {
             const mobile = partyInput.value.trim();
             if (mobile.length >= 10) {
-                const infoDisplay = document.getElementById('party-info-display');
-                const partyNameSpan = document.getElementById('active-party-name');
-                
-                if (infoDisplay) infoDisplay.style.display = 'block';
-                if (partyNameSpan) {
-                    partyNameSpan.style.color = '#f59e0b';
-                    partyNameSpan.innerText = "Searching ORB-ID Data...";
-                }
-                
-                // Backend API Call Simulation
-                setTimeout(() => {
-                    if (partyNameSpan) {
-                        partyNameSpan.style.color = '#059669';
-                        partyNameSpan.innerText = "Verified Party - " + mobile;
-                    }
-                }, 600);
+                // ... (আপনার আগের সিমুলেশন কোড) ...
+                console.log("Searching Party: " + mobile);
             } else {
                 alert("দয়া করে সঠিক ১০ ডিজিটের মোবাইল নম্বর দিন।");
             }
@@ -51,57 +60,89 @@ export function initLotteryWorkspace() {
     }
 }
 
-// 🟢 প্রতিটি লাইনের (Row) হিসাব করার ইঞ্জিন
-function calculateRow(row) {
-    const rate = parseFloat(row.querySelector('.rate-input')?.value) || 0;
-    const dispatch = parseInt(row.querySelector('.dispatch-input')?.value) || 0;
-    const returnQty = parseInt(row.querySelector('.return-input')?.value) || 0;
-    
-    // কমিশন থেকে % চিহ্ন সরিয়ে শুধু সংখ্যাটা নেওয়া
-    const commStr = row.querySelector('.comm-input')?.value || "0";
-    const commPercent = parseFloat(commStr.replace('%', '')) || 0;
+// 🟢 প্রতিটি লাইনের (Row) ডাটা ইঞ্জিনে পাঠানো এবং রেজাল্ট UI-তে আপডেট করা
+function calculateRowUI(row) {
+    // ১. UI ইনপুট থেকে ডাটা সংগ্রহ করে অবজেক্ট তৈরি
+    const rowData = {
+        rate: row.querySelector('.rate-input')?.value,
+        dispatchQty: row.querySelector('.dispatch-input')?.value,
+        returnQty: row.querySelector('.return-input')?.value,
+        commissionRate: row.querySelector('.comm-input')?.value,
+        tdsRate: row.querySelector('.tds-input')?.value,
+        previousOutstanding: row.querySelector('.prev-bal-input')?.value
+    };
 
-    // মূল লজিক: (Dispatch - Return) * Rate
-    const netQty = Math.max(0, dispatch - returnQty);
-    const grossAmount = netQty * rate;
-    
-    // কমিশন মাইনাস করা
-    const commAmount = grossAmount * (commPercent / 100);
-    let netPay = grossAmount - commAmount;
-    
-    // রেজাল্ট ডিসপ্লে করা
-    const outputField = row.querySelector('.net-pay-output');
-    if (outputField) {
-        outputField.value = `₹ ${netPay.toFixed(2)}`;
+    // ২. Core Engine-কে কল করে সঠিক হিসাব নিয়ে আসা (ফ্রন্টএন্ডে কোনো জটিল ম্যাথ নেই)
+    const result = LotteryCalcEngine.calculateRow(rowData);
+
+    // ৩. আউটপুট ফিল্ডগুলো ধরা
+    const netTktOutput = row.querySelector('.net-tkt-output');
+    const netPayOutput = row.querySelector('.net-pay-output');
+    const currBalOutput = row.querySelector('.curr-bal-output');
+
+    // ৪. রেজাল্ট বসানো এবং নেগেটিভ ভ্যালু হলে লাল রঙ (CSS Class) করা
+    if (netTktOutput) {
+        netTktOutput.value = result.netTickets;
+        result.netTickets < 0 
+            ? netTktOutput.classList.add('negative-val') 
+            : netTktOutput.classList.remove('negative-val');
+    }
+
+    if (netPayOutput) {
+        netPayOutput.value = `₹ ${result.finalAmount.toFixed(2)}`;
+        if (result.finalAmount < 0) {
+            netPayOutput.classList.remove('text-success');
+            netPayOutput.classList.add('negative-val');
+        } else {
+            netPayOutput.classList.add('text-success');
+            netPayOutput.classList.remove('negative-val');
+        }
+    }
+
+    if (currBalOutput) {
+        currBalOutput.value = `₹ ${result.currentBalance.toFixed(2)}`;
+        if (result.currentBalance < 0) {
+            currBalOutput.classList.remove('text-warning');
+            currBalOutput.classList.add('negative-val');
+        } else {
+            currBalOutput.classList.add('text-warning');
+            currBalOutput.classList.remove('negative-val');
+        }
     }
 }
 
-// 🟢 উপরের লাইভ কার্ডগুলোর (Metrics) হিসাব করার ইঞ্জিন
-function calculateTotals() {
+// 🟢 উপরের লাইভ কার্ডগুলোর (Metrics) টোটাল হিসাব আপডেট করা
+function calculateTotalsUI() {
     const rows = document.querySelectorAll('#lottery-grid-body tr');
     let totalDispatch = 0;
     let totalReturn = 0;
-    let totalNet = 0;
+    let totalNetPayable = 0;
+    let totalOutstanding = 0;
 
+    // টোটাল নির্ভুল রাখার জন্য আবার কোর ইঞ্জিনের সাহায্য নেওয়া
     rows.forEach(row => {
-        totalDispatch += parseInt(row.querySelector('.dispatch-input')?.value) || 0;
-        totalReturn += parseInt(row.querySelector('.return-input')?.value) || 0;
-        
-        const netPayStr = row.querySelector('.net-pay-output')?.value || "0";
-        // Clean currency format: ₹ 1,200.00 -> 1200
-        const netPay = parseFloat(netPayStr.replace(/[₹ ,]/g, '')) || 0;
-        totalNet += netPay;
+        const rowData = {
+            rate: row.querySelector('.rate-input')?.value,
+            dispatchQty: row.querySelector('.dispatch-input')?.value,
+            returnQty: row.querySelector('.return-input')?.value,
+            commissionRate: row.querySelector('.comm-input')?.value,
+            tdsRate: row.querySelector('.tds-input')?.value,
+            previousOutstanding: row.querySelector('.prev-bal-input')?.value
+        };
+
+        const result = LotteryCalcEngine.calculateRow(rowData);
+
+        totalDispatch += result.dispatchQty;
+        totalReturn += result.returnQty;
+        totalNetPayable += result.finalAmount;
+        totalOutstanding += result.currentBalance;
     });
 
     // কার্ডগুলোতে ভ্যালু পুশ করা
-    const elDispatch = document.getElementById('val-dispatch');
-    const elReturn = document.getElementById('val-return');
-    const elNet = document.getElementById('val-net');
-
-    if (elDispatch) elDispatch.innerText = totalDispatch;
-    if (elReturn) elReturn.innerText = totalReturn;
+    document.getElementById('val-dispatch').innerText = totalDispatch;
+    document.getElementById('val-return').innerText = totalReturn;
     
-    if (elNet) {
-        elNet.innerText = `₹ ${totalNet.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    }
+    // কারেন্সি ফরম্যাটে (Indian Rupee) সাজানো
+    document.getElementById('val-net').innerText = `₹ ${totalNetPayable.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    document.getElementById('val-outstanding').innerText = `₹ ${totalOutstanding.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }

@@ -6,41 +6,51 @@
 export class LotteryCalcEngine {
     /**
      * Automatically calculates the entire statement for a single transaction row.
-     * @param {Object} rowData - Contains rate, dispatchQty, returnQty, and commissionRate
+     * @param {Object} rowData - Contains rate, dispatchQty, returnQty, commissionRate, tdsRate, previousOutstanding, and partyId
      */
     static calculateRow(rowData) {
+        // ১. Party ID এবং ডিফল্ট ভ্যালু সেট করা
+        const partyId = rowData.partyId || null;
         const rate = parseFloat(rowData.rate) || 0;
         const dispatchQty = parseInt(rowData.dispatchQty) || 0;
         const returnQty = parseInt(rowData.returnQty) || 0;
-        const commRate = parseFloat(rowData.commissionRate) || 0; // e.g., 10 for 10%
+        const commRate = parseFloat(rowData.commissionRate) || 0; 
+        
+        // ডাইনামিক TDS এবং Previous Outstanding (ম্যানুয়াল এন্ট্রির জন্য)
+        const tdsRateInput = parseFloat(rowData.tdsRate) || 0; 
+        const prevOutstanding = parseFloat(rowData.previousOutstanding) || 0;
 
-        // 1. Net Tickets Calculation
+        // ২. Net Tickets Calculation (এখন আর জিরো ফিল্টার নেই, রিটার্ন বেশি হলে মাইনাস শো করবে)
         const netTickets = dispatchQty - returnQty;
-        const validNetTickets = netTickets > 0 ? netTickets : 0;
 
-        // 2. Gross/Net Sales Calculation
-        const grossSales = validNetTickets * rate;
+        // ৩. Gross/Net Sales Calculation
+        const grossSales = netTickets * rate;
 
-        // 3. Commission Calculation
+        // ৪. Commission Calculation
         const commissionAmount = grossSales * (commRate / 100);
 
-        // 4. TDS Calculation (Standard 5% on Commission amount as per rule)
-        const tdsRate = 5; 
-        const tdsAmount = commissionAmount * (tdsRate / 100);
+        // ৫. TDS Calculation (ডাইনামিক রেট অনুযায়ী)
+        const tdsAmount = commissionAmount * (tdsRateInput / 100);
 
-        // 5. Final Net Payable Amount to Platform
+        // ৬. Final Net Payable Amount for the transaction
         // Formula: Gross Sales - (Commission - TDS)
         const netPayable = grossSales - (commissionAmount - tdsAmount);
 
+        // ৭. Current Balance Calculation
+        const currentBalance = prevOutstanding + netPayable;
+
         return {
+            partyId,
             rate,
             dispatchQty,
             returnQty,
-            netTickets: validNetTickets,
+            netTickets,
             grossSales: Math.round(grossSales * 100) / 100,
             commission: Math.round(commissionAmount * 100) / 100,
             tds: Math.round(tdsAmount * 100) / 100,
-            finalAmount: Math.round(netPayable * 100) / 100
+            finalAmount: Math.round(netPayable * 100) / 100,
+            previousOutstanding: Math.round(prevOutstanding * 100) / 100,
+            currentBalance: Math.round(currentBalance * 100) / 100
         };
     }
 
@@ -51,6 +61,7 @@ export class LotteryCalcEngine {
     static calculateBatchTotal(rows) {
         let totalDispatch = 0;
         let totalReturn = 0;
+        let totalNetTickets = 0;
         let totalGrossSales = 0;
         let totalCommission = 0;
         let totalTds = 0;
@@ -60,6 +71,7 @@ export class LotteryCalcEngine {
             const res = this.calculateRow(row);
             totalDispatch += res.dispatchQty;
             totalReturn += res.returnQty;
+            totalNetTickets += res.netTickets; // মাইনাস ভ্যালুও ঠিকভাবে ক্যালকুলেট হবে
             totalGrossSales += res.grossSales;
             totalCommission += res.commission;
             totalTds += res.tds;
@@ -69,12 +81,12 @@ export class LotteryCalcEngine {
         return {
             totalDispatch,
             totalReturn,
+            totalNetTickets,
             totalGrossSales,
             totalCommission,
             totalTds,
             totalFinalAmount,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString() // সার্ভারে নির্ভুলভাবে সেভ হওয়ার জন্য টাইমস্ট্যাম্প
         };
     }
 }
-

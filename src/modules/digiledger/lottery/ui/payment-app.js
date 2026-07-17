@@ -6,6 +6,9 @@ export function initPaymentWorkspace() {
     const fetchDuesBtn = document.getElementById('btn-fetch-dues');
     const processPaymentBtn = document.getElementById('btn-process-payment');
     const settlementPanel = document.getElementById('settlement-panel');
+    
+    // বর্তমান বকেয়া স্টোর করার জন্য একটি ভেরিয়েবল
+    let currentOutstanding = 0; 
 
     // 🟢 ১. বকেয়া (Dues) চেক করার লজিক
     if (fetchDuesBtn) {
@@ -19,32 +22,91 @@ export function initPaymentWorkspace() {
                 document.getElementById('settle-orb-id').innerText = "ORB-LOT-" + mobile.slice(-4);
                 
                 // ডামি বকেয়া (যেমন ৪৫,৫০০ টাকা)
-                document.getElementById('display-due-amount').innerText = "₹ 45,500.00"; 
+                currentOutstanding = 45500.00;
+                document.getElementById('display-due-amount').innerText = `₹ ${currentOutstanding.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`; 
+                
+                // নতুন ব্যালেন্স ফিল্ড রিসেট করা
+                updateLiveBalance(); 
                 
                 // প্যানেলটা স্লাইড করে দেখিয়ে দেওয়া
                 settlementPanel.style.display = 'block';
             } else {
-                alert("দয়া করে সঠিক ১০ ডিজিটের মোবাইল নম্বর দিন।");
+                alert("দয়া করে সঠিক ১০ ডিজিটের মোবাইল নম্বর বা ORB-ID দিন।");
             }
         });
     }
 
-    // 🟢 ২. পেমেন্ট রিসিভ করার লজিক
+    // 🟢 ২. লাইভ ব্যালেন্স ক্যালকুলেশন (Live New Balance Calculation)
+    const payTypeEl = document.getElementById('input-payment-type');
+    const payAmountEl = document.getElementById('input-payment-amount');
+    const payDiscountEl = document.getElementById('input-payment-discount');
+
+    function updateLiveBalance() {
+        const type = payTypeEl?.value || 'RECEIPT';
+        const amount = parseFloat(payAmountEl?.value) || 0;
+        const discount = parseFloat(payDiscountEl?.value) || 0;
+
+        let newBalance = currentOutstanding;
+
+        if (type === 'RECEIPT') {
+            // টাকা পেলে বকেয়া কমবে (Amount + Discount দুটোই বকেয়া কমায়)
+            newBalance = currentOutstanding - (amount + discount);
+        } else if (type === 'PAYMENT') {
+            // টাকা দিলে বকেয়া বাড়বে (অথবা রিফান্ড দিলে)
+            newBalance = currentOutstanding + amount - discount; 
+        }
+
+        const newBalanceEl = document.getElementById('display-new-balance');
+        if (newBalanceEl) {
+            newBalanceEl.innerText = `Balance After Transaction: ₹ ${newBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+            // মাইনাস বা অ্যাডভান্স হলে সবুজ, বকেয়া থাকলে ওয়ার্নিং কালার
+            newBalanceEl.style.color = newBalance <= 0 ? '#10b981' : '#f59e0b'; 
+        }
+    }
+
+    // ইনপুটগুলোতে ইভেন্ট লিসেনার অ্যাড করা যাতে টাইপ করার সাথে সাথে ব্যালেন্স বদলায়
+    if (payTypeEl) payTypeEl.addEventListener('change', updateLiveBalance);
+    if (payAmountEl) payAmountEl.addEventListener('input', updateLiveBalance);
+    if (payDiscountEl) payDiscountEl.addEventListener('input', updateLiveBalance);
+
+
+    // 🟢 ৩. পেমেন্ট রিসিভ/প্রসেস করার লজিক (Unified Engine Payload)
     if (processPaymentBtn) {
         processPaymentBtn.addEventListener('click', () => {
-            const payAmount = document.getElementById('input-payment-amount').value;
+            const type = payTypeEl?.value;
+            const mode = document.getElementById('input-payment-mode')?.value;
+            const amount = parseFloat(payAmountEl?.value) || 0;
+            const discount = parseFloat(payDiscountEl?.value) || 0;
+            const remarks = document.getElementById('input-payment-remarks')?.value || "";
             
-            if (payAmount && parseFloat(payAmount) > 0) {
-                // 🟢 Future: এখানে পেমেন্ট API (Supabase) কল হয়ে লেজার আপডেট হবে।
+            if (amount > 0 || discount > 0) {
+                // ডাটাবেসে পাঠানোর জন্য পেলোড তৈরি
+                const transactionPayload = {
+                    transactionType: type,
+                    paymentMode: mode,
+                    amount: amount,
+                    discount: discount,
+                    remarks: remarks,
+                    previousBalance: currentOutstanding
+                };
+
+                console.log("[ORBIS] Ready to Sync with Database:", transactionPayload);
+
+                // 🟢 Future: এখানে পেমেন্ট API (LotteryDatabase.js) কল হয়ে লেজার আপডেট হবে।
                 
-                alert(`✅ সফলভাবে ₹ ${payAmount} পেমেন্ট রিসিভ করা হয়েছে এবং লেজার আপডেট হয়েছে!`);
+                alert(`✅ সফলভাবে ₹ ${amount} (${mode}) লেনদেন প্রসেস করা হয়েছে!`);
                 
                 // পেমেন্ট সাকসেসফুল হওয়ার পর স্ক্রিন রিফ্রেশ/ক্লিন করা
-                document.getElementById('input-payment-amount').value = '';
+                if(payAmountEl) payAmountEl.value = '';
+                if(payDiscountEl) payDiscountEl.value = '';
+                const remarksEl = document.getElementById('input-payment-remarks');
+                if(remarksEl) remarksEl.value = '';
                 document.getElementById('settle-mobile-input').value = '';
                 settlementPanel.style.display = 'none';
+                
+                currentOutstanding = 0; // মেমরি ক্লিন
             } else {
-                alert("দয়া করে সঠিক পেমেন্ট অ্যামাউন্ট দিন।");
+                alert("দয়া করে সঠিক অ্যামাউন্ট বা ডিসকাউন্ট দিন।");
             }
         });
     }
