@@ -199,8 +199,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     const script = document.createElement('script');
                     script.id = 'orbis-lottery-module';
                     
-                    // 🟢 FIX: পাথ আপডেট করা হলো সার্ভারের নতুন রাউটিং অনুযায়ী
-                    script.src = '/assets/lottery/js/user-view.js'; 
+                    // 🟢 FIX & CACHE BUSTER: সঠিক ফোল্ডার (/ui/) এবং ক্যাশ বাস্টার যুক্ত করা হলো
+                    const timestamp = new Date().getTime();
+                    script.src = `/assets/lottery/ui/user-view.js?v=${timestamp}`; 
                     
                     script.onerror = () => {
                         alert("Error 404: লটারি ফাইলটি পাওয়া যাচ্ছে না! সার্ভারের (server.js) রাউটিং চেক করতে হবে।");

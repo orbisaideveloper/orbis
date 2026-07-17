@@ -14,7 +14,7 @@ import lotteryRoutes from './modules/digiledger/lottery/routes/lotteryRoutes.js'
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// 🟢 MASTER FIX: Absolute Project Root (গ্যারান্টিড পাথ)
+// 🟢 MASTER FIX: Absolute Project Root 
 const ROOT_DIR = process.cwd(); 
 
 const app = express();
@@ -57,18 +57,19 @@ app.use('/admin.html', (req, res, next) => {
 });
 
 // ==============================================================
-// 🟢 BULLETPROOF STATIC ROUTING (আর কোনো 404 হবে না)
+// 🟢 BULLETPROOF STATIC ROUTING (Safe Bridge for Lottery)
 // ==============================================================
 
-// ১. ফ্রন্টএন্ড ফাইল
+// ১. Platform Core Frontend
 app.use(express.static(path.join(ROOT_DIR, 'frontend'), { index: false }));
 
-// ২. লটারির নতুন পাথ (New Path)
-app.use('/assets/lottery', express.static(path.join(ROOT_DIR, 'src/modules/digiledger/lottery/public')));
+// ২. Safe Public Route - লটারির UI ফাইল নিরাপদে ব্রাউজারে পাঠানোর জন্য
+app.use('/assets/lottery', express.static(path.join(ROOT_DIR, 'src/modules/digiledger/lottery/ui')));
 app.use('/assets/lottery/ui', express.static(path.join(ROOT_DIR, 'src/modules/digiledger/lottery/ui')));
 
-// ৩. লটারির পুরনো পাথ (Fallback - যদি ব্রাউজারে পুরনো ক্যাশ থাকে, তবে এটি কাজ করবে)
+// ৩. Legacy Cache Fallback - ব্রাউজারে পুরনো লিংক ক্যাশ থাকলে তা সামলানোর জন্য
 app.use('/src/modules/digiledger/lottery/ui', express.static(path.join(ROOT_DIR, 'src/modules/digiledger/lottery/ui')));
+
 // ==============================================================
 
 const getAppVersion = () => {
