@@ -1,11 +1,17 @@
 // frontend/js/admin-dashboard.js
 /**
  * Admin Dashboard Module
- * Extracted from ui-dashboard.js - Handles strictly Admin Cockpit & Telemetry visuals
+ * CHAPTER 2: Cockpit Rendering Migration with Shared Platform Context
  */
+
+// Initialize Shared Platform Context (Single Source of Truth)
+window.ORBIS_SHARED = window.ORBIS_SHARED || {};
+window.ORBIS_SHARED.telemetry = window.ORBIS_SHARED.telemetry || {
+    snapshot: null,
+    lastUpdate: null
+};
+
 window.AdminDashboard = {
-    latestTelemetrySnapshot: null,
-    
     init: function() {
         console.log('[ORBIS] Admin Dashboard Cockpit Live.');
     },
@@ -40,9 +46,12 @@ window.AdminDashboard = {
 
     updateCockpitUI: function(telemetry) {
         if (!telemetry) return;
-        this.latestTelemetrySnapshot = telemetry; 
+        
+        // STRICT RULE: Admin Layer WRITES to Shared Platform Context
+        window.ORBIS_SHARED.telemetry.snapshot = telemetry;
+        window.ORBIS_SHARED.telemetry.lastUpdate = Date.now();
 
-        console.log("📦 RAW PAYLOAD RECEIVED:", telemetry);
+        console.log("📦 [ADMIN COCKPIT] RAW PAYLOAD RECEIVED:", telemetry);
 
         if (telemetry.logs) this.syncAndRenderLogs(telemetry.logs);
 

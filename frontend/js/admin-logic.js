@@ -94,7 +94,7 @@ async function openPanel(pluginId) {
     const contentArea = document.getElementById('panel-content-area');
     
     if (pluginId === 'plugin-cockpit') {
-        // 🚀 PHASE 4 FIX: ককপিট এখন admin.html-এই আছে, তাই index.html-এর iframe আর লাগবে না।
+        // 🚀 PHASE 4 FIX: ককপিট এখন admin.html-এই আছে, তাই index.html-এর iframe আর লাগবেবিধা
         contentArea.style.padding = '20px';
         contentArea.innerHTML = `<div style="text-align:center; padding: 40px;"><div style="font-size: 3rem; margin-bottom:10px;">⚙️</div><h2 style="color:var(--navy);">Cockpit Migrated</h2><p style="color:var(--text-muted);">The diagnostic cockpit is now permanently anchored to the right side of your main dashboard. Click 'Back to Dashboard' to view it.</p></div>`;
     } else if (pluginId === 'plugin-radar') {
@@ -176,3 +176,41 @@ function closePanel() {
     
     document.getElementById('panel-content-area').innerHTML = ''; 
 }
+
+// ==========================================
+// CHAPTER 1: MIGRATED MASTER TELEMETRY ENGINE
+// ==========================================
+let isAdminTelemetryFetching = false;
+window.startMasterTelemetryEngine = function() {
+    setInterval(async () => {
+        if (isAdminTelemetryFetching) return;
+        isAdminTelemetryFetching = true;
+        const start = Date.now();
+
+        try {
+            const response = await fetch('/api/telemetry');
+            if (response.ok) {
+                const result = await response.json();
+                const computedPing = Date.now() - start;
+                const telemetryData = result.telemetry || result;
+                
+                if (telemetryData) {
+                    telemetryData.apiPing = computedPing; 
+                    
+                    // Broadcast ONLY via Shared Platform Infrastructure
+                    if (window.globalEventBus) {
+                        window.globalEventBus.emit('TelemetryUpdated', telemetryData);
+                    }
+                }
+            }
+        } catch (e) {
+            console.error("[ADMIN COCKPIT] Telemetry Engine Offline:", e);
+        } finally {
+            isAdminTelemetryFetching = false;
+        }
+    }, 3000);
+    console.log("[ADMIN COCKPIT] Master Telemetry Engine Active.");
+};
+
+// Start the Master Engine
+window.startMasterTelemetryEngine();

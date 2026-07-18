@@ -2,8 +2,8 @@
 /**
  * * PHASE 10.4: Master Node & X-Ray Precision Fix
  * This file fetches data and distributes it to the UI Dashboard.
+ * (Note: Master Telemetry Engine migrated to Admin Layer - Chapter 1)
  */
-let isXRayFetching = false;
 
 window.syncXRayData = function(data, computedPing = 8) {
     if (!data) return;
@@ -74,47 +74,9 @@ window.syncXRayData = function(data, computedPing = 8) {
     }
 };
 
-// 🟢 প্রতি ৩ সেকেন্ড পর পর ব্যাকএন্ড থেকে ডেটা আনার মাস্টার লুপ
-setInterval(async () => {
-    if (isXRayFetching) return;
-    isXRayFetching = true;
-    const start = Date.now();
-
-    try {
-        const response = await fetch('/api/telemetry');
-        if (response.ok) {
-            const result = await response.json();
-            const computedPing = Date.now() - start;
-
-            const telemetryData = result.telemetry || result;
-            
-            if (telemetryData) {
-                // ১. নিজের কাজ (X-Ray আপডেট)
-                window.syncXRayData(telemetryData, computedPing);
-                
-                // ২. স্লেভ (ui-dashboard.js) কে ডেটা পার্সেল করা
-                telemetryData.apiPing = computedPing; // ড্যাশবোর্ড যেন লাইভ পিং পায়
-                
-                if (window.Dashboard && typeof window.Dashboard.updateCockpitUI === 'function') {
-                    window.Dashboard.updateCockpitUI(telemetryData);
-                } else if (window.globalEventBus) {
-                    window.globalEventBus.emit('TelemetryUpdated', telemetryData);
-                }
-            }
-        }
-    } catch (e) {
-        if (document.getElementById('st-telemetry')) {
-            document.getElementById('st-telemetry').innerText = "OFFLINE";
-            document.getElementById('st-telemetry').className = "xray-status status-fail";
-        }
-    } finally {
-        isXRayFetching = false;
-    }
-}, 3000); // 3 সেকেন্ড রিয়েল-টাইম লুপ
-
 if (window.globalEventBus) {
     window.globalEventBus.on('TelemetryUpdated', (data) => {
-        window.syncXRayData(data);
+        window.syncXRayData(data, data.apiPing || 8);
     });
 }
-console.log("Ultimate System X-Ray Active (Master Node v10.4).");
+console.log("Ultimate System X-Ray Active (Slave Node - Master Engine Migrated).");

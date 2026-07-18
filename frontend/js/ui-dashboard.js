@@ -2,17 +2,18 @@
 /**
  * UI Dashboard Module
  * * PHASE 10.5: JSON Log Fix, Double Copy Fix, Anti-Blur & Modal Stacking Fix
+ * * CHAPTER 2: Admin Cockpit Rendering Migrated & Shared Platform Context Adopted
  */
 window.Dashboard = {
     startTime: Date.now(),
     lastEventTimestamp: 0,
-    latestTelemetrySnapshot: null, 
+    // latestTelemetrySnapshot removed - User Layer strictly reads from ORBIS_SHARED
     
     init: function() {
         this.startUptimeCounter();
         this.setupCardInteractions();
         this.setupOutsideClickToClose(); 
-        window.printLog('OK', 'Dashboard Diagnostic System Live.');
+        if(typeof window.printLog === 'function') window.printLog('OK', 'Dashboard Diagnostic System Live.');
     },
 
     startUptimeCounter: function() {
@@ -39,117 +40,6 @@ window.Dashboard = {
         }
     },
 
-    syncAndRenderLogs: function(serverLogs) {
-        if (!serverLogs || !Array.isArray(serverLogs)) return;
-        let localLogs = JSON.parse(localStorage.getItem('orbis_logs') || '[]');
-        
-        serverLogs.forEach(log => {
-            let logStr = `[${log.time}] [${log.level}]: ${log.message}`;
-            let isDuplicate = localLogs.slice(-20).some(l => l.includes(log.time) && l.includes(log.message));
-            if (!isDuplicate) localLogs.push(logStr);
-        });
-        
-        if (localLogs.length > 100) localLogs = localLogs.slice(localLogs.length - 100);
-        localStorage.setItem('orbis_logs', JSON.stringify(localLogs));
-        
-        const logBox = document.getElementById('log-box');
-        if (logBox) {
-            logBox.innerHTML = localLogs.map(logStr => {
-                let color = '#f8fafc'; 
-                if (logStr.includes('[ERR]') || logStr.includes('FAILED') || logStr.includes('503')) color = '#ef4444'; 
-                else if (logStr.includes('[WARN]') || logStr.includes('HIGH')) color = '#facc15'; 
-                else if (logStr.includes('[OK]') || logStr.includes('ONLINE') || logStr.includes('Success')) color = '#10b981'; 
-                else if (logStr.includes('[INFO]')) color = '#38bdf8'; 
-                
-                return `<div style="color:${color}; padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.05);">${logStr}</div>`;
-            }).join('');
-            logBox.scrollTop = logBox.scrollHeight; 
-        }
-    },
-
-    updateCockpitUI: function(telemetry) {
-        if (!telemetry) return;
-        this.latestTelemetrySnapshot = telemetry; 
-
-        // Raw payload tracker
-        console.log("📦 RAW PAYLOAD RECEIVED:", telemetry);
-
-        if (telemetry.logs) this.syncAndRenderLogs(telemetry.logs);
-
-        if(telemetry.apiPing) {
-            const el = document.getElementById('net-ping');
-            if(el) el.innerText = `${telemetry.apiPing} ms`;
-        }
-        if(telemetry.ramUsage) {
-            const el = document.getElementById('sys-ram');
-            if(el) el.innerText = `${telemetry.ramUsage} MB`;
-        }
-
-        if (telemetry.engineering_inspector) {
-            const req = telemetry.engineering_inspector.active_requests || 0;
-            const reqEl = document.getElementById('ui-insp-req');
-            if(reqEl) reqEl.innerText = req;
-            
-            const loadEl = document.getElementById('ui-insp-load');
-            if(loadEl) {
-                loadEl.innerText = telemetry.engineering_inspector.load_status || 'LOW';
-                loadEl.style.color = telemetry.engineering_inspector.load_status === 'HIGH' ? '#facc15' : '#10b981';
-            }
-            
-            const usedEl = document.getElementById('token-used');
-            if(usedEl) usedEl.innerText = req * 154; 
-            
-            const costEl = document.getElementById('token-cost');
-            if(costEl) costEl.innerText = '$' + ((req * 154) * 0.00005).toFixed(4);
-        }
-
-        if (telemetry.provider_monitor) {
-            const provEl = document.getElementById('ui-insp-prov');
-            if (provEl) {
-                provEl.innerText = telemetry.provider_monitor.status || 'ONLINE';
-                provEl.style.color = telemetry.provider_monitor.status === 'OFFLINE' ? '#ef4444' : '#10b981';
-            }
-        }
-
-        if (telemetry.latency || telemetry.apiPing) {
-            const basePing = telemetry.apiPing || telemetry.latency || 45;
-            const readEl = document.getElementById('db-read-ping');
-            if(readEl) readEl.innerText = Math.max(12, basePing - 15) + ' ms';
-            const writeEl = document.getElementById('db-write-ping');
-            if(writeEl) writeEl.innerText = (basePing + 10) + ' ms';
-        }
-
-        const treeCanvas = document.getElementById('dependency-tree-canvas');
-        if (treeCanvas) {
-            const activeBus = telemetry.lastRoute || 'CORE_ROUTER';
-            const status = (telemetry.provider_monitor && telemetry.provider_monitor.status) || 'ONLINE';
-            const memNodes = telemetry.memoryNodes || 0;
-            
-            let treeHTML = `<div style="text-align:left; padding-left: 5px; line-height: 1.5; font-size: 0.65rem;">`;
-            treeHTML += `<div style="color: #cbd5e1;">[👤] Client Interface</div>`;
-            treeHTML += `<div style="color: #64748b;"> └── [🚦] Express Router</div>`;
-            treeHTML += `<div style="color: #38bdf8; font-weight: bold;"> &nbsp;&nbsp;&nbsp;&nbsp;└── [⚙️] BrainController (CORE)</div>`;
-            
-            treeHTML += `<div style="color: #a78bfa;"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── [💾] Supabase Memory (${memNodes} Nodes)</div>`;
-            treeHTML += `<div style="color: #94a3b8;"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── [⚡] Cognitive Switch</div>`;
-            
-            if (activeBus.includes('Local') || status === 'OFFLINE' || status === 'ERROR' || status === '503') {
-                treeHTML += `<div style="color: #10b981; font-weight:bold;"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── [🧠] LocalNLPEngine (ACTIVE)</div>`;
-                treeHTML += `<div style="color: #475569;"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── [☁️] GeminiProvider (STANDBY)</div>`;
-                if (status === 'OFFLINE' || status === 'ERROR' || status === '503') {
-                    treeHTML += `<div style="color: #ef4444; margin-top:2px; font-weight:bold; animation: blinker 1s infinite;"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;⚠️ API_FAULT_DETECTED</div>`;
-                }
-            } else {
-                treeHTML += `<div style="color: #475569;"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── [🧠] LocalNLPEngine (BYPASS)</div>`;
-                treeHTML += `<div style="color: #10b981; font-weight:bold;"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── [☁️] GeminiProvider (ACTIVE)</div>`;
-            }
-
-            treeHTML += `</div>`;
-            treeCanvas.innerHTML = treeHTML;
-        }
-    },
-
-    // 🟢 ফিক্স ১: জেসন (JSON) ফরম্যাট ভেঙে সুন্দর হিউম্যান রিডেবল লগবুক বানানো
     formatHumanText: function(dataObj) {
         if (!dataObj) return "No data available.";
         if (typeof dataObj === 'string') return dataObj.replace(/[{}"\[\]]/g, '').trim();
@@ -159,7 +49,6 @@ window.Dashboard = {
             let cleanKey = key.replace(/_/g, ' ').toUpperCase();
             let val = dataObj[key];
 
-            // যদি ডেটাটি Logs Array হয়, তবে লাইন বাই লাইন ফরম্যাট করবে
             if ((key === 'logs' || key === 'LOGS') && Array.isArray(val)) {
                 readableText += `▪ ${cleanKey}:\n`;
                 val.forEach(l => {
@@ -190,17 +79,22 @@ window.Dashboard = {
                 let header = card.querySelector('.panel-header')?.innerText.trim() || card.querySelector('div[style*="font-weight: bold"]')?.innerText.trim() || 'System Details';
                 let rawDataObj = "";
                 
+                // STRICT RULE: Read ONLY from Shared Platform Context
+                const currentSnapshot = (window.ORBIS_SHARED && window.ORBIS_SHARED.telemetry) 
+                                        ? window.ORBIS_SHARED.telemetry.snapshot 
+                                        : null;
+                
                 if (header.includes('LOGS')) {
                     rawDataObj = document.querySelector('.terminal')?.innerText || "Log stream empty.";
-                } else if (this.latestTelemetrySnapshot) {
-                    if (header.includes('INSPECTOR')) rawDataObj = this.latestTelemetrySnapshot.engineering_inspector || "No Inspector Data";
-                    else if (header.includes('HEALTH')) rawDataObj = this.latestTelemetrySnapshot.memory_health || "No Memory Data";
-                    else if (header.includes('TOKENS')) rawDataObj = { Active_Requests: this.latestTelemetrySnapshot.engineering_inspector?.active_requests || 0 };
+                } else if (currentSnapshot) {
+                    if (header.includes('INSPECTOR')) rawDataObj = currentSnapshot.engineering_inspector || "No Inspector Data";
+                    else if (header.includes('HEALTH')) rawDataObj = currentSnapshot.memory_health || "No Memory Data";
+                    else if (header.includes('TOKENS')) rawDataObj = { Active_Requests: currentSnapshot.engineering_inspector?.active_requests || 0 };
                     else if (header.includes('SPEED')) rawDataObj = { Read: document.getElementById('db-read-ping')?.innerText, Write: document.getElementById('db-write-ping')?.innerText };
-                    else if (header.includes('DEPENDENCY') || header.includes('VISUAL')) rawDataObj = this.latestTelemetrySnapshot; 
-                    else if (header.includes('EXECUTION')) rawDataObj = this.latestTelemetrySnapshot.architecture_analyzer || "No Routing Data";
-                    else if (header.includes('SUPABASE') || header.includes('MEMORY BUS')) rawDataObj = { Sync: "OK", Nodes: this.latestTelemetrySnapshot.memoryNodes || 0, Route: this.latestTelemetrySnapshot.lastRoute || "N/A" };
-                    else rawDataObj = this.latestTelemetrySnapshot || "Data fetching in progress...";
+                    else if (header.includes('DEPENDENCY') || header.includes('VISUAL')) rawDataObj = currentSnapshot; 
+                    else if (header.includes('EXECUTION')) rawDataObj = currentSnapshot.architecture_analyzer || "No Routing Data";
+                    else if (header.includes('SUPABASE') || header.includes('MEMORY BUS')) rawDataObj = { Sync: "OK", Nodes: currentSnapshot.memoryNodes || 0, Route: currentSnapshot.lastRoute || "N/A" };
+                    else rawDataObj = currentSnapshot || "Data fetching in progress...";
                 } else {
                     rawDataObj = "Awaiting Server Telemetry...";
                 }
@@ -214,22 +108,18 @@ window.Dashboard = {
                     </div>
                 `;
                 
-                // 🟢 ফিক্স ২: ডাবল কপি দূর করা হলো। যদি LOGS হয়, তবে শুধু extraTools দেখাবে।
                 let contentToShow = header.includes('LOGS') ? extraTools : (card.innerHTML + extraTools);
                 this.showMinimalModal(header, contentToShow);
             });
         });
     },
 
-    // 🟢 ফিক্স ৩ ও ৪: Anti-Blur Flexbox এবং Modal Stacking প্রতিরোধ
     showMinimalModal: function(title, content) {
-        // ফিক্স ৪: নতুন পপআপ তৈরির আগে পুরোনোটা ডিলিট করে দেবে
         const existing = document.getElementById('active-orbis-modal');
         if(existing) existing.remove();
 
         const overlay = document.createElement('div');
         overlay.id = 'active-orbis-modal';
-        // ফিক্স ৩: Flexbox ব্যবহার করে সেন্টারিং এবং অ্যান্টি-এলিয়াসিং
         overlay.style = "position:fixed; inset:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:99999; display:flex; justify-content:center; align-items:center; backdrop-filter:blur(2px); -webkit-font-smoothing:antialiased;";
 
         const modal = document.createElement('div');
@@ -243,7 +133,6 @@ window.Dashboard = {
             <div style="flex:1; overflow-y:auto; -webkit-font-smoothing:antialiased;">${content}</div>
         `;
 
-        // পপআপের বাইরের কালো অংশে ক্লিক করলেও পপআপ বন্ধ হয়ে যাবে
         overlay.addEventListener('click', (e) => {
             if(e.target === overlay) overlay.remove();
         });
