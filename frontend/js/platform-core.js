@@ -1,3 +1,31 @@
+/*
+STATUS: LOCKED
+
+ROLE:
+Public Platform Router
+
+OWNER:
+Public Platform
+
+This file must contain ONLY:
+
+- Landing
+- Login
+- Public Dashboard
+- Module Launcher
+- Public Navigation
+- Heartbeat
+
+Do NOT place:
+
+- Admin Startup
+- Admin Cockpit
+- Admin Telemetry
+- Admin Diagnostics
+
+Future module loading must be handled by the ORBIS Module Registry.
+*/
+
 // ==================================================================
 // ORBIS PLATFORM CORE LOGIC (Sprint-1.1 - Added Routing & Layer Control)
 // ==================================================================
@@ -9,13 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 🟢 বাই-ডিফল্ট AI Chat লুকিয়ে রাখা হলো, যাতে পেছনের স্ক্রিন সামনে না আসে
     if (chatLayout) chatLayout.style.display = 'none';
 
-    // অ্যাডমিন বাইপাস
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('cockpit_mode') === 'true') {
-        if (platformRoot) platformRoot.style.display = 'none';
-        if (chatLayout) chatLayout.style.display = 'flex'; // শুধু অ্যাডমিনের জন্য চ্যাট ওপেন
-        return; 
-    }
+    // ❌ LEGACY/DEPRECATED: Admin cockpit_mode bypass removed for platform independence.
 
     if (!platformRoot) return;
 
@@ -23,6 +45,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentState = activeUser ? 'dashboard' : 'landing';
 
     let localSystemVersion = localStorage.getItem('orbis_system_version') || '1.4.2';
+    
+    // TODO (Future)
+    // Replace static localModules with Registry-driven dynamic module loading.
     let localModules = { farmer: 'Coming Soon', ledger: 'Active' };
 
     let heartbeatInterval = null;
@@ -150,7 +175,6 @@ document.addEventListener('DOMContentLoaded', () => {
         navigate: function(state, pushHistory = true) {
             currentState = state;
             this.render();
-            // 🟢 মোবাইলের ব্যাক বাটনের জন্য ব্রাউজার হিস্ট্রি পুশ করা
             if (pushHistory) history.pushState({ page: state }, "", `?view=${state}`);
         },
 
@@ -173,22 +197,26 @@ document.addEventListener('DOMContentLoaded', () => {
             this.navigate('landing');
         },
 
+        // TODO (Future)
+        // Replace hardcoded module launching with Registry/Module Loader routing.
         launchModule: function(moduleId) {
             if (moduleId === 'orchestrator') {
                 startHeartbeat('AI Orchestrator'); 
                 platformRoot.style.opacity = '0';
                 setTimeout(() => { 
                     platformRoot.style.display = 'none'; 
-                    if (chatLayout) chatLayout.style.display = 'flex'; // 🟢 শুধুমাত্র এখানেই AI চ্যাট খুলবে
+                    if (chatLayout) chatLayout.style.display = 'flex'; 
                 }, 300); 
             }
         },
 
+        // TODO (Future)
+        // Remove hardcoded Lottery path.
+        // Load the module through the ORBIS Module Registry.
         mountLotteryModule: function() {
             console.log("[ORBIS] Mounting Lottery Module...");
             startHeartbeat('Lottery Module');
             
-            // 🟢 মোবাইলের ব্যাক বাটনের জন্য লটারি পেজটিকে হিস্ট্রিতে সেভ করা
             history.pushState({ page: 'lottery-app' }, "", "?view=lottery");
             
             platformRoot.style.opacity = '0';
@@ -198,13 +226,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!document.getElementById('orbis-lottery-module')) {
                     const script = document.createElement('script');
                     script.id = 'orbis-lottery-module';
-                    
-                    // 🟢 FIX & CACHE BUSTER: সঠিক ফোল্ডার (/ui/) এবং ক্যাশ বাস্টার যুক্ত করা হলো
                     const timestamp = new Date().getTime();
                     script.src = `/assets/lottery/ui/user-view.js?v=${timestamp}`; 
                     
                     script.onerror = () => {
-                        alert("Error 404: লটারি ফাইলটি পাওয়া যাচ্ছে না! সার্ভারের (server.js) রাউটিং চেক করতে হবে।");
+                        alert("Error 404: Lottery module failed to load.");
                         window.orbisPlatform.unmountModule();
                     };
                     
@@ -220,7 +246,6 @@ document.addEventListener('DOMContentLoaded', () => {
         unmountModule: function() {
             console.log("[ORBIS] Unmounting module...");
             startHeartbeat('Dashboard');
-            // লটারির পেজ হাইড করা
             const workspace = document.getElementById('lottery-user-workspace');
             if (workspace) workspace.style.display = 'none';
             
@@ -228,12 +253,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // 🟢 মোবাইলের হার্ডওয়্যার (Hardware) Back Button কন্ট্রোলার
     window.addEventListener('popstate', (event) => {
         const workspace = document.getElementById('lottery-user-workspace');
         if (event.state && event.state.page) {
             if (event.state.page !== 'lottery-app' && workspace) {
-                workspace.style.display = 'none'; // লটারি থেকে ব্যাক করলে লটারি হাইড হবে
+                workspace.style.display = 'none'; 
             }
             if (event.state.page !== 'lottery-app') {
                 currentState = event.state.page;
