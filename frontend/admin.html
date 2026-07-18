@@ -16,6 +16,10 @@
         
         /* Hide the main workspace initially */
         #admin-workspace { display: none; } 
+
+        /* CSS Grid/Flex Wrapper to safely position the migrated Cockpit sidebar */
+        .admin-layout-wrapper { display: flex; width: 100%; align-items: flex-start; gap: 20px; padding: 15px; box-sizing: border-box;}
+        .dashboard-container { flex: 1; }
     </style>
 </head>
 <body>
@@ -38,15 +42,46 @@
             <div class="sys-status-badge"><div class="pulse-dot"></div>SYSTEM LIVE</div>
         </header>
 
-        <div class="dashboard-container" id="main-dashboard">
-            <div class="quick-stats">
-                <div class="stat-box"><div class="stat-label">Active Users</div><div class="stat-value" id="live-users">--</div><div class="stat-live">Live Sync</div></div>
-                <div class="stat-box" style="border-left-color: var(--green);"><div class="stat-label">Platform RAM</div><div class="stat-value"><span id="live-ram">--</span> MB</div><div class="stat-live">Stable</div></div>
-                <div class="stat-box" style="border-left-color: var(--text-dark);"><div class="stat-label">DB Ping (Latency)</div><div class="stat-value"><span id="live-ping">--</span> ms</div><div class="stat-live">Optimal</div></div>
-                <div class="stat-box" style="border-left-color: var(--saffron);"><div class="stat-label">System Uptime</div><div class="stat-value" id="live-uptime">00:00:00</div><div class="stat-live">Server Sync</div></div>
+        <div class="admin-layout-wrapper">
+            <!-- Existing Admin Dashboard Area -->
+            <div class="dashboard-container" id="main-dashboard">
+                <div class="quick-stats">
+                    <div class="stat-box"><div class="stat-label">Active Users</div><div class="stat-value" id="live-users">--</div><div class="stat-live">Live Sync</div></div>
+                    <div class="stat-box" style="border-left-color: var(--green);"><div class="stat-label">Platform RAM</div><div class="stat-value"><span id="live-ram">--</span> MB</div><div class="stat-live">Stable</div></div>
+                    <div class="stat-box" style="border-left-color: var(--text-dark);"><div class="stat-label">DB Ping (Latency)</div><div class="stat-value"><span id="live-ping">--</span> ms</div><div class="stat-live">Optimal</div></div>
+                    <div class="stat-box" style="border-left-color: var(--saffron);"><div class="stat-label">System Uptime</div><div class="stat-value" id="live-uptime">00:00:00</div><div class="stat-live">Server Sync</div></div>
+                </div>
+                <div class="section-title">🚀 Core Modules & Plugins</div>
+                <div class="card-grid" id="dynamic-plugin-grid"></div>
             </div>
-            <div class="section-title">🚀 Core Modules & Plugins</div>
-            <div class="card-grid" id="dynamic-plugin-grid"></div>
+
+            <!-- MIGRATED COMPONENT: dev-sidebar (Admin Cockpit) -->
+            <aside class="telemetry-sidebar cockpit-mode" id="dev-sidebar" style="width: 380px; display: flex; flex-direction: column; gap: 10px; padding: 15px; background: #0f172a; color: #fff; font-family: monospace; border-radius: 12px; flex-shrink: 0;">
+                <h3 style="color: #FF9933; margin-top:0;">Diagnostic Cockpit</h3>
+                
+                <div id="xray-err-trace" style="display:none; padding:10px; background:#fee2e2; color:#b91c1c; font-size:0.7rem; border-radius:4px;"></div>
+
+                <div style="font-size: 0.8rem; line-height: 1.6;">
+                    <strong>RAM:</strong> <span id="sys-ram">-- MB</span><br>
+                    <strong>Ping:</strong> <span id="net-ping">-- ms</span><br>
+                    <strong>Latency:</strong> <span id="prov-gemini-latency">-- ms</span><br>
+                    <strong>Memory Nodes:</strong> <span id="mem-nodes">0</span><br>
+                    <strong>Last Route:</strong> <span id="router-last">None</span>
+                </div>
+
+                <div style="border-top:1px solid #334155; margin-top:10px; padding-top:10px;">
+                    <p><strong>System Status:</strong></p>
+                    <div style="display:flex; justify-content:space-between;"><span>Chat:</span> <span id="st-chat" class="xray-status">...</span></div>
+                    <div style="display:flex; justify-content:space-between;"><span>Voice:</span> <span id="st-voice" class="xray-status">...</span></div>
+                    <div style="display:flex; justify-content:space-between;"><span>DB:</span> <span id="st-supabase" class="xray-status">...</span></div>
+                    <div style="display:flex; justify-content:space-between;"><span>Router:</span> <span id="st-router" class="xray-status">...</span></div>
+                    <div style="display:flex; justify-content:space-between;"><span>Telemetry:</span> <span id="st-telemetry" class="xray-status">...</span></div>
+                </div>
+                <p style="font-size: 0.7rem; color: #64748b; margin-top: 20px;">Memory Status: <span id="mem-status">Checking...</span></p>
+                
+                <!-- Added canvas for routing path -->
+                <div id="dependency-tree-canvas"></div>
+            </aside>
         </div>
 
         <div class="detail-panel-container" id="detail-panel">
@@ -56,7 +91,9 @@
             </div>
             <div class="panel-content" id="panel-content-area"></div>
         </div>
-    </div> <script>
+    </div> 
+    
+    <script>
         function checkPIN() {
             const pin = document.getElementById('master-pin').value;
             if(pin === '2026') { // 🔑 MASTER PIN IS SET HERE
@@ -75,5 +112,8 @@
     <script src="/js/admin-registry.js"></script>
     <script src="/js/admin-plugins.js"></script>
     <script src="/js/admin-logic.js"></script>
+    <!-- Placeholder Scripts for upcoming Phases -->
+    <!-- <script src="/js/admin-dashboard.js"></script> -->
+    <!-- <script src="/js/admin-bootstrap.js"></script> -->
 </body>
 </html>
