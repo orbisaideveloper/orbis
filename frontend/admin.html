@@ -16,10 +16,6 @@
         
         /* Hide the main workspace initially */
         #admin-workspace { display: none; } 
-
-        /* CSS Grid/Flex Wrapper to safely position the migrated Cockpit sidebar */
-        .admin-layout-wrapper { display: flex; width: 100%; align-items: flex-start; gap: 20px; padding: 15px; box-sizing: border-box;}
-        .dashboard-container { flex: 1; }
     </style>
 </head>
 <body>
@@ -43,7 +39,7 @@
         </header>
 
         <div class="admin-layout-wrapper">
-            <!-- Existing Admin Dashboard Area -->
+            <!-- Admin Dashboard Area -->
             <div class="dashboard-container" id="main-dashboard">
                 <div class="quick-stats">
                     <div class="stat-box"><div class="stat-label">Active Users</div><div class="stat-value" id="live-users">--</div><div class="stat-live">Live Sync</div></div>
@@ -55,13 +51,13 @@
                 <div class="card-grid" id="dynamic-plugin-grid"></div>
             </div>
 
-            <!-- MIGRATED COMPONENT: dev-sidebar (Admin Cockpit) -->
-            <aside class="telemetry-sidebar cockpit-mode" id="dev-sidebar" style="width: 380px; display: flex; flex-direction: column; gap: 10px; padding: 15px; background: #0f172a; color: #fff; font-family: monospace; border-radius: 12px; flex-shrink: 0;">
+            <!-- Migrated Admin Cockpit -->
+            <aside class="telemetry-sidebar cockpit-mode" id="dev-sidebar">
                 <h3 style="color: #FF9933; margin-top:0;">Diagnostic Cockpit</h3>
                 
                 <div id="xray-err-trace" style="display:none; padding:10px; background:#fee2e2; color:#b91c1c; font-size:0.7rem; border-radius:4px;"></div>
 
-                <div style="font-size: 0.8rem; line-height: 1.6;">
+                <div style="font-size: 0.8rem; line-height: 1.6; font-family: monospace;">
                     <strong>RAM:</strong> <span id="sys-ram">-- MB</span><br>
                     <strong>Ping:</strong> <span id="net-ping">-- ms</span><br>
                     <strong>Latency:</strong> <span id="prov-gemini-latency">-- ms</span><br>
@@ -69,7 +65,7 @@
                     <strong>Last Route:</strong> <span id="router-last">None</span>
                 </div>
 
-                <div style="border-top:1px solid #334155; margin-top:10px; padding-top:10px;">
+                <div style="border-top:1px solid #334155; margin-top:10px; padding-top:10px; font-family: monospace;">
                     <p><strong>System Status:</strong></p>
                     <div style="display:flex; justify-content:space-between;"><span>Chat:</span> <span id="st-chat" class="xray-status">...</span></div>
                     <div style="display:flex; justify-content:space-between;"><span>Voice:</span> <span id="st-voice" class="xray-status">...</span></div>
@@ -77,9 +73,8 @@
                     <div style="display:flex; justify-content:space-between;"><span>Router:</span> <span id="st-router" class="xray-status">...</span></div>
                     <div style="display:flex; justify-content:space-between;"><span>Telemetry:</span> <span id="st-telemetry" class="xray-status">...</span></div>
                 </div>
-                <p style="font-size: 0.7rem; color: #64748b; margin-top: 20px;">Memory Status: <span id="mem-status">Checking...</span></p>
+                <p style="font-size: 0.7rem; color: #64748b; margin-top: 20px; font-family: monospace;">Memory Status: <span id="mem-status">Checking...</span></p>
                 
-                <!-- Added canvas for routing path -->
                 <div id="dependency-tree-canvas"></div>
             </aside>
         </div>
@@ -96,7 +91,7 @@
     <script>
         function checkPIN() {
             const pin = document.getElementById('master-pin').value;
-            if(pin === '2026') { // 🔑 MASTER PIN IS SET HERE
+            if(pin === '2026') { 
                 document.getElementById('security-overlay').style.opacity = '0';
                 setTimeout(() => {
                     document.getElementById('security-overlay').style.display = 'none';
@@ -112,10 +107,7 @@
     <script src="/js/admin-registry.js"></script>
     <script src="/js/admin-plugins.js"></script>
     <script src="/js/admin-logic.js"></script>
-    <!-- ACTIVATED: Admin Dashboard (Phase 2 completed) -->
     <script src="/js/admin-dashboard.js"></script>
-    
-    <!-- ACTIVATED: Admin Bootstrap (Phase 4 completed) -->
     <script src="/js/admin-bootstrap.js"></script>
 </body>
 </html>
