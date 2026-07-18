@@ -1,5 +1,25 @@
 // frontend/js/admin-logic.js
 
+// 🟢 THE MASTER KEY FOR BACKEND AUTHENTICATION
+const ADMIN_AUTH_TOKEN = 'Bearer ORBIS_ADMIN_API_TOKEN';
+
+// ==========================================
+// PHASE 3: Migrated Admin Telemetry Listener
+// ==========================================
+window.globalEventBus?.on('TelemetryUpdated', (data) => {
+    if (data.ramUsage) document.getElementById('sys-ram').innerText = data.ramUsage + ' MB';
+    if (data.latency) {
+        const el = document.getElementById('prov-gemini-latency');
+        if(el) el.innerText = data.latency + ' ms';
+    }
+    if (data.memoryNodes) document.getElementById('mem-nodes').innerText = data.memoryNodes;
+    if(window.updateXRay) window.updateXRay(data);
+
+    if (window.AdminDashboard && typeof window.AdminDashboard.updateCockpitUI === 'function') {
+        window.AdminDashboard.updateCockpitUI(data);
+    }
+});
+
 // 🩺 SELF-HEALING LOGIC (Emergency Cache Wiping)
 function triggerSelfHealing() {
     console.log("[Self-Healing] Activating emergency cache wipe...");
@@ -14,53 +34,10 @@ function triggerSelfHealing() {
     setTimeout(() => { window.location.reload(true); }, 500);
 }
 
-// 🟢 THE MASTER KEY FOR BACKEND AUTHENTICATION
-const ADMIN_AUTH_TOKEN = 'Bearer ORBIS_ADMIN_API_TOKEN';
-
-document.addEventListener('DOMContentLoaded', () => {
-    // 🚀 MASTER FIX: FORCE INJECT DEPLOYMENT PLUGIN IF IT IS MISSING FROM MAP
-    if (window.ORBIS_ADMIN && window.ORBIS_ADMIN.plugins) {
-        if (!window.ORBIS_ADMIN.plugins.has('plugin-deploy')) {
-            window.ORBIS_ADMIN.plugins.set('plugin-deploy', {
-                id: 'plugin-deploy',
-                icon: '🚀',
-                name: 'Deployment Engine',
-                desc: 'Manage production releases, shadow workspaces, and live module publisher pathways.',
-                statusClass: 'status-admin',
-                statusText: 'Core'
-            });
-        }
-    }
-
-    if (typeof window.ORBIS_ADMIN === 'undefined') {
-        const grid = document.getElementById('dynamic-plugin-grid');
-        if (grid) {
-            grid.innerHTML = `<div style="grid-column: 1/-1; background:#fff0f0; border:2px dashed #ff4d4d; padding:30px; border-radius:12px; text-align:center;"><div style="font-size:3rem; margin-bottom:10px;">🩺</div><h3 style="color:#ff4d4d; margin-top:0;">System UI Pipeline Blocked</h3><p style="color:#d32f2f;">A background cache conflict prevented core registry files from loading.</p><button onclick="triggerSelfHealing()" style="background:#ff4d4d; color:#fff; border:none; padding:12px 24px; border-radius:6px; font-weight:bold; cursor:pointer;">⚡ Run Self-Healing Sequence</button></div>`;
-        }
-        return; 
-    }
-
-    window.ORBIS_ADMIN.registerProvider('sys-metrics', async () => {
-        try {
-            const response = await fetch('/api/admin/health', { headers: { 'Authorization': ADMIN_AUTH_TOKEN } });
-            const result = await response.json();
-            if(result.status === 'OK') {
-                const ramMB = Math.round(result.memoryUsage.rss / (1024 * 1024));
-                return { success: true, data: { ram: ramMB, ping: 12, activeUsers: result.activeUsers || 0, uptime: Math.floor(result.uptime) } };
-            }
-            throw new Error('API Failed');
-        } catch (error) { return { success: false, data: { ram: '--', ping: '--', activeUsers: '--', uptime: 0 } }; }
-    });
-    startTelemetryPolling();
-    renderPlugins();
-});
-
 function renderPlugins() {
     const grid = document.getElementById('dynamic-plugin-grid');
     if (!grid) return;
     
-    // 🔴 CULPRIT FOUND & REMOVED: grid.innerHTML = '';
-    // এর বদলে আমরা শুধু পুরোনো ডাইনামিক কার্ডগুলো মুছব, যাতে আমাদের নতুন ডিজাইন সেভ থাকে!
     const existingDynamicCards = grid.querySelectorAll('.admin-card');
     existingDynamicCards.forEach(card => card.remove());
 
@@ -68,9 +45,8 @@ function renderPlugins() {
         const pId = plugin.id || id;
         const nameCheck = (plugin.name || "").toLowerCase();
 
-        // 🟢 NINJA BYPASS: পুরোনো মডিউলগুলোকে স্ক্রিনে আসতে দেওয়া হবে না!
         if (nameCheck.includes('core') || nameCheck.includes('farmer') || nameCheck.includes('digiledger') || nameCheck.includes('ledger')) {
-            return; // এদেরকে স্কিপ করে যাও!
+            return; 
         }
 
         const card = document.createElement('div');
@@ -106,15 +82,21 @@ async function fetchSystemState() {
 
 async function openPanel(pluginId) {
     if (pluginId === 'plugin-public') { window.location.href = '/'; return; }
-    const plugin = window.ORBIS_ADMIN.plugins.get(pluginId);
+    
     document.getElementById('main-dashboard').style.display = 'none';
+    const devSidebar = document.getElementById('dev-sidebar');
+    if (devSidebar) devSidebar.style.display = 'none'; // প্যানেল খুললে ককপিট হাইড হবে
+
+    const plugin = window.ORBIS_ADMIN.plugins.get(pluginId);
+    
     document.getElementById('detail-panel').style.display = 'flex';
     document.getElementById('panel-title-text').innerText = plugin.name;
     const contentArea = document.getElementById('panel-content-area');
     
     if (pluginId === 'plugin-cockpit') {
-        contentArea.style.padding = '0';
-        contentArea.innerHTML = `<iframe src="/index.html?cockpit_mode=true" style="width: 100%; height: 100%; border: none; background: #0f172a;"></iframe>`;
+        // 🚀 PHASE 4 FIX: ককপিট এখন admin.html-এই আছে, তাই index.html-এর iframe আর লাগবে না।
+        contentArea.style.padding = '20px';
+        contentArea.innerHTML = `<div style="text-align:center; padding: 40px;"><div style="font-size: 3rem; margin-bottom:10px;">⚙️</div><h2 style="color:var(--navy);">Cockpit Migrated</h2><p style="color:var(--text-muted);">The diagnostic cockpit is now permanently anchored to the right side of your main dashboard. Click 'Back to Dashboard' to view it.</p></div>`;
     } else if (pluginId === 'plugin-radar') {
         contentArea.style.padding = '20px';
         contentArea.innerHTML = `<div style="background:#fff; padding:20px; border-radius:10px; max-width:900px; margin:0 auto; box-shadow: var(--shadow);"><div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:15px;"><h3 style="margin:0; color:var(--text-dark);">Active Sessions Map</h3><span style="font-size:0.85rem; background:#dcfce7; color:var(--green); padding:4px 10px; border-radius:20px; font-weight:bold;"><span class="live-dot"></span> Live Tracking</span></div><div id="radar-table-container"><p style="text-align:center; color:var(--text-muted); padding:20px;">Scanning network...</p></div></div>`;
@@ -188,5 +170,9 @@ function closePanel() {
     if (activeRadarInterval) { clearInterval(activeRadarInterval); activeRadarInterval = null; }
     document.getElementById('detail-panel').style.display = 'none';
     document.getElementById('main-dashboard').style.display = 'block';
+    
+    const devSidebar = document.getElementById('dev-sidebar');
+    if (devSidebar) devSidebar.style.display = 'flex'; // প্যানেল বন্ধ করলে ককপিট আবার দৃশ্যমান হবে
+    
     document.getElementById('panel-content-area').innerHTML = ''; 
 }

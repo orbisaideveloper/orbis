@@ -1,12 +1,6 @@
-// File: frontend/js/platform-init.js
+// frontend/js/platform-init.js
 // ORBIS Platform Initialization & PWA Logic
-
-window.globalEventBus?.on('TelemetryUpdated', (data) => {
-    if (data.ramUsage) document.getElementById('sys-ram').innerText = data.ramUsage + ' MB';
-    if (data.latency) document.getElementById('prov-gemini-latency')?.innerText = data.latency + ' ms';
-    if (data.memoryNodes) document.getElementById('mem-nodes').innerText = data.memoryNodes;
-    if(window.updateXRay) window.updateXRay(data);
-});
+// * PHASE 3 DONE: Admin Telemetry Listener moved to admin-logic.js
 
 document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
