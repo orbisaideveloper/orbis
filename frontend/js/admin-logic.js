@@ -7,14 +7,8 @@ const ADMIN_AUTH_TOKEN = 'Bearer ORBIS_ADMIN_API_TOKEN';
 // PHASE 3: Migrated Admin Telemetry Listener
 // ==========================================
 window.globalEventBus?.on('TelemetryUpdated', (data) => {
-    if (data.ramUsage) document.getElementById('sys-ram').innerText = data.ramUsage + ' MB';
-    if (data.latency) {
-        const el = document.getElementById('prov-gemini-latency');
-        if(el) el.innerText = data.latency + ' ms';
-    }
-    if (data.memoryNodes) document.getElementById('mem-nodes').innerText = data.memoryNodes;
-    if(window.updateXRay) window.updateXRay(data);
-
+    // 🚀 CHAPTER 3: Direct DOM mutations removed from Logic Layer.
+    // Strict Delegation: Admin Logic delegates all rendering to Admin Dashboard.
     if (window.AdminDashboard && typeof window.AdminDashboard.updateCockpitUI === 'function') {
         window.AdminDashboard.updateCockpitUI(data);
     }
@@ -85,7 +79,7 @@ async function openPanel(pluginId) {
     
     document.getElementById('main-dashboard').style.display = 'none';
     const devSidebar = document.getElementById('dev-sidebar');
-    if (devSidebar) devSidebar.style.display = 'none'; // প্যানেল খুললে ককপিট হাইড হবে
+    if (devSidebar) devSidebar.style.display = 'none';
 
     const plugin = window.ORBIS_ADMIN.plugins.get(pluginId);
     
@@ -94,7 +88,6 @@ async function openPanel(pluginId) {
     const contentArea = document.getElementById('panel-content-area');
     
     if (pluginId === 'plugin-cockpit') {
-        // 🚀 PHASE 4 FIX: ককপিট এখন admin.html-এই আছে, তাই index.html-এর iframe আর লাগবেবিধা
         contentArea.style.padding = '20px';
         contentArea.innerHTML = `<div style="text-align:center; padding: 40px;"><div style="font-size: 3rem; margin-bottom:10px;">⚙️</div><h2 style="color:var(--navy);">Cockpit Migrated</h2><p style="color:var(--text-muted);">The diagnostic cockpit is now permanently anchored to the right side of your main dashboard. Click 'Back to Dashboard' to view it.</p></div>`;
     } else if (pluginId === 'plugin-radar') {
@@ -130,16 +123,6 @@ async function openPanel(pluginId) {
                     <div style="font-weight:bold; color:#d97706; font-size:1.2rem;">v${shadowVer}</div>
                 </div>
                 <button onclick="publishNewVersion('${shadowVer}')" style="background:var(--saffron); color:white; border:none; padding:12px 24px; border-radius:6px; font-weight:bold; cursor:pointer; width:100%; font-size:1rem;">🚀 Publish Shadow to Production</button>
-                
-                <h3 style="margin-top:40px; color:var(--text-dark); border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">Module Publisher</h3>
-                <div style="display:flex; justify-content:space-between; align-items:center; padding:15px 0; border-bottom:1px solid #f1f5f9;">
-                    <div><div style="font-weight:bold;">🌾 Farmer Brain</div><div style="font-size:0.8rem; color:var(--text-muted);">Intelligent agriculture.</div></div>
-                    <button class="toggle-btn ${sysState && sysState.modules.farmer === 'Active' ? 'active' : ''}" onclick="toggleModule('farmer', this)">${sysState && sysState.modules.farmer === 'Active' ? 'Active' : 'Coming Soon'}</button>
-                </div>
-                <div style="display:flex; justify-content:space-between; align-items:center; padding:15px 0;">
-                    <div><div style="font-weight:bold;">📒 DigiLedger</div><div style="font-size:0.8rem; color:var(--text-muted);">Secure financial tracking.</div></div>
-                    <button class="toggle-btn ${sysState && sysState.modules.ledger === 'Active' ? 'active' : ''}" onclick="toggleModule('ledger', this)">${sysState && sysState.modules.ledger === 'Active' ? 'Active' : 'Coming Soon'}</button>
-                </div>
             </div>
         `;
     } else {
@@ -156,23 +139,13 @@ async function publishNewVersion(ver) {
     }
 }
 
-async function toggleModule(moduleId, btnElement) {
-    const currentStatus = btnElement.innerText === 'Active' ? 'Coming Soon' : 'Active';
-    const res = await fetch('/api/admin/toggle-module', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': ADMIN_AUTH_TOKEN }, body: JSON.stringify({ moduleId: moduleId, status: currentStatus }) });
-    const data = await res.json();
-    if(data.success) {
-        if(currentStatus === 'Active') { btnElement.innerText = 'Active'; btnElement.classList.add('active'); } 
-        else { btnElement.innerText = 'Coming Soon'; btnElement.classList.remove('active'); }
-    }
-}
-
 function closePanel() {
     if (activeRadarInterval) { clearInterval(activeRadarInterval); activeRadarInterval = null; }
     document.getElementById('detail-panel').style.display = 'none';
     document.getElementById('main-dashboard').style.display = 'block';
     
     const devSidebar = document.getElementById('dev-sidebar');
-    if (devSidebar) devSidebar.style.display = 'flex'; // প্যানেল বন্ধ করলে ককপিট আবার দৃশ্যমান হবে
+    if (devSidebar) devSidebar.style.display = 'flex'; 
     
     document.getElementById('panel-content-area').innerHTML = ''; 
 }

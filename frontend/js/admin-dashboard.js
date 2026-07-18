@@ -1,7 +1,7 @@
 // frontend/js/admin-dashboard.js
 /**
  * Admin Dashboard Module
- * CHAPTER 2: Cockpit Rendering Migration with Shared Platform Context
+ * CHAPTER 2 & 3: Cockpit Rendering Migration & X-Ray Integration
  */
 
 // Initialize Shared Platform Context (Single Source of Truth)
@@ -13,7 +13,7 @@ window.ORBIS_SHARED.telemetry = window.ORBIS_SHARED.telemetry || {
 
 window.AdminDashboard = {
     init: function() {
-        console.log('[ORBIS] Admin Dashboard Cockpit Live.');
+        console.log('[ORBIS] Admin Dashboard Cockpit Live. X-Ray Diagnostics Unified.');
     },
 
     syncAndRenderLogs: function(serverLogs) {
@@ -44,10 +44,64 @@ window.AdminDashboard = {
         }
     },
 
+    // 🚀 PHASE 10.4 MIGRATED: X-Ray File Health Checker Logic integrated into Admin Layer
+    syncXRayDiagnostics: function(data, computedPing) {
+        try {
+            if (typeof window.dispatchToAI === 'function') {
+                const el = document.getElementById('st-chat');
+                if(el) { el.innerText = "ACTIVE"; el.className = "xray-status status-ok"; }
+            } else {
+                throw new Error("ui-chat.js: Critical Ingestion Failure");
+            }
+
+            if (typeof window.startVoiceEngine === 'function') {
+                const el = document.getElementById('st-voice');
+                if(el) { el.innerText = "READY"; el.className = "xray-status status-ok"; }
+            } else {
+                const el = document.getElementById('st-voice');
+                if(el) { el.innerText = "DEAD"; el.className = "xray-status status-fail"; }
+            }
+
+            if (data.memoryNodes !== undefined) {
+                const el = document.getElementById('st-supabase');
+                if(el) { el.innerText = "CONNECTED"; el.className = "xray-status status-ok"; }
+                const memSt = document.getElementById('mem-status');
+                if(memSt) { memSt.innerText = "OK"; memSt.style.color = "#00e676"; }
+            } else {
+                const el = document.getElementById('st-supabase');
+                if(el) { el.innerText = "DROP_ALERT"; el.className = "xray-status status-fail"; }
+                const memSt = document.getElementById('mem-status');
+                if(memSt) { memSt.innerText = "ERROR"; memSt.style.color = "#ff4d4d"; }
+            }
+
+            const routerEl = document.getElementById('st-router');
+            if (routerEl) {
+                if (data.lastRoute) {
+                    routerEl.innerText = "ACTIVE";
+                    routerEl.className = "xray-status status-ok";
+                    routerEl.style.color = "#00e676";
+                } else {
+                    routerEl.innerText = "STANDBY";
+                    routerEl.style.color = "#facc15";
+                }
+            }
+
+            const errBox = document.getElementById('xray-err-trace');
+            if(errBox) errBox.style.display = 'none';
+
+        } catch (err) {
+            const errBox = document.getElementById('xray-err-trace');
+            if (errBox) {
+                errBox.style.display = 'block';
+                errBox.innerText = `🚨 CRITICAL FAULT:\n${err.message}`;
+            }
+        }
+    },
+
     updateCockpitUI: function(telemetry) {
         if (!telemetry) return;
         
-        // STRICT RULE: Admin Layer WRITES to Shared Platform Context
+        // 🛡️ STRICT RULE: Admin Layer WRITES to Shared Platform Context
         window.ORBIS_SHARED.telemetry.snapshot = telemetry;
         window.ORBIS_SHARED.telemetry.lastUpdate = Date.now();
 
@@ -55,22 +109,25 @@ window.AdminDashboard = {
 
         if (telemetry.logs) this.syncAndRenderLogs(telemetry.logs);
 
-        // Map telemetry to the Sidebar IDs and Admin Dashboard top-bar IDs
-        if(telemetry.apiPing) {
-            const el = document.getElementById('net-ping');
-            if(el) el.innerText = `${telemetry.apiPing} ms`;
-            
-            const livePingEl = document.getElementById('live-ping');
-            if(livePingEl) livePingEl.innerText = telemetry.apiPing; // Admin Top Stat
-        }
+        // Core Metrics Updates
+        const computedPing = telemetry.apiPing || telemetry.latency || 8;
+        
+        if(document.getElementById('net-ping')) document.getElementById('net-ping').innerText = `${computedPing} ms`;
+        if(document.getElementById('live-ping')) document.getElementById('live-ping').innerText = computedPing;
+        if(document.getElementById('prov-gemini-latency') && telemetry.latency) document.getElementById('prov-gemini-latency').innerText = `${telemetry.latency} ms`;
+        if(document.getElementById('router-last') && telemetry.lastRoute) document.getElementById('router-last').innerText = telemetry.lastRoute;
         
         if(telemetry.ramUsage) {
-            const el = document.getElementById('sys-ram');
-            if(el) el.innerText = `${telemetry.ramUsage} MB`;
-            
-            const liveRamEl = document.getElementById('live-ram');
-            if(liveRamEl) liveRamEl.innerText = telemetry.ramUsage; // Admin Top Stat
+            if(document.getElementById('sys-ram')) document.getElementById('sys-ram').innerText = `${telemetry.ramUsage} MB`;
+            if(document.getElementById('live-ram')) document.getElementById('live-ram').innerText = telemetry.ramUsage;
         }
+
+        if(telemetry.memoryNodes !== undefined && document.getElementById('mem-nodes')) {
+            document.getElementById('mem-nodes').innerText = telemetry.memoryNodes;
+        }
+
+        // Trigger migrated X-Ray DOM Logic
+        this.syncXRayDiagnostics(telemetry, computedPing);
 
         if (telemetry.engineering_inspector) {
             const req = telemetry.engineering_inspector.active_requests || 0;
@@ -80,7 +137,7 @@ window.AdminDashboard = {
             const loadEl = document.getElementById('ui-insp-load');
             if(loadEl) {
                 loadEl.innerText = telemetry.engineering_inspector.load_status || 'LOW';
-                loadEl.style.color = telemetry.engineering_inspector.load_status === 'HIGH' ? '#facc15' : '#10b981';
+                loadloadEl.style.color = telemetry.engineering_inspector.load_status === 'HIGH' ? '#facc15' : '#10b981';
             }
             
             const usedEl = document.getElementById('token-used');
