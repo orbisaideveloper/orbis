@@ -7,34 +7,68 @@ import { createClient } from '@supabase/supabase-js';
 import { getTelemetryData, logRequest, addLog } from './brain/telemetry.js';
 import { BrainController } from './brain/BrainController.js'; 
 import adminRoutes from './routes/adminRoutes.js';
-
-// 🟢 Lottery Module Route Import
 import lotteryRoutes from './modules/digiledger/lottery/routes/lotteryRoutes.js';
+
+// 🟢 NEW TRACKING & SECURITY PACKAGES IMPORT
+import statusMonitor from 'express-status-monitor';
+import morgan from 'morgan';
+import winston from 'winston';
+import Joi from 'joi';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// 🟢 MASTER FIX: Absolute Project Root 
 const ROOT_DIR = process.cwd(); 
 
 const app = express();
 const PORT = process.env.PORT || 10000; 
-
 const brain = new BrainController(); 
 
 const supabaseUrl = process.env.SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_KEY || '';
 const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supabaseKey) : null;
 
+// ==============================================================
+// 🟢 WINSTON LOGGER SETUP (Error & System Logs Saver)
+// ==============================================================
+const logger = winston.createLogger({
+    level: 'info',
+    format: winston.format.combine(
+        winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+        winston.format.printf(info => `[${info.timestamp}] [${info.level.toUpperCase()}]: ${info.message}`)
+    ),
+    transports: [
+        new winston.transports.Console(),
+        // এররগুলো ফাইলে সেভ হবে (Render-এ ফাইলগুলো টেম্পোরারি থাকতে পারে, তবে লগগুলো পারফেক্ট দেখাবে)
+        new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
+        new winston.transports.File({ filename: 'logs/system.log' })
+    ]
+});
+
+// Update old log function to use Winston
 const logSystemEvent = (level, source, message) => {
-    const timestamp = new Date().toLocaleTimeString('en-IN', { hour12: false });
-    const formattedLog = `[${timestamp}] [${level}] [${source}]: ${message}`;
+    const logMsg = `[${source}]: ${message}`;
+    if (level === 'ERR') logger.error(logMsg);
+    else if (level === 'WARN') logger.warn(logMsg);
+    else logger.info(logMsg);
     
-    if (level === 'ERR') console.error(formattedLog);
-    else console.log(formattedLog);
-    
-    try { addLog(level, `[${source}] ${message}`); } catch(e) {}
+    try { addLog(level, logMsg); } catch(e) {}
 };
+
+// ==============================================================
+// 🟢 NEW MIDDLEWARES (The Cockpit & The Tracker)
+// ==============================================================
+// ১. The Cockpit: এটা আপনার /status লিংকে ড্যাশবোর্ড তৈরি করবে
+app.use(statusMonitor({
+    title: 'ORBIS Core Status',
+    path: '/status',
+    spans: [{ interval: 1, retention: 60 }],
+    chartVisibility: { cpu: true, mem: true, load: true, responseTime: true, rps: true, statusCodes: true }
+}));
+
+// ২. Morgan: কে কোন API কল করছে, তা রেন্ডারের লগে লাইভ প্রিন্ট করবে
+app.use(morgan('dev'));
+
+// ==============================================================
 
 app.use((req, res, next) => {
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
@@ -56,21 +90,11 @@ app.use('/admin.html', (req, res, next) => {
     }
 });
 
-// ==============================================================
-// 🟢 BULLETPROOF STATIC ROUTING (Safe Bridge for Lottery)
-// ==============================================================
-
-// ১. Platform Core Frontend
+// 🟢 BULLETPROOF STATIC ROUTING
 app.use(express.static(path.join(ROOT_DIR, 'frontend'), { index: false }));
-
-// ২. Safe Public Route - লটারির UI ফাইল নিরাপদে ব্রাউজারে পাঠানোর জন্য
 app.use('/assets/lottery', express.static(path.join(ROOT_DIR, 'src/modules/digiledger/lottery/ui')));
 app.use('/assets/lottery/ui', express.static(path.join(ROOT_DIR, 'src/modules/digiledger/lottery/ui')));
-
-// ৩. Legacy Cache Fallback - ব্রাউজারে পুরনো লিংক ক্যাশ থাকলে তা সামলানোর জন্য
 app.use('/src/modules/digiledger/lottery/ui', express.static(path.join(ROOT_DIR, 'src/modules/digiledger/lottery/ui')));
-
-// ==============================================================
 
 const getAppVersion = () => {
     if (process.env.SYSTEM_MODE === 'PRODUCTION') return process.env.FINAL_VERSION || '10.0-STABLE';
@@ -88,14 +112,31 @@ app.get('/', (req, res) => {
     });
 });
 
+// ==============================================================
+// 🟢 JOI FILTER APPLIED TO LOGIN (ডেটা ছাঁকনি)
+// ==============================================================
+const loginSchema = Joi.object({
+    mobile: Joi.string().min(4).required(),
+    password: Joi.string().optional().allow('')
+});
+
 app.post('/api/auth/login', (req, res) => {
-    const { mobile, password } = req.body;
+    // Joi দিয়ে আগে ডেটা চেক করা হচ্ছে
+    const { error, value } = loginSchema.validate(req.body);
+    
+    if (error) {
+        logSystemEvent('WARN', 'Auth', `Invalid Login Data Attempted: ${error.details[0].message}`);
+        return res.status(400).json({ success: false, message: "সঠিক ফরম্যাটে ডেটা দিন!" });
+    }
+
+    const { mobile, password } = value;
     logSystemEvent('INFO', 'Auth', `Login attempt for identity: ${mobile}`);
 
+    // Admin-User Separate Logic
     if (mobile === 'admin' && password === 'admin123') { 
         res.cookie('orbis_admin_session', 'SECURE', { httpOnly: true, maxAge: 30 * 24 * 60 * 60 * 1000 });
         res.status(200).json({ success: true, user: { uid: 'ADM_MASTER', mobile, role: 'ADMIN' }, token: 'ORBIS_ADMIN_API_TOKEN' });
-    } else if (mobile) {
+    } else if (mobile && mobile !== 'admin') {
         res.status(200).json({ success: true, user: { uid: `USR_${Date.now()}`, mobile, role: 'USER' }, token: 'ORBIS_USER_API_TOKEN' });
     } else {
         res.status(401).json({ success: false, message: "Invalid identity credentials" });
@@ -220,4 +261,5 @@ process.on('uncaughtException', (error) => logSystemEvent('ERR', 'GlobalTracker'
 
 app.listen(PORT, () => {
     logSystemEvent('OK', 'Server', `ORBIS Live on Port: ${PORT}`);
+    console.log(`🚀 COCKPIT READY AT: http://localhost:${PORT}/status`);
 });
