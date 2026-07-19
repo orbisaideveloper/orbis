@@ -1,4 +1,4 @@
-name: ORBIS Brain CI
+Name: ORBIS Brain CI
 
 on:
   push:
@@ -22,7 +22,7 @@ jobs:
           node-version: "24"
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Run Jest Tests
         run: npm test
@@ -34,7 +34,7 @@ jobs:
 
       - name: SonarCloud Scan
         if: github.actor != 'dependabot[bot]'
-        uses: SonarSource/sonarqube-scan-action@v5
+        uses: SonarSource/sonarqube-scan-action@c2b6279930f143bc35582fcc8641b8a599158309
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
