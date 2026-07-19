@@ -1,4 +1,4 @@
-Name: ORBIS Brain CI
+name: ORBIS Brain CI
 
 on:
   push:
