@@ -9,6 +9,7 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -18,9 +19,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '24'
-          # এখান থেকে cache: 'npm' লাইনটি সরিয়ে দেওয়া হয়েছে যাতে আর লক ফাইল না খোঁজে
-      
+          node-version: "24"
+
       - name: Install dependencies
         run: npm install
 
@@ -32,13 +32,13 @@ jobs:
       - name: ORBIS Live Architecture Output
         run: node src/run.js
 
-      - name: SonarQube Scan
+      - name: SonarCloud Scan
         if: github.actor != 'dependabot[bot]'
-        uses: SonarSource/sonarcloud-github-action@master
+        uses: SonarSource/sonarqube-scan-action@v5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
-            -Dsonar.projectKey=orbis
+            -Dsonar.projectKey=orbisaideveloper_orbis
             -Dsonar.organization=orbis
