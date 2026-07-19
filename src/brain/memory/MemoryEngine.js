@@ -19,7 +19,8 @@ export class MemoryEngine {
   // 🟢 TELEMETRY & DASHBOARD HOOK (ড্যাশবোর্ড সচল রাখার জন্য)
   // ==============================================================
   _logMemoryEvent(event) {
-    if (typeof global.systemLogs !== 'undefined') {
+    // 🟢 ফিক্স: typeof এর বদলে সরাসরি undefined চেক
+    if (global.systemLogs !== undefined) {
         const time = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour12: false });
         global.systemLogs.push({ time, level: 'INFO', message: `[Memory] ${event}` });
         if (global.systemLogs.length > 100) global.systemLogs.shift();
@@ -44,29 +45,41 @@ export class MemoryEngine {
     } else this.cache.set(`${category}_${key}`, value);
 
     if (this.repository && typeof this.repository.save === 'function') {
-      await this.repository.save(category, key, value).catch(() => {});
+      // 🟢 ফিক্স: ফাঁকা catch ব্লকে এরর হ্যান্ডেল করা হলো
+      await this.repository.save(category, key, value).catch(e => {
+         this._logMemoryEvent(`DB Save Warning: ${e.message}`);
+      });
     }
     
     this._logMemoryEvent(`Saved ${category} data for key: ${key}`);
     return { success: true, category, key };
   }
 
+  // 🟢 হেল্পার ফাংশন: Complexity কমানোর জন্য RAM থেকে ডেটা নেওয়ার লজিক আলাদা করা হলো
+  _getFromRam(category, key) {
+    if (category === 'user') return this.userMemory.get(key);
+    if (category === 'project') return this.projectMemory.get(key);
+    return this.cache.get(`${category}_${key}`);
+  }
+
+  // 🟢 হেল্পার ফাংশন: Complexity কমানোর জন্য RAM এ ডেটা সেভ করার লজিক আলাদা করা হলো
+  _saveToRam(category, key, value) {
+    if (category === 'user') this.userMemory.set(key, value);
+    else if (category === 'project') this.projectMemory.set(key, value);
+    else this.cache.set(`${category}_${key}`, value);
+  }
+
+  // 🟢 ফিক্স: Cognitive Complexity কমানো হলো
   async loadMemory(category, key) {
     if (!key) throw new Error("Key cannot be null");
     
-    let val = null;
-    if (category === 'user') val = this.userMemory.get(key);
-    else if (category === 'project') val = this.projectMemory.get(key);
-    else val = this.cache.get(`${category}_${key}`);
-
+    const val = this._getFromRam(category, key);
     if (val !== undefined && val !== null) return val;
 
     if (this.repository && typeof this.repository.get === 'function') {
       const dbValue = await this.repository.get(category, key);
       if (dbValue !== null) {
-        if (category === 'user') this.userMemory.set(key, dbValue);
-        else if (category === 'project') this.projectMemory.set(key, dbValue); 
-        else this.cache.set(`${category}_${key}`, dbValue);
+        this._saveToRam(category, key, dbValue);
         return dbValue;
       }
     }
@@ -77,8 +90,11 @@ export class MemoryEngine {
     if (!prompt || !response) return false;
     
     // ১. Save to RAM (UI এর জন্য)
-    this.history.push({ role: 'user', content: prompt });
-    this.history.push({ role: 'model', content: response });
+    // 🟢 ফিক্স: দুবার push না করে একবারেই ডেটা push করা হলো
+    this.history.push(
+        { role: 'user', content: prompt },
+        { role: 'model', content: response }
+    );
 
     // ২. Save to Persistent DB
     if (this.repository && typeof this.repository.saveConversationMessage === 'function') {
@@ -120,7 +136,8 @@ export class MemoryEngine {
         });
 
         const data = await response.json();
-        return (data.embedding && data.embedding.values) ? data.embedding.values : null;
+        // 🟢 ফিক্স: Optional chaining (?.) ব্যবহার করা হলো
+        return data.embedding?.values || null;
     } catch (error) {
         this._logMemoryEvent(`Embedding Error: ${error.message}`);
         return null;
@@ -142,6 +159,8 @@ export class MemoryEngine {
         }
         return null;
     } catch (error) {
+        // 🟢 ফিক্স: Catch ব্লক হ্যান্ডেল করা হলো
+        this._logMemoryEvent(`Cognitive Search Error: ${error.message}`);
         return null;
     }
   }
@@ -159,6 +178,8 @@ export class MemoryEngine {
         }
         return false;
     } catch (error) {
+        // 🟢 ফিক্স: Catch ব্লক হ্যান্ডেল করা হলো
+        this._logMemoryEvent(`Cognitive Save Error: ${error.message}`);
         return false;
     }
   }
