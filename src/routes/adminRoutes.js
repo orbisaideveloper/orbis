@@ -107,7 +107,14 @@ router.post('/publish-version', adminAuth, (req, res) => {
 // 🟢 Toggle Module Status
 router.post('/toggle-module', adminAuth, (req, res) => {
     const { moduleId, status } = req.body;
-    if(globalSystemState.modules[moduleId] !== undefined) {
+    
+    // 🟢 ফিক্স: Prevent Prototype Pollution (Security Blocker)
+    if (typeof moduleId !== 'string' || moduleId === '__proto__' || moduleId === 'constructor' || moduleId === 'prototype') {
+        return res.status(400).json({ success: false, message: "Invalid Module ID" });
+    }
+
+    // 🟢 ফিক্স: সরাসরি অবজেক্ট মডিফিকেশন ব্লক করে Object.hasOwn ব্যবহার করা হলো
+    if(Object.hasOwn(globalSystemState.modules, moduleId)) {
         globalSystemState.modules[moduleId] = status;
         console.log(`[Admin] Module ${moduleId} changed to:${status}`);
         res.json({ success: true, modules: globalSystemState.modules });
