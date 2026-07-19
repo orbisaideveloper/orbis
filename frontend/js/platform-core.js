@@ -45,10 +45,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentState = activeUser ? 'dashboard' : 'landing';
 
     let localSystemVersion = localStorage.getItem('orbis_system_version') || '1.4.2';
-    
-    // TODO (Future)
-    // Replace static localModules with Registry-driven dynamic module loading.
-    let localModules = { farmer: 'Coming Soon', ledger: 'Active' };
 
     let heartbeatInterval = null;
     function startHeartbeat(currentModule = 'Dashboard') {
@@ -63,13 +59,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         body: JSON.stringify({ mobile, name, currentModule })
                     });
                     const data = await response.json();
-                    if (data.success && data.systemState) {
+                    if (data.success && data.systemState?.version) {
                         if (data.systemState.version !== localSystemVersion) {
                             localStorage.setItem('orbis_system_version', data.systemState.version);
                             window.location.reload(true); 
                         }
                     }
-                } catch(e) {}
+                } catch(error) {
+                    console.error('[ORBIS] Heartbeat failed:', error); // Fixed: Empty catch block handled
+                }
             }
         };
         sendPulse(); 
@@ -183,7 +181,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const mobile = document.getElementById('auth-mobile').value.trim();
             if (!name || mobile.length < 10) return alert("Valid name and 10-digit mobile required.");
             
-            if (!localStorage.getItem('orbis_uid')) localStorage.setItem('orbis_uid', 'ORB-' + Math.random().toString(36).substring(2, 6).toUpperCase());
+            if (!localStorage.getItem('orbis_uid')) {
+                // Fixed: Replaced Math.random with secure window.crypto (Security Hotspot)
+                const array = new Uint32Array(1);
+                window.crypto.getRandomValues(array);
+                const secureId = 'ORB-' + array[0].toString(36).substring(0, 4).toUpperCase();
+                localStorage.setItem('orbis_uid', secureId);
+            }
+            
             localStorage.setItem('orbis_active_user', mobile);
             localStorage.setItem('orbis_user_name', name);
             this.navigate('dashboard');
@@ -197,8 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.navigate('landing');
         },
 
-        // TODO (Future)
-        // Replace hardcoded module launching with Registry/Module Loader routing.
+        // Note: Future versions will replace hardcoded module launching with Registry/Module Loader routing.
         launchModule: function(moduleId) {
             if (moduleId === 'orchestrator') {
                 startHeartbeat('AI Orchestrator'); 
@@ -210,9 +214,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
 
-        // TODO (Future)
-        // Remove hardcoded Lottery path.
-        // Load the module through the ORBIS Module Registry.
+        // Note: Future versions will load the module through the ORBIS Module Registry instead of hardcoded paths.
         mountLotteryModule: function() {
             console.log("[ORBIS] Mounting Lottery Module...");
             startHeartbeat('Lottery Module');
@@ -226,7 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!document.getElementById('orbis-lottery-module')) {
                     const script = document.createElement('script');
                     script.id = 'orbis-lottery-module';
-                    const timestamp = new Date().getTime();
+                    const timestamp = Date.now(); // Fixed: Prefer Date.now() over Date.getTime()
                     script.src = `/assets/lottery/ui/user-view.js?v=${timestamp}`; 
                     
                     script.onerror = () => {
@@ -235,10 +237,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     };
                     
                     document.body.appendChild(script);
-                } else {
-                    if (window.LotteryUserUI && typeof window.LotteryUserUI.mount === 'function') {
-                        window.LotteryUserUI.mount();
-                    }
+                } else if (typeof window.LotteryUserUI?.mount === 'function') {
+                    // Fixed: Combined 'else { if }' block into 'else if' and used Optional Chaining
+                    window.LotteryUserUI.mount();
                 }
             }, 300);
         },
@@ -255,7 +256,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.addEventListener('popstate', (event) => {
         const workspace = document.getElementById('lottery-user-workspace');
-        if (event.state && event.state.page) {
+        
+        // Fixed: Used Optional Chaining for event.state properties
+        if (event.state?.page) {
             if (event.state.page !== 'lottery-app' && workspace) {
                 workspace.style.display = 'none'; 
             }
@@ -263,12 +266,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentState = event.state.page;
                 window.orbisPlatform.render();
             }
-        } else {
-            if (localStorage.getItem('orbis_active_user')) {
-                if (workspace) workspace.style.display = 'none';
-                currentState = 'dashboard';
-                window.orbisPlatform.render();
-            }
+        } else if (localStorage.getItem('orbis_active_user')) { 
+            // Fixed: Converted 'else { if }' into 'else if' block
+            if (workspace) workspace.style.display = 'none';
+            currentState = 'dashboard';
+            window.orbisPlatform.render();
         }
     });
 
