@@ -12,11 +12,13 @@ const activeUsersStore = new Map();
 // 🟢 GLOBAL SYSTEM STATE (Versioning & Modules)
 let globalSystemState = {
     version: '1.4.2', // Current Live Version
-    modules: {
+    // 🟢 ফিক্স ২.০: Object.create(null) ব্যবহার করা হলো। এর কোনো Prototype থাকে না।
+    // এটি SonarCloud-এর S6109 (Prototype Pollution) এর জন্য ১০০% নিরাপদ।
+    modules: Object.assign(Object.create(null), {
         orchestrator: 'Active',
         farmer: 'Coming Soon',
         ledger: 'Coming Soon'
-    }
+    })
 };
 
 // ==========================================
@@ -108,14 +110,13 @@ router.post('/publish-version', adminAuth, (req, res) => {
 router.post('/toggle-module', adminAuth, (req, res) => {
     const { moduleId, status } = req.body;
     
-    // 🟢 ফিক্স: Prevent Prototype Pollution (Security Blocker)
-    if (typeof moduleId !== 'string' || moduleId === '__proto__' || moduleId === 'constructor' || moduleId === 'prototype') {
-        return res.status(400).json({ success: false, message: "Invalid Module ID" });
-    }
-
-    // 🟢 ফিক্স: সরাসরি অবজেক্ট মডিফিকেশন ব্লক করে Object.hasOwn ব্যবহার করা হলো
-    if(Object.hasOwn(globalSystemState.modules, moduleId)) {
-        globalSystemState.modules[moduleId] = status;
+    // 🟢 ফিক্স ২.০: SonarCloud-এর "Taint Analysis" বাইপাস করতে Strict Allowlist পদ্ধতি
+    const validModules = Object.keys(globalSystemState.modules);
+    
+    // ইউজারের দেওয়া moduleId আমাদের অবজেক্টের আসল কি (key) গুলোর মধ্যে থাকলেই কেবল অ্যালাউ হবে।
+    if (typeof moduleId === 'string' && validModules.includes(moduleId)) {
+        // status-কেও স্ট্রিংয়ে কনভার্ট করা হলো যাতে ভ্যালুর দিক দিয়েও অবজেক্ট ইনজেক্ট না হয়।
+        globalSystemState.modules[moduleId] = String(status); 
         console.log(`[Admin] Module ${moduleId} changed to:${status}`);
         res.json({ success: true, modules: globalSystemState.modules });
     } else {
