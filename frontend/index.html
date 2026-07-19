@@ -31,7 +31,7 @@
 
     <header class="top-nav" style="display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; gap: 10px;">
         <div class="brand" style="display: flex; align-items: center; gap: 8px; font-weight: 800; color: var(--navy-blue); white-space: nowrap;">
-            <button onclick="toggleSidebar()" id="mobile-menu-btn" style="background:transparent; border:none; font-size:1.4rem; cursor:pointer; color:var(--navy-blue); padding-right:5px;">☰</button>
+            <button onclick="toggleSidebar()" id="mobile-menu-btn" aria-label="Toggle mobile menu" style="background:transparent; border:none; font-size:1.4rem; cursor:pointer; color:var(--navy-blue); padding-right:5px;">☰</button>
             <span>ORBIS AI</span>
         </div>
         <div class="sys-badges" style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
@@ -45,7 +45,8 @@
     </header>
 
     <div class="main-layout">
-        <div id="dashboard-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+        <!-- Fixed: Added role, tabindex, aria-label and onkeydown -->
+        <div id="dashboard-overlay" class="sidebar-overlay" role="button" tabindex="0" aria-label="Close sidebar" onclick="toggleSidebar()" onkeydown="if(event.key === 'Enter') toggleSidebar()"></div>
 
         <!-- dev-sidebar (Admin Cockpit) HAS BEEN MIGRATED TO admin.html -->
 
@@ -53,10 +54,11 @@
             <div class="chat-display" id="chat-box"></div>
             <div class="input-dock">
                 <div class="smart-input-box">
-                    <select id="lang-select" class="lang-selector"><option value="bn-IN">BN</option></select>
-                    <input type="text" id="prompt-box" placeholder="Message ORBIS..." onkeydown="if(event.key === 'Enter') window.dispatchToAI()" />
-                    <button id="mic-btn" class="btn-icon" onclick="window.startVoiceEngine()">🎙️</button>
-                    <button id="send-btn" class="btn-send" onclick="window.dispatchToAI()">➤</button>
+                    <!-- Fixed: Added aria-label to inputs and buttons -->
+                    <select id="lang-select" class="lang-selector" aria-label="Select language"><option value="bn-IN">BN</option></select>
+                    <input type="text" id="prompt-box" aria-label="Message ORBIS" placeholder="Message ORBIS..." onkeydown="if(event.key === 'Enter') window.dispatchToAI()" />
+                    <button id="mic-btn" class="btn-icon" aria-label="Start voice input" onclick="window.startVoiceEngine()">🎙️</button>
+                    <button id="send-btn" class="btn-send" aria-label="Send message" onclick="window.dispatchToAI()">➤</button>
                 </div>
             </div>
         </main>
