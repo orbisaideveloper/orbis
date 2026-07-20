@@ -39,8 +39,9 @@
         .module-card {
             background: #ffffff; border: 1px solid var(--border); padding: 12px 15px; border-radius: 4px;
             display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 0.85rem;
-            border-left: 6px solid var(--green); /* Restored the thick green border */
+            border-left: 6px solid var(--green); cursor: pointer; transition: 0.2s;
         }
+        .module-card:hover { border-color: var(--saffron); background: #f8fafc; }
         .badge-active { background: var(--green); color: white; padding: 4px 8px; border-radius: 12px; font-size: 0.65rem; }
 
         /* Terminal & Tree Box */
@@ -56,6 +57,34 @@
         .t-yellow { color: #fbbf24; }
         .t-muted { color: #64748b; }
         .t-green { color: #10b981; }
+
+        /* --- MODAL (POP-UP) STYLES --- */
+        #data-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; padding: 15px; box-sizing: border-box; }
+        .modal-content { background: var(--bg); width: 100%; max-width: 700px; border-radius: 6px; border: 2px solid var(--saffron); overflow: hidden; display: flex; flex-direction: column; }
+        .modal-header { padding: 12px; background: var(--dark); color: white; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size:0.9rem;}
+        
+        /* Modal Tabs */
+        .modal-tabs { display: flex; background: #e2e8f0; border-bottom: 1px solid var(--border); }
+        .tab-btn { flex: 1; padding: 10px; border: none; background: none; font-weight: bold; font-family: inherit; font-size: 0.8rem; cursor: pointer; color: var(--text-muted); transition: 0.2s;}
+        .tab-btn.active { background: white; color: var(--saffron); border-bottom: 2px solid var(--saffron); }
+        
+        .modal-body { padding: 15px; max-height: 60vh; overflow-y: auto; background: white; }
+        .modal-footer { padding: 10px; display: flex; gap: 10px; border-top: 1px solid var(--border); background: #f1f5f9; }
+        
+        .btn { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-family: inherit; font-size:0.75rem;}
+        .btn-action { background: var(--dark); color: white; }
+        .btn-close { background: #cbd5e1; color: var(--text-main); }
+        .btn-danger { background: #ef4444; color: white; }
+
+        /* Chat UI Inside Modal */
+        .chat-test-window { border: 1px solid var(--border); border-radius: 4px; height: 200px; display: flex; flex-direction: column; background: var(--bg); }
+        .chat-messages { flex: 1; padding: 10px; overflow-y: auto; font-size: 0.8rem; }
+        .chat-input-area { display: flex; border-top: 1px solid var(--border); }
+        .chat-input-area input { flex: 1; padding: 8px; border: none; outline: none; font-family: inherit; }
+        .chat-input-area button { background: var(--green); color: white; border: none; padding: 0 15px; cursor: pointer; font-weight: bold; }
+
+        .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .control-item { background: #f8fafc; border: 1px solid var(--border); padding: 10px; border-radius: 4px; text-align: center; }
     </style>
 </head>
 <body>
@@ -66,26 +95,26 @@
         <button class="btn-switch-ui" onclick="window.location.href='/'">🌐 Switch to User UI</button>
     </div>
 
-    <!-- 1. DYNAMIC COMPONENT REGISTRY (Restored Original Design) -->
+    <!-- 1. DYNAMIC COMPONENT REGISTRY (Clickable Modules) -->
     <div class="matrix-section">
         <h2>🚀 SYSTEM MODULES & PLUGINS</h2>
         <div id="dynamic-modules-container">
-            <div class="module-card">
+            <div class="module-card" onclick="openModuleInspector('brain_chat', 'ORBIS AI Chat (BrainHub)')">
                 <span>🧩 ORBIS AI Chat (BrainHub)</span>
                 <span class="badge-active">ACTIVE</span>
             </div>
-            <div class="module-card">
+            <div class="module-card" onclick="openModuleInspector('lottery_ledger', 'DigiLedger Lottery Engine')">
                 <span>🧩 DigiLedger Lottery Engine</span>
                 <span class="badge-active">ACTIVE</span>
             </div>
         </div>
     </div>
 
-    <!-- 2. DEPENDENCY TREE (Restored exactly from screenshot 1000287177.jpg) -->
+    <!-- 2. DEPENDENCY TREE -->
     <div class="matrix-section">
         <h2>
             <span>🔗 LIVE ROUTING & DEPENDENCY TREE</span>
-            <button class="btn-copy" onclick="alert('Tree Copied!')">📋 Copy Tree</button>
+            <button class="btn-copy" onclick="copyTree()">📋 Copy Tree</button>
         </h2>
         <div class="tree-box" id="dependency-tree-box">
 [ 👤 ] Client Interface
@@ -104,11 +133,11 @@
         <div class="grid-3">
             <div class="stat-card">
                 <div class="stat-title">Latency</div>
-                <div class="stat-val" id="st-ping">13 ms</div>
+                <div class="stat-val" id="st-ping">12 ms</div>
             </div>
             <div class="stat-card">
                 <div class="stat-title">Process RAM</div>
-                <div class="stat-val" id="st-ram">155 MB</div>
+                <div class="stat-val" id="st-ram">156 MB</div>
             </div>
             <div class="stat-card">
                 <div class="stat-title">Active Users</div>
@@ -121,16 +150,177 @@
     <div class="matrix-section">
         <h2>
             <span>📜 GLOBAL RUNTIME LOGS</span>
-            <button class="btn-copy" style="background:var(--dark); color:var(--saffron); border-color:var(--saffron);" onclick="alert('Logs Copied!')">📋 COPY ALL LOGS</button>
+            <button class="btn-copy" style="background:var(--dark); color:var(--saffron); border-color:var(--saffron);" onclick="copyLogs()">📋 COPY ALL LOGS</button>
         </h2>
         <div class="terminal-box" id="terminal-logs">
             > ORBIS Admin Engine Boot Sequence Verified...<br>
-            > [12:11:09] Telemetry Sync OK.<br>
+        </div>
+    </div>
+
+    <!-- 5. THE MISSING MODAL (POP-UP) RESTORED -->
+    <div id="data-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span id="modal-title">Module Inspector</span>
+                <span style="cursor:pointer;" onclick="closeModal()">❌</span>
+            </div>
+            <div class="modal-tabs" id="modal-tabs-container">
+                <!-- Tabs injected dynamically -->
+            </div>
+            <div class="modal-body" id="modal-body-content">
+                <!-- Content injected via JS based on Tab -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-close" onclick="closeModal()">Close Console</button>
+            </div>
         </div>
     </div>
 
     <script>
-        // --- REAL-TIME ORBIS TELEMETRY SYNC (Preserving your old visual logic) ---
+        // --- COPY TO CLIPBOARD FUNCTIONS (Fixed) ---
+        function copyTree() {
+            const treeText = document.getElementById('dependency-tree-box').innerText;
+            navigator.clipboard.writeText(treeText).then(() => {
+                alert("✅ Tree copied to clipboard!");
+            }).catch(err => {
+                alert("Failed to copy. Your browser might block this.");
+            });
+        }
+
+        function copyLogs() {
+            const logText = document.getElementById('terminal-logs').innerText;
+            navigator.clipboard.writeText(logText).then(() => {
+                alert("✅ All Logs copied to clipboard!");
+            }).catch(err => {
+                alert("Failed to copy.");
+            });
+        }
+
+        // --- MODAL & TAB LOGIC (Restored Original Logic) ---
+        let currentActiveModule = '';
+
+        function openModuleInspector(moduleId, moduleName) {
+            currentActiveModule = moduleId;
+            document.getElementById('data-modal').style.display = 'flex';
+            document.getElementById('modal-title').innerText = "⚙️ " + moduleName;
+            
+            const tabsContainer = document.getElementById('modal-tabs-container');
+            
+            if(moduleId === 'brain_chat') {
+                tabsContainer.innerHTML = `
+                    <button class="tab-btn active" onclick="switchTab('test', this)">Test Interface</button>
+                    <button class="tab-btn" onclick="switchTab('control', this)">Admin Controls</button>
+                `;
+                renderChatTestUI();
+            } else if (moduleId === 'lottery_ledger') {
+                tabsContainer.innerHTML = `
+                    <button class="tab-btn active" onclick="switchTab('control', this)">Engine Controls</button>
+                    <button class="tab-btn" onclick="switchTab('logs', this)">Audit Logs</button>
+                `;
+                renderLotteryControls();
+            }
+        }
+
+        function switchTab(tabType, btnElement) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            btnElement.classList.add('active');
+
+            if(currentActiveModule === 'brain_chat') {
+                if(tabType === 'test') renderChatTestUI();
+                if(tabType === 'control') renderChatControls();
+            } else if (currentActiveModule === 'lottery_ledger') {
+                if(tabType === 'control') renderLotteryControls();
+                if(tabType === 'logs') renderLotteryLogs();
+            }
+        }
+
+        function closeModal() { 
+            document.getElementById('data-modal').style.display = 'none'; 
+        }
+
+        // --- MODAL VIEWS (Chat & Lottery) ---
+        function renderChatTestUI() {
+            document.getElementById('modal-body-content').innerHTML = `
+                <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:10px;">Simulation of End-User Client UI. Connected to LocalNLP/Gemini.</div>
+                <div class="chat-test-window">
+                    <div class="chat-messages" id="sim-chat-box">
+                        <div style="color:var(--text-muted); margin-bottom:5px;">System: AI Bridge Connected.</div>
+                    </div>
+                    <div class="chat-input-area">
+                        <input type="text" id="sim-chat-input" placeholder="Type a message to test AI...">
+                        <button onclick="sendTestChat()">Send</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function sendTestChat() {
+            const input = document.getElementById('sim-chat-input');
+            const box = document.getElementById('sim-chat-box');
+            if(!input.value) return;
+            box.innerHTML += `<div style="color:var(--dark); font-weight:bold; margin-top:5px;">User: ${input.value}</div>`;
+            box.innerHTML += `<div style="color:var(--saffron); font-size:0.8rem;">[AI Processing...]</div>`;
+            input.value = '';
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function renderChatControls() {
+            document.getElementById('modal-body-content').innerHTML = `
+                <div class="control-grid">
+                    <div class="control-item">
+                        <div style="font-size:0.75rem; font-weight:bold;">Memory Nodes</div>
+                        <div style="color:var(--green); font-size:1.2rem; font-weight:bold; margin:5px 0;" id="modal-node-count">36</div>
+                        <button class="btn btn-danger" style="width:100%">CLEAR MEMORY</button>
+                    </div>
+                    <div class="control-item">
+                        <div style="font-size:0.75rem; font-weight:bold;">AI Provider</div>
+                        <div style="color:var(--saffron); font-size:0.8rem; margin:5px 0;">Currently: Gemini Flash</div>
+                        <button class="btn btn-action" style="width:100%">TOGGLE LOCAL NLP</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderLotteryControls() {
+            document.getElementById('modal-body-content').innerHTML = `
+                <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:10px;">DigiLedger Master Overrides</div>
+                <div class="control-grid">
+                    <div class="control-item">
+                        <div style="font-size:0.75rem; font-weight:bold;">Current Draw Pool</div>
+                        <div style="color:var(--green); font-size:1.2rem; font-weight:bold; margin:5px 0;">Active</div>
+                        <button class="btn btn-action" style="width:100%; background:var(--saffron);">FORCE DRAW NOW</button>
+                    </div>
+                    <div class="control-item">
+                        <div style="font-size:0.75rem; font-weight:bold;">System Status</div>
+                        <div style="color:var(--green); font-size:0.9rem; font-weight:bold; margin:5px 0;">Running</div>
+                        <button class="btn btn-danger" style="width:100%">PAUSE ENGINE</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderLotteryLogs() {
+            document.getElementById('modal-body-content').innerHTML = `
+                <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:5px;">Recent Ledger Transactions (JSON)</div>
+                <pre style="background:var(--dark); color:#10b981; padding:10px; border-radius:4px; font-size:0.75rem; height:150px; overflow-y:auto;" id="lottery-json-box">
+{
+  "last_draw": "11:30 AM",
+  "status": "SUCCESS",
+  "hash": "0x8f7a99...",
+  "active_tickets": 142
+}
+                </pre>
+                <button class="btn btn-action" style="width:100%; margin-top:5px;" onclick="copyLotteryJSON()">📋 Copy JSON Data</button>
+            `;
+        }
+
+        function copyLotteryJSON() {
+            const jsonText = document.getElementById('lottery-json-box').innerText;
+            navigator.clipboard.writeText(jsonText).then(() => alert("✅ JSON Copied!"));
+        }
+
+
+        // --- REAL-TIME ORBIS TELEMETRY SYNC ---
         async function fetchLiveBrainData() {
             try {
                 const response = await fetch('/api/telemetry');
@@ -139,7 +329,7 @@
                 if (result.success && result.telemetry) {
                     const data = result.telemetry;
                     
-                    // 1. Update Hardware Stats (Preserving your green text layout)
+                    // Update Hardware Stats
                     if(data.latency) document.getElementById('st-ping').innerText = data.latency + " ms";
                     if(data.ramUsage) document.getElementById('st-ram').innerText = data.ramUsage + " MB";
                     
@@ -148,32 +338,28 @@
                         : (data.memoryNodes || 0);
                     document.getElementById('st-users').innerText = activeCount;
 
-                    // 2. Update the Node count in the Dependency Tree live!
+                    // Update Node count in Tree
                     if(data.memoryNodes) {
                         document.getElementById('tree-nodes').innerText = data.memoryNodes;
                     }
                     
-                    // 3. Update Global Runtime Logs
+                    // Update Global Runtime Logs
                     const logBox = document.getElementById('terminal-logs');
                     
-                    // Add standard sync log just like in your screenshot 1000287215.jpg
                     const now = new Date();
                     const timeStr = now.toTimeString().split(' ')[0];
                     let logHTML = `<div style="color:#10b981;">> [${timeStr}] Telemetry Sync OK.</div>`;
                     
-                    // Add real backend logs if they exist
                     if (data.logs && data.logs.length > 0) {
                         data.logs.forEach(log => {
-                            let color = '#38bdf8'; // Blue for info
-                            if (log.level === 'ERR') color = '#ef4444'; // Red
-                            if (log.level === 'WARN') color = '#fbbf24'; // Yellow
+                            let color = '#38bdf8'; 
+                            if (log.level === 'ERR') color = '#ef4444';
+                            if (log.level === 'WARN') color = '#fbbf24';
                             logHTML += `<div style="color:${color};">> [${log.time}] [${log.level}] ${log.message}</div>`;
                         });
                     }
                     
                     logBox.innerHTML += logHTML;
-                    
-                    // Auto-scroll to bottom of logs
                     logBox.scrollTop = logBox.scrollHeight;
                 }
             } catch (error) {
@@ -183,7 +369,6 @@
 
         // Initialize on load
         window.onload = () => {
-            // Fetch live data every 3 seconds so the terminal keeps scrolling like a real server
             setInterval(fetchLiveBrainData, 3000); 
         };
     </script>
