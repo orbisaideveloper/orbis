@@ -27,14 +27,14 @@ jobs:
       uses: actions/checkout@v4 # লেটেস্ট সিকিউরিটির জন্য v4 করা হলো
 
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v3
+      uses: github/codeql-action/init@v4
       with:
         languages: ${{ matrix.language }}
 
     - name: Autobuild
-      uses: github/codeql-action/autobuild@v3 # কোড বিল্ড করার জন্য এই লাইনটা জরুরি
+      uses: github/codeql-action/autobuild@v4 # কোড বিল্ড করার জন্য এই লাইনটা জরুরি
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v3
+      uses: github/codeql-action/analyze@v4
       with:
         category: "/language:${{matrix.language}}"
