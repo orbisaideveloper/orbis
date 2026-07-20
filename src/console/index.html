@@ -48,8 +48,8 @@
         
         <h2>Live Execution Logs</h2>
         <div class="live-logs" id="logs">
-            > ORBIS System Boot Sequence Initiated...<br>
-            > Waiting for connections...<br>
+            &gt; ORBIS System Boot Sequence Initiated...<br>
+            &gt; Waiting for connections...<br>
         </div>
     </div>
 
@@ -68,7 +68,7 @@
         function logToConsole(message) {
             const logs = document.getElementById('logs');
             const time = new Date().toLocaleTimeString();
-            logs.innerHTML += `> [${time}] ${message}<br>`;
+            logs.innerHTML += `&gt; [${time}] ${message}<br>`;
             logs.scrollTop = logs.scrollHeight;
         }
 
@@ -112,4 +112,3 @@
     </script>
 </body>
 </html>
-
