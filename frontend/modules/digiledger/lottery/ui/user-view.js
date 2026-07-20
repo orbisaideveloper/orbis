@@ -9,14 +9,18 @@ const lotteryHTML = `
             <button onclick="alert('System Ready for Action!')" style="padding: 12px 24px; background: #28a745; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; font-weight: bold;">
                 Initialize Ledger
             </button>
+            <button onclick="window.location.reload()" style="padding: 12px 24px; margin-left: 10px; background: #dc3545; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; font-weight: bold;">
+                Close & Back to Chat
+            </button>
         </div>
     </div>
 `;
 
-// Injecting the HTML into the main platform container
-const moduleContent = document.getElementById("module-content");
-if (moduleContent) {
-    moduleContent.innerHTML = lotteryHTML;
+// index.html-এ থাকা আসল কন্টেইনারে মডিউলটি বসাচ্ছি
+const platformRoot = document.getElementById("orbis-platform-root");
+
+if (platformRoot) {
+    platformRoot.innerHTML = lotteryHTML;
 } else {
-    console.error("Error: 'module-content' div not found in index.html!");
+    console.error("Error: 'orbis-platform-root' not found in index.html!");
 }
