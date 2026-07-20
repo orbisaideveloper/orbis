@@ -1,7 +1,8 @@
 import express from 'express';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import fs from 'fs'; 
+import path from 'node:path'; // SonarCloud Fix: Added 'node:' prefix
+import { fileURLToPath } from 'node:url'; // SonarCloud Fix: Added 'node:' prefix
+import fs from 'node:fs'; // SonarCloud Fix: Added 'node:' prefix
+import crypto from 'node:crypto'; // SonarCloud Fix: For secure random numbers
 
 import { createClient } from '@supabase/supabase-js';
 import { getTelemetryData, logRequest, addLog } from './brain/telemetry.js';
@@ -20,6 +21,10 @@ const __dirname = path.dirname(__filename);
 const ROOT_DIR = process.cwd(); 
 
 const app = express();
+
+// SonarCloud Fix: Hide Express version for security
+app.disable('x-powered-by'); 
+
 const PORT = process.env.PORT || 10000; 
 const brain = new BrainController(); 
 
@@ -28,23 +33,23 @@ const supabaseKey = process.env.SUPABASE_KEY || '';
 const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supabaseKey) : null;
 
 // ==============================================================
-// 🟢 WINSTON LOGGER SETUP (Error & System Logs Saver)
+// 🟢 WINSTON LOGGER SETUP (Optimized)
 // ==============================================================
 const logger = winston.createLogger({
     level: 'info',
     format: winston.format.combine(
         winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-        winston.format.printf(info => `[${info.timestamp}] [${info.level.toUpperCase()}]: ${info.message}`)
+        // SonarCloud Fix: Prevent '[object Object]' logging issue
+        winston.format.printf(info => `[${info.timestamp}] [${info.level.toUpperCase()}]: ${typeof info.message === 'object' ? JSON.stringify(info.message) : info.message}`)
     ),
     transports: [
         new winston.transports.Console(),
-        // এররগুলো ফাইলে সেভ হবে (Render-এ ফাইলগুলো টেম্পোরারি থাকতে পারে, তবে লগগুলো পারফেক্ট দেখাবে)
         new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
         new winston.transports.File({ filename: 'logs/system.log' })
     ]
 });
 
-// Update old log function to use Winston
+// Old logic intact: Bridging old log function to new Winston logger
 const logSystemEvent = (level, source, message) => {
     const logMsg = `[${source}]: ${message}`;
     if (level === 'ERR') logger.error(logMsg);
@@ -55,9 +60,8 @@ const logSystemEvent = (level, source, message) => {
 };
 
 // ==============================================================
-// 🟢 NEW MIDDLEWARES (The Cockpit & The Tracker)
+// 🟢 MIDDLEWARES (Cockpit & Tracker)
 // ==============================================================
-// ১. The Cockpit: এটা আপনার /status লিংকে ড্যাশবোর্ড তৈরি করবে
 app.use(statusMonitor({
     title: 'ORBIS Core Status',
     path: '/status',
@@ -65,11 +69,9 @@ app.use(statusMonitor({
     chartVisibility: { cpu: true, mem: true, load: true, responseTime: true, rps: true, statusCodes: true }
 }));
 
-// ২. Morgan: কে কোন API কল করছে, তা রেন্ডারের লগে লাইভ প্রিন্ট করবে
 app.use(morgan('dev'));
 
-// ==============================================================
-
+// Old caching logic intact
 app.use((req, res, next) => {
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     next();
@@ -77,6 +79,7 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
+// Old Admin Security logic intact
 app.use('/admin.html', (req, res, next) => {
     logSystemEvent('INFO', 'Security', `Admin page access attempt from ${req.ip}`);
     const cookieHeader = req.headers.cookie || '';
@@ -90,17 +93,20 @@ app.use('/admin.html', (req, res, next) => {
     }
 });
 
-// 🟢 BULLETPROOF STATIC ROUTING
+// 🟢 BULLETPROOF STATIC ROUTING (Intact)
 app.use(express.static(path.join(ROOT_DIR, 'frontend'), { index: false }));
 app.use('/assets/lottery', express.static(path.join(ROOT_DIR, 'src/modules/digiledger/lottery/ui')));
 app.use('/assets/lottery/ui', express.static(path.join(ROOT_DIR, 'src/modules/digiledger/lottery/ui')));
 app.use('/src/modules/digiledger/lottery/ui', express.static(path.join(ROOT_DIR, 'src/modules/digiledger/lottery/ui')));
 
+// SonarCloud Fix: Secure pseudorandom number generator using crypto
 const getAppVersion = () => {
     if (process.env.SYSTEM_MODE === 'PRODUCTION') return process.env.FINAL_VERSION || '10.0-STABLE';
-    return `9.01-DEV-${Math.floor(1000 + Math.random() * 9000)}`;
+    const randomNum = crypto.randomInt(1000, 9999);
+    return `9.01-DEV-${randomNum}`;
 };
 
+// Old Home route logic intact
 app.get('/', (req, res) => {
     const indexPath = path.join(ROOT_DIR, 'frontend/index.html');
     fs.readFile(indexPath, 'utf8', (err, data) => {
@@ -108,12 +114,13 @@ app.get('/', (req, res) => {
             logSystemEvent('ERR', 'Server', 'Failed to load index.html');
             return res.status(500).send('System Core Error');
         }
-        res.send(data.replace(/{{APP_VERSION}}/g, getAppVersion()));
+        // SonarCloud Fix: Prefer replaceAll over replace with regex for exact string match
+        res.send(data.replaceAll('{{APP_VERSION}}', getAppVersion()));
     });
 });
 
 // ==============================================================
-// 🟢 JOI FILTER APPLIED TO LOGIN (ডেটা ছাঁকনি)
+// 🟢 JOI FILTER APPLIED TO LOGIN (Intact)
 // ==============================================================
 const loginSchema = Joi.object({
     mobile: Joi.string().min(4).required(),
@@ -121,7 +128,6 @@ const loginSchema = Joi.object({
 });
 
 app.post('/api/auth/login', (req, res) => {
-    // Joi দিয়ে আগে ডেটা চেক করা হচ্ছে
     const { error, value } = loginSchema.validate(req.body);
     
     if (error) {
@@ -132,7 +138,6 @@ app.post('/api/auth/login', (req, res) => {
     const { mobile, password } = value;
     logSystemEvent('INFO', 'Auth', `Login attempt for identity: ${mobile}`);
 
-    // Admin-User Separate Logic
     if (mobile === 'admin' && password === 'admin123') { 
         res.cookie('orbis_admin_session', 'SECURE', { httpOnly: true, maxAge: 30 * 24 * 60 * 60 * 1000 });
         res.status(200).json({ success: true, user: { uid: 'ADM_MASTER', mobile, role: 'ADMIN' }, token: 'ORBIS_ADMIN_API_TOKEN' });
@@ -154,7 +159,7 @@ app.get('/admin/login', (req, res) => {
     else res.send('<h2 style="text-align:center; margin-top:20%;">Admin Workspace (Coming Soon)</h2>');
 });
 
-// Main Platform Routes
+// Old Routes Intact
 app.use('/api/admin', adminRoutes);
 app.use('/api/lottery', lotteryRoutes);
 
