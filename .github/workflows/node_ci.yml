@@ -24,6 +24,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # 🚀 নতুন: HTML Validator (ট্যাগ বা স্ট্রাকচারে ভুল আছে কিনা চেক করবে)
+      - name: HTML Syntax Checker
+        run: npx htmlhint "**/*.html"
+
+      # 🚀 নতুন: ESLint (জাভাস্ক্রিপ্টের সাইলেন্ট ফেইলর ও লজিক্যাল ভুল ধরবে)
+      - name: Run ESLint
+        run: npx eslint . --ext .js
+
       - name: Run Jest Tests
         run: npm test
         env:
@@ -34,7 +42,6 @@ jobs:
 
       - name: SonarCloud Scan
         if: github.actor != 'dependabot[bot]'
-        # Updated to the correct SHA you just found!
         uses: SonarSource/sonarqube-scan-action@22918119ff8e1ca75a623e15c8296b6ea4fbe28f
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
