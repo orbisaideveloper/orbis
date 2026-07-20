@@ -45,16 +45,43 @@
     </header>
 
     <div class="main-layout">
-        <!-- Fixed: Added role, tabindex, aria-label and onkeydown -->
+        <!-- Dashboard Overlay -->
         <div id="dashboard-overlay" class="sidebar-overlay" role="button" tabindex="0" aria-label="Close sidebar" onclick="toggleSidebar()" onkeydown="if(event.key === 'Enter') toggleSidebar()"></div>
 
-        <!-- dev-sidebar (Admin Cockpit) HAS BEEN MIGRATED TO admin.html -->
+        <!-- Hierarchical Sidebar (Your exact vision) -->
+        <aside id="user-sidebar" class="platform-sidebar" style="width: 280px; display: none; flex-direction: column; gap: 12px; padding: 20px; background: #f8fafc; border-right: 1px solid #e2e8f0; position: absolute; height: 100%; z-index: 1000; overflow-y: auto;">
+            
+            <div style="font-weight: 800; color: #64748b; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Main Navigation</div>
+            
+            <!-- 1. Chat Workspace -->
+            <button onclick="location.reload()" style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: white; border: 1px solid #cbd5e1; border-radius: 8px; cursor: pointer; text-align: left; font-weight: bold; color: #0f172a; width: 100%;">
+                💬 ORBIS Chat
+            </button>
+
+            <!-- 2. Farmer Brain / Agriculture Module -->
+            <button onclick="if(window.EventBus) window.EventBus.emit('NavigateTo', 'farmer-brain'); toggleSidebar();" style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: white; border: 1px solid #cbd5e1; border-radius: 8px; cursor: pointer; text-align: left; font-weight: bold; color: #0f172a; width: 100%;">
+                🌾 Farmer Agriculture
+            </button>
+
+            <div style="height: 1px; background: #e2e8f0; margin: 5px 0;"></div>
+
+            <!-- 3. DigiLedger Parent Menu -->
+            <div style="font-weight: 800; color: #64748b; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">DigiLedger (Accounts)</div>
+            
+            <!-- DigiLedger Sub-menu: Lottery Module -->
+            <div style="display: flex; flex-direction: column; gap: 6px; padding-left: 10px; border-left: 2px solid #FF9933;">
+                <button onclick="if(window.EventBus) window.EventBus.emit('NavigateTo', 'lottery'); toggleSidebar();" style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: linear-gradient(135deg, #FF9933 0%, #F57C00 100%); border: none; border-radius: 8px; cursor: pointer; text-align: left; font-weight: bold; color: white; box-shadow: 0 4px 6px rgba(255,153,51,0.3); width: 100%;">
+                    🎟️ Lottery Accounts & Dispatch
+                </button>
+                <!-- Future DigiLedger modules can be added right here easily! -->
+            </div>
+
+        </aside>
 
         <main class="chat-section">
             <div class="chat-display" id="chat-box"></div>
             <div class="input-dock">
                 <div class="smart-input-box">
-                    <!-- Fixed: Added aria-label to inputs and buttons -->
                     <select id="lang-select" class="lang-selector" aria-label="Select language"><option value="bn-IN">BN</option></select>
                     <input type="text" id="prompt-box" aria-label="Message ORBIS" placeholder="Message ORBIS..." onkeydown="if(event.key === 'Enter') window.dispatchToAI()" />
                     <button id="mic-btn" class="btn-icon" aria-label="Start voice input" onclick="window.startVoiceEngine()">🎙️</button>
