@@ -8,6 +8,17 @@ window.ModuleLoader = {
     },
 
     loadModule: async function(moduleName) {
+        // UI Toggle Logic: লটারি মডিউলে চ্যাট সেকশন হাইড করার লজিক
+        const chatSection = document.querySelector('.chat-section');
+        if (chatSection) {
+            // যদি মডিউলের নাম lottery হয়, তবে চ্যাট হাইড হবে, অন্যথায় দৃশ্যমান থাকবে
+            if (moduleName === 'lottery' || moduleName.includes('lottery')) {
+                chatSection.style.display = 'none';
+            } else {
+                chatSection.style.display = ''; // ডিফল্ট CSS স্টাইলে ফিরে যাবে
+            }
+        }
+
         if (moduleName === 'home') {
             // হোম ভিউ রেন্ডার লজিক
             return;
