@@ -75,6 +75,13 @@
 
         .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .control-item { background: #f8fafc; border: 1px solid var(--border); padding: 10px; border-radius: 4px; text-align: center; }
+
+        /* Workflow Dependency Tree Styles */
+        .workflow-step { display: flex; align-items: center; margin-bottom: 10px; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: #f1f5f9; }
+        .workflow-step-num { background: var(--dark); color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; justify-content: center; align-items: center; font-size: 0.7rem; font-weight: bold; margin-right: 10px; }
+        .workflow-step-info { flex: 1; font-size: 0.75rem; }
+        .workflow-agent { font-weight: bold; color: var(--green); }
+        .workflow-arrow { text-align: center; color: var(--saffron); font-size: 1.2rem; margin: -5px 0 5px 0; }
     </style>
 </head>
 <body>
@@ -100,14 +107,14 @@
         <div class="grid-3">
             <div class="stat-card">
                 <div class="stat-title">Latency</div>
-                <div class="stat-val" id="st-ping">12 ms</div>
+                <div class="stat-val" id="st-ping">0 ms</div>
             </div>
             <div class="stat-card">
                 <div class="stat-title">Process RAM</div>
-                <div class="stat-val" id="st-ram">155 MB</div>
+                <div class="stat-val" id="st-ram">0 MB</div>
             </div>
             <div class="stat-card">
-                <div class="stat-title">Active Users</div>
+                <div class="stat-title">Active Req/Nodes</div>
                 <div class="stat-val" id="st-users" style="color:var(--saffron)">0</div>
             </div>
         </div>
@@ -144,8 +151,8 @@
 
     <script>
         // --- 1. DYNAMIC MODULE REGISTRY SYSTEM ---
-        // In the future, this array can be fetched directly from your Express backend via an API
         const SYSTEM_MODULES = [
+            { id: 'brain_core', name: 'ORBIS Core Decision Engine', status: 'ONLINE' }, // 🟢 NEW MODULE ADDED
             { id: 'brain_chat', name: 'ORBIS AI Chat (BrainHub)', status: 'ACTIVE' },
             { id: 'lottery_ledger', name: 'DigiLedger Lottery Engine', status: 'ACTIVE' }
         ];
@@ -173,7 +180,13 @@
             
             const tabsContainer = document.getElementById('modal-tabs-container');
             
-            if(moduleId === 'brain_chat') {
+            if(moduleId === 'brain_core') {
+                tabsContainer.innerHTML = `
+                    <button class="tab-btn active" onclick="switchTab('decision', this)">Decision Tracker</button>
+                    <button class="tab-btn" onclick="switchTab('workflow', this)">Dependency Tree</button>
+                `;
+                renderDecisionTracker();
+            } else if(moduleId === 'brain_chat') {
                 tabsContainer.innerHTML = `
                     <button class="tab-btn active" onclick="switchTab('test', this)">Test Interface</button>
                     <button class="tab-btn" onclick="switchTab('control', this)">Admin Controls</button>
@@ -189,12 +202,13 @@
         }
 
         function switchTab(tabType, btnElement) {
-            // UI Tab switching
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             btnElement.classList.add('active');
 
-            // Render Content
-            if(currentActiveModule === 'brain_chat') {
+            if(currentActiveModule === 'brain_core') {
+                if(tabType === 'decision') renderDecisionTracker();
+                if(tabType === 'workflow') renderWorkflowTree();
+            } else if(currentActiveModule === 'brain_chat') {
                 if(tabType === 'test') renderChatTestUI();
                 if(tabType === 'control') renderChatControls();
             } else if (currentActiveModule === 'lottery_ledger') {
@@ -203,9 +217,69 @@
             }
         }
 
-        // --- 3. SPECIFIC MODULE VIEWS ---
-        
-        // Chat - Test View (To check if AI is working smoothly)
+        // --- 3. SPECIFIC MODULE VIEWS (INCL. NEW BRAIN LOGIC) ---
+
+        // 🟢 NEW: Decision Tracker UI based on DecisionEngine.js
+        function renderDecisionTracker() {
+            document.getElementById('modal-body-content').innerHTML = `
+                <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:10px;">Live Core Routing & Fallback Logic Observer</div>
+                <div class="control-grid">
+                    <div class="control-item">
+                        <div style="font-size:0.75rem; font-weight:bold;">Primary Routing</div>
+                        <div style="color:var(--green); font-size:0.9rem; font-weight:bold; margin:5px 0;">ACTIVE</div>
+                        <div style="font-size:0.65rem;">Engine: DecisionEngine</div>
+                    </div>
+                    <div class="control-item">
+                        <div style="font-size:0.75rem; font-weight:bold;">Active Provider Execute()</div>
+                        <div style="color:var(--saffron); font-size:0.9rem; font-weight:bold; margin:5px 0;" id="sim-provider-status">Awaiting Input...</div>
+                        <div style="font-size:0.65rem;">Status: ONLINE</div>
+                    </div>
+                </div>
+                <div style="margin-top:15px; background:var(--dark); color:#10b981; padding:10px; border-radius:4px; font-size:0.75rem; height:80px; overflow-y:auto;" id="sim-decision-log">
+                    > DecisionEngine initialized.<br>
+                    > Fallback logic ready.
+                </div>
+            `;
+        }
+
+        // 🟢 NEW: Dependency Tree UI based on WorkflowEngine.js
+        function renderWorkflowTree() {
+            document.getElementById('modal-body-content').innerHTML = `
+                <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:15px;">Sequential Execution of Tasks (Active Workflow)</div>
+                
+                <div class="workflow-step">
+                    <div class="workflow-step-num">1</div>
+                    <div class="workflow-step-info">
+                        <strong>Step Name:</strong> Context Aggregation<br>
+                        <strong>Agent:</strong> <span class="workflow-agent">ContextEngine</span>
+                    </div>
+                </div>
+                <div class="workflow-arrow">↓</div>
+                
+                <div class="workflow-step">
+                    <div class="workflow-step-num">2</div>
+                    <div class="workflow-step-info">
+                        <strong>Step Name:</strong> Intent & Routing Analysis<br>
+                        <strong>Agent:</strong> <span class="workflow-agent">DecisionEngine</span>
+                    </div>
+                </div>
+                <div class="workflow-arrow">↓</div>
+                
+                <div class="workflow-step">
+                    <div class="workflow-step-num" style="background:var(--saffron);">3</div>
+                    <div class="workflow-step-info">
+                        <strong>Step Name:</strong> LLM Execution<br>
+                        <strong>Agent:</strong> <span class="workflow-agent">Provider (Gemini/Local)</span>
+                    </div>
+                </div>
+                
+                <div style="margin-top:10px; text-align:right;">
+                    <button class="btn btn-action" onclick="alert('Manual Workflow Trigger dispatched.')">Simulate Workflow</button>
+                </div>
+            `;
+        }
+
+        // Existing Chat & Lottery UIs (Untouched)
         function renderChatTestUI() {
             document.getElementById('modal-body-content').innerHTML = `
                 <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:10px;">Simulation of End-User Client UI. Connected to LocalNLP/Gemini.</div>
@@ -229,10 +303,8 @@
             box.innerHTML += `<div style="color:var(--saffron); font-size:0.8rem;">[AI Processing...]</div>`;
             input.value = '';
             box.scrollTop = box.scrollHeight;
-            // Here you would hook up the actual fetch('/api/chat') call
         }
 
-        // Chat - Admin Controls
         function renderChatControls() {
             document.getElementById('modal-body-content').innerHTML = `
                 <div class="control-grid">
@@ -251,7 +323,6 @@
             `;
         }
 
-        // Lottery - Admin Controls
         function renderLotteryControls() {
             document.getElementById('modal-body-content').innerHTML = `
                 <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:10px;">DigiLedger Master Overrides</div>
@@ -270,7 +341,6 @@
             `;
         }
 
-        // Lottery - Logs
         function renderLotteryLogs() {
             document.getElementById('modal-body-content').innerHTML = `
                 <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:5px;">Recent Ledger Transactions (JSON)</div>
@@ -282,28 +352,4 @@
   "active_tickets": 142
 }
                 </pre>
-                <button class="btn btn-action" style="width:100%; margin-top:5px;" onclick="copyLotteryJSON()">📋 Copy JSON Data</button>
-            `;
-        }
-
-        function copyLotteryJSON() { alert("✅ Lottery JSON Copied to Clipboard"); }
-        function closeModal() { document.getElementById('data-modal').style.display = 'none'; }
-        
-        // Random Telemetry Simulation (Replace with actual fetch logic)
-        setInterval(() => {
-            const ping = Math.floor(Math.random() * 5) + 10;
-            document.getElementById('st-ping').innerText = ping + " ms";
-            const logBox = document.getElementById('terminal-logs');
-            if(Math.random() > 0.8) {
-                logBox.innerHTML += `<div style="color:#10b981;">> [${new Date().toLocaleTimeString()}] Telemetry Sync OK.</div>`;
-                logBox.scrollTop = logBox.scrollHeight;
-            }
-        }, 3000);
-
-        function copyLogs() { alert("✅ Global Logs Copied!"); }
-
-        // Initialize Dynamic Modules on load
-        window.onload = renderModules;
-    </script>
-</body>
-</html>
+                <button 
