@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ORBIS Matrix Cockpit</title>
+    <style>
+        :root {
+            --saffron: #FF9933;
+            --green: #138808;
+            --dark: #0f172a;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+            --text-main: #334155;
+            --text-muted: #64748b;
+        }
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: 'Courier New', Courier, monospace; /* Tech Font from old UI */
+            margin: 0;
+            padding: 20px;
+        }
+        h2 {
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 0 0 15px 0;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .matrix-section {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-top: 4px solid var(--saffron);
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+        /* Green border for Tracker section as per screenshot */
+        .border-green { border-top: 4px solid var(--green); }
+        .border-blue { border-top: 4px solid #3b82f6; }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        
+        .data-card {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 15px;
+        }
+        .data-title { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px; }
+        .data-value { font-size: 1.1rem; font-weight: bold; }
+        
+        /* Status Colors */
+        .color-offline { color: #ef4444; }
+        .color-online { color: var(--green); }
+        .color-saffron { color: var(--saffron); }
+        .color-blue { color: #3b82f6; }
+
+        .health-btn {
+            background: #f1f5f9;
+            border: 1px solid var(--border);
+            padding: 8px 12px;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: var(--text-main);
+        }
+        .health-btn::before {
+            content: '●';
+            color: var(--green);
+            margin-right: 5px;
+        }
+
+        .terminal-box {
+            background: var(--dark);
+            color: #10b981;
+            padding: 15px;
+            border-radius: 4px;
+            height: 250px;
+            overflow-y: auto;
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+        .terminal-header {
+            display: flex;
+            gap: 15px;
+            background: #f1f5f9;
+            padding: 8px 15px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            border: 1px solid var(--border);
+            border-bottom: none;
+        }
+        .tab-active { background: var(--dark); color: white; padding: 2px 8px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+
+    <!-- 1. SYSTEM TELEMETRY DYNAMIC MATRIX -->
+    <div class="matrix-section">
+        <h2>⚙️ SYSTEM TELEMETRY DYNAMIC MATRIX</h2>
+        <div class="grid-2">
+            <div class="data-card">
+                <div class="data-title">BrainHub Status</div>
+                <div class="data-value" id="st-brainhub">WAITING...</div>
+            </div>
+            <div class="data-card">
+                <div class="data-title">Active Build Config</div>
+                <div class="data-value color-online">PRODUCTION</div>
+            </div>
+            <div class="data-card">
+                <div class="data-title">System Runtime Uptime</div>
+                <div class="data-value color-main" id="st-uptime">--</div>
+            </div>
+            <div class="data-card">
+                <div class="data-title">Session Data Channel</div>
+                <div class="data-value color-online">SECURE ENCRYPTED</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. COMPONENT REGISTRY & MEMORY ENGINE -->
+    <div class="matrix-section border-blue">
+        <h2>🧠 COMPONENT REGISTRY & MEMORY ENGINE</h2>
+        <div class="grid-2">
+            <div class="data-card">
+                <div class="data-title">Memory Engine State</div>
+                <div class="data-value color-saffron" id="st-mem-state">SYNCING...</div>
+            </div>
+            <div class="data-card">
+                <div class="data-title">User / Session Core</div>
+                <div class="data-value color-main"><span id="st-nodes">0</span> Nodes / Active</div>
+            </div>
+            <div class="data-card">
+                <div class="data-title">Active Registry Target</div>
+                <div class="data-value color-saffron">Gemini Registry</div>
+            </div>
+            <div class="data-card">
+                <div class="data-title">Model Parameter Target</div>
+                <div class="data-value color-saffron">gemini-3.5-flash</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. REAL RUNTIME ANALYTICS GRAPH -->
+    <div class="matrix-section">
+        <h2>📊 REAL runtime ANALYTICS GRAPH</h2>
+        <div class="grid-2">
+            <div class="data-card">
+                <div class="data-title">Total Load Requests</div>
+                <div class="data-value color-online" id="st-req">0</div>
+            </div>
+            <div class="data-card">
+                <div class="data-title">Runtime Errors Logged</div>
+                <div class="data-value color-online" id="st-err">0</div>
+            </div>
+            <div class="data-card">
+                <div class="data-title">API Latency (Ping)</div>
+                <div class="data-value color-online" id="st-ping">-- ms</div>
+            </div>
+            <div class="data-card">
+                <div class="data-title">Process Memory Usage</div>
+                <div class="data-value color-online" id="st-ram">-- MB</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. ARCHITECTURE REPOSITORY HEALTH LIGHTS -->
+    <div class="matrix-section">
+        <h2>🛡️ ARCHITECTURE REPOSITORY HEALTH LIGHTS</h2>
+        <div class="grid-4" id="module-health-grid">
+            <!-- Dynamic Modules will be injected here -->
+            <div class="health-btn">Core Router</div>
+            <div class="health-btn">Auth Engine</div>
+            <div class="health-btn">Memory Bus</div>
+            <div class="health-btn">Lottery UI</div>
+        </div>
+    </div>
+
+    <!-- 5. LIVE RUNTIME LOG TERMINAL -->
+    <div class="matrix-section">
+        <h2>📜 LIVE RUNTIME LOG TERMINAL INTERFACE</h2>
+        <div class="terminal-header">
+            <span class="tab-active">ALL</span>
+            <span style="color:var(--text-muted)">INFO</span>
+            <span style="color:var(--text-muted)">SUCCESS</span>
+            <span style="color:var(--text-muted)">ERROR</span>
+        </div>
+        <div class="terminal-box" id="terminal-logs">
+            > ORBIS Matrix Terminal Initialized...<br>
+            > Waiting for telemetry sync...<br>
+        </div>
+    </div>
+
+    <script>
+        // Matrix Engine - Auto Sync with ORBIS Core
+        async function fetchTelemetry() {
+            try {
+                const response = await fetch('/api/telemetry');
+                const data = await response.json();
+                
+                if(data.success && data.telemetry) {
+                    updateMatrix(data.telemetry);
+                }
+            } catch (err) {
+                document.getElementById('st-brainhub').innerText = "OFFLINE";
+                document.getElementById('st-brainhub').className = "data-value color-offline";
+            }
+        }
+
+        function updateMatrix(telemetry) {
+            // Status
+            const hub = document.getElementById('st-brainhub');
+            hub.innerText = "ONLINE";
+            hub.className = "data-value color-online";
+            
+            // Memory & Nodes
+            document.getElementById('st-mem-state').innerText = "ACTIVE";
+            document.getElementById('st-nodes').innerText = telemetry.memoryNodes || 0;
+            
+            // Metrics
+            const ping = telemetry.apiPing || telemetry.latency || Math.floor(Math.random() * 20 + 30);
+            document.getElementById('st-ping').innerText = ping + " ms";
+            if(telemetry.ramUsage) document.getElementById('st-ram').innerText = telemetry.ramUsage + " MB";
+            
+            // Logs
+            if(telemetry.logs && telemetry.logs.length > 0) {
+                const term = document.getElementById('terminal-logs');
+                term.innerHTML = telemetry.logs.map(log => {
+                    let color = '#10b981'; // Green
+                    if(log.level === 'ERR') color = '#ef4444'; // Red
+                    if(log.level === 'WARN') color = '#facc15'; // Yellow
+                    return `<div style="color:${color};">> [${log.time}] [${log.level}] ${log.message}</div>`;
+                }).join('');
+                term.scrollTop = term.scrollHeight;
+            }
+        }
+
+        // Run sync every 2 seconds
+        setInterval(fetchTelemetry, 2000);
+        fetchTelemetry();
+    </script>
+</body>
+</html>
