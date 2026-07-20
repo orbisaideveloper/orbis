@@ -146,14 +146,14 @@
         </div>
     </div>
 
-    <!-- 4. TERMINAL LOGS -->
+    <!-- 4. TERMINAL LOGS (Fixed for HTML Syntax Checker) -->
     <div class="matrix-section">
         <h2>
             <span>📜 GLOBAL RUNTIME LOGS</span>
             <button class="btn-copy" style="background:var(--dark); color:var(--saffron); border-color:var(--saffron);" onclick="copyLogs()">📋 COPY ALL LOGS</button>
         </h2>
         <div class="terminal-box" id="terminal-logs">
-            > ORBIS Admin Engine Boot Sequence Verified...<br>
+            &gt; ORBIS Admin Engine Boot Sequence Verified...<br>
         </div>
     </div>
 
@@ -343,19 +343,19 @@
                         document.getElementById('tree-nodes').innerText = data.memoryNodes;
                     }
                     
-                    // Update Global Runtime Logs
+                    // Update Global Runtime Logs (Fixed > to &gt; inside JS template literal for safety)
                     const logBox = document.getElementById('terminal-logs');
                     
                     const now = new Date();
                     const timeStr = now.toTimeString().split(' ')[0];
-                    let logHTML = `<div style="color:#10b981;">> [${timeStr}] Telemetry Sync OK.</div>`;
+                    let logHTML = \`<div style="color:#10b981;">&gt; [\${timeStr}] Telemetry Sync OK.</div>\`;
                     
                     if (data.logs && data.logs.length > 0) {
                         data.logs.forEach(log => {
                             let color = '#38bdf8'; 
                             if (log.level === 'ERR') color = '#ef4444';
                             if (log.level === 'WARN') color = '#fbbf24';
-                            logHTML += `<div style="color:${color};">> [${log.time}] [${log.level}] ${log.message}</div>`;
+                            logHTML += \`<div style="color:\${color};">&gt; [\${log.time}] [\${log.level}] \${log.message}</div>\`;
                         });
                     }
                     
