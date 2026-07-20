@@ -103,7 +103,8 @@
                 <span>🧩 ORBIS AI Chat (BrainHub)</span>
                 <span class="badge-active">ACTIVE</span>
             </div>
-            <div class="module-card" onclick="openModuleInspector('lottery_ledger', 'DigiLedger Lottery Engine')">
+            <!-- FIXED: Changed 'lottery_ledger' to 'lottery' -->
+            <div class="module-card" onclick="openModuleInspector('lottery', 'DigiLedger Lottery Engine')">
                 <span>🧩 DigiLedger Lottery Engine</span>
                 <span class="badge-active">ACTIVE</span>
             </div>
@@ -212,7 +213,7 @@
                     <button class="tab-btn" onclick="switchTab('control', this)">Admin Controls</button>
                 `;
                 renderChatTestUI();
-            } else if (moduleId === 'lottery_ledger') {
+            } else if (moduleId === 'lottery') { // FIXED HERE
                 tabsContainer.innerHTML = `
                     <button class="tab-btn active" onclick="switchTab('control', this)">Engine Controls</button>
                     <button class="tab-btn" onclick="switchTab('logs', this)">Audit Logs</button>
@@ -228,7 +229,7 @@
             if(currentActiveModule === 'brain_chat') {
                 if(tabType === 'test') renderChatTestUI();
                 if(tabType === 'control') renderChatControls();
-            } else if (currentActiveModule === 'lottery_ledger') {
+            } else if (currentActiveModule === 'lottery') { // FIXED HERE
                 if(tabType === 'control') renderLotteryControls();
                 if(tabType === 'logs') renderLotteryLogs();
             }
