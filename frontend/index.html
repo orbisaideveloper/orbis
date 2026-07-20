@@ -8,8 +8,25 @@
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#FF9933">
     
-    <link rel="stylesheet" href="/css/style.css?v={{APP_VERSION}}">
-    <link rel="stylesheet" href="/css/platform-ui.css?v={{APP_VERSION}}">
+    <!-- CSS Files (Version 1.0.01) -->
+    <link rel="stylesheet" href="/css/style.css?v=1.0.01">
+    <link rel="stylesheet" href="/css/platform-ui.css?v=1.0.01">
+
+    <!-- 🚨 Global Error Catcher (Diagnostic Tool) 🚨 -->
+    <script>
+        "use strict";
+        
+        window.onerror = function(message, source, lineno, colno, error) {
+            const errorDiv = document.createElement('div');
+            errorDiv.style.cssText = "position:fixed; top:0; left:0; width:100%; background:#dc3545; color:white; padding:20px; z-index:9999; font-weight:bold; box-shadow:0 4px 6px rgba(0,0,0,0.3);";
+            errorDiv.innerHTML = `🚨 ORBIS System Error Detected!<br><br>
+                                  <b>Message:</b> ${message}<br>
+                                  <b>File:</b> ${source}<br>
+                                  <b>Line:</b> ${lineno}`;
+            document.body.appendChild(errorDiv);
+            return false;
+        };
+    </script>
 </head>
 <body>
 
@@ -57,17 +74,18 @@
         </main>
     </div>
 
-    <script src="/js/ui-core.js?v={{APP_VERSION}}"></script>
-    <script src="/js/ui-dashboard.js?v={{APP_VERSION}}"></script>
-    <script src="/js/ui-telemetry.js?v={{APP_VERSION}}"></script>
-    <script src="/js/ui-chat.js?v={{APP_VERSION}}"></script>
-    <script src="/js/ui-voice.js?v={{APP_VERSION}}"></script>
+    <!-- JS Core Files (Version 1.0.01) -->
+    <script src="/js/ui-core.js?v=1.0.01"></script>
+    <script src="/js/ui-dashboard.js?v=1.0.01"></script>
+    <script src="/js/ui-telemetry.js?v=1.0.01"></script>
+    <script src="/js/ui-chat.js?v=1.0.01"></script>
+    <script src="/js/ui-voice.js?v=1.0.01"></script>
     
-    <script src="/js/module-registry.js?v={{APP_VERSION}}"></script>
-    <script src="/js/module-loader.js?v={{APP_VERSION}}"></script>
+    <script src="/js/module-registry.js?v=1.0.01"></script>
+    <script src="/js/module-loader.js?v=1.0.01"></script>
 
-    <script src="/js/platform-core.js?v={{APP_VERSION}}"></script>
-    <script src="/js/platform-init.js?v={{APP_VERSION}}"></script>
+    <script src="/js/platform-core.js?v=1.0.01"></script>
+    <script src="/js/platform-init.js?v=1.0.01"></script>
 
 </body>
 </html>
