@@ -223,15 +223,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 platformRoot.style.display = 'none'; 
                 
                 if (window.ModuleLoader) {
+                    // শুধুমাত্র লোডারকে কল করা হচ্ছে, বাকি দায়িত্ব তার
                     window.ModuleLoader.loadModule('lottery');
-                    
-                    // 🟢 SAFETY FIX: মডিউল লোড হওয়ার পর জোর করে মাউন্ট করা হচ্ছে
-                    setTimeout(() => {
-                        if (typeof window.LotteryUserUI?.mount === 'function') {
-                            window.LotteryUserUI.mount();
-                        }
-                    }, 500);
-                    
                 } else {
                     console.error("[ORBIS] Pipeline broken: ModuleLoader not found!");
                     alert("Error 500: Module Loader pipeline failed.");
