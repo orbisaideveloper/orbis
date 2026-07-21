@@ -1,9 +1,6 @@
-"use strict"; // Strict mode enabled
-
 window.ModuleLoader = {
-    
     // মডিউল লোড এবং UI টগল করার লজিক
-    loadModule: async function(moduleName) {
+    loadModule: function(moduleName) {
         const chatSection = document.querySelector('.chat-section');
         const topNav = document.querySelector('.top-nav');
 
@@ -17,38 +14,51 @@ window.ModuleLoader = {
             if (topNav) topNav.style.display = 'flex';
         }
 
-        if (moduleName === 'home') {
+        if (moduleName === 'home') return;
+
+        // মডিউল রেজিস্ট্রি থেকে সঠিক পাথ টেনে আনা হচ্ছে (যাতে কোনো কনফ্লিক্ট না হয়)
+        let scriptPath = '';
+        if (window.ModuleRegistry && window.ModuleRegistry.get(moduleName)) {
+            scriptPath = window.ModuleRegistry.get(moduleName).scriptPath;
+        } else {
+            // ফলব্যাক পাথ
+            scriptPath = moduleName === 'lottery' 
+                ? '/modules/digiledger/lottery/ui/user-view.js' 
+                : `/modules/${moduleName}/${moduleName}.js`;
+        }
+
+        this.injectScript(scriptPath, moduleName);
+    },
+
+    // স্ক্রিপ্ট ইনজেক্ট এবং সঠিক সময়ে মাউন্ট করার লজিক
+    injectScript: function(path, moduleName) {
+        // যদি স্ক্রিপ্ট আগে থেকেই লোড করা থাকে, তবে আবার লোড না করে সরাসরি মাউন্ট করবে
+        if (document.querySelector(`script[src^="${path.split('?')[0]}"]`)) {
+            this.triggerMount(moduleName);
             return;
         }
 
-        // মডিউলের ডাইনামিক পাথ তৈরি করা
-        let scriptPath = `/modules/${moduleName}/${moduleName}.js`; 
-        
-        // 🚀 লটারির জন্য কাস্টম পাথ আপডেট করা হয়েছে (কারণ এটি digiledger-এর ভেতর আছে)
-        if (moduleName === 'lottery' || moduleName.includes('lottery')) {
-            scriptPath = `/modules/digiledger/lottery/ui/user-view.js`;
-        }
-
-        this.injectScript(scriptPath);
-    },
-
-    // স্ক্রিপ্ট ইনজেক্ট এবং ক্যাশ ক্লিয়ারিং লজিক
-    injectScript: function(path) {
         const script = document.createElement('script');
-        
-        // 🚀 Cache Buster: প্রতিবার লোড হওয়ার সময় ফাইলের নামের শেষে নতুন টাইমস্ট্যাম্প বসিয়ে দেবে
-        // ফলে ব্রাউজার পুরনো ক্যাশ ধরে রাখতে পারবে না!
         const cacheBuster = new Date().getTime(); 
         script.src = `${path}?v=${cacheBuster}`;
         
-        script.onload = () => console.log(`✅ Successfully loaded: ${path}`);
+        script.onload = () => {
+            console.log(`✅ Successfully loaded: ${path}`);
+            // 🚀 আসল ম্যাজিক: ফাইল পুরোপুরি ডাউনলোড হওয়ার পরই মাউন্ট ট্রিগার হবে
+            this.triggerMount(moduleName);
+        };
         
         script.onerror = () => {
-            // স্ক্রিপ্ট লোড হতে ফেইল করলে আমরা ইচ্ছা করে একটি Error থ্রো করছি, 
-            // যাতে আপনার index.html-এ বসানো 'Global Error Catcher' এটা ধরে ফেলে এবং স্ক্রিনে লাল দাগ দেখায়।
-            throw new Error(`System Error: Failed to load module script from path: ${path}`);
+            console.error(`❌ System Error: Failed to load module script from path: ${path}`);
         };
         
         document.body.appendChild(script);
+    },
+
+    // মডিউল স্ক্রিনে রেন্ডার করার ফাংশন
+    triggerMount: function(moduleName) {
+        if (moduleName === 'lottery' && typeof window.LotteryUserUI !== 'undefined' && typeof window.LotteryUserUI.mount === 'function') {
+            window.LotteryUserUI.mount();
+        }
     }
 };
