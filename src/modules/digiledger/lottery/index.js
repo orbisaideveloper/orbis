@@ -26,3 +26,31 @@ window.LotteryModule = {
         `;
     }
 };
+
+    // কনসোল দেখার টুল ইনজেক্ট করা হচ্ছে
+(function () {
+    var script = document.createElement('script');
+    script.src = "https://cdn.jsdelivr.net/npm/eruda";
+    document.body.appendChild(script);
+    script.onload = function () { eruda.init() };
+})();
+
+window.LotteryModule = {
+    mount: function() {
+        console.log("🚀 Lottery Micro-App is booting up...");
+        
+        const workspace = document.getElementById('orbis-workspace') || document.querySelector('.main-content');
+        
+        if (!workspace) {
+            console.error("❌ Error: ORBIS Workspace container not found!");
+            return;
+        }
+        
+        workspace.innerHTML = `
+            <div class="lottery-module-container" style="padding: 20px; color: #fff; background: #1a1a2e; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; font-family: sans-serif;">
+                <h1 style="color: #4CAF50; margin-bottom: 10px;">🎟️ Lottery Module Hooked Successfully!</h1>
+                <p style="font-size: 18px;">যদি আপনি এই লেখাটি দেখতে পান, তার মানে সব ঠিক আছে!</p>
+            </div>
+        `;
+    }
+};
