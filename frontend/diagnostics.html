@@ -156,22 +156,118 @@
                 <tr>
                     <td colspan="8" style="text-align: center; color: #8b949e;">No active scans. Enter a query or run a module scan.</td>
                 </tr>
-                <!-- Dummy data format for testing -->
-                <!--
-                <tr>
-                    <td><span class="badge high">CRITICAL</span></td>
-                    <td>modules/digiledger/lottery/index.js</td>
-                    <td>42</td>
-                    <td>Module Registry failed to load</td>
-                    <td>ModuleLoader.js</td>
-                    <td>System Crash</td>
-                    <td>Check import path mapping</td>
-                    <td><button>Preview Fix</button></td>
-                </tr>
-                -->
             </tbody>
         </table>
     </div>
 
+    <!-- DIAGNOSTICS LOGIC -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. Initial System Scan Simulation
+            runInitialScan();
+
+            // 2. Search Box Event Listener
+            const searchBox = document.querySelector('.search-box');
+            searchBox.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    const query = e.target.value.trim();
+                    if (query) {
+                        handleSearch(query);
+                    }
+                }
+            });
+        });
+
+        function runInitialScan() {
+            // Update Health Cards with dummy status for now
+            document.querySelector('.score-card .value').innerHTML = '<span style="color: var(--accent-green);">92 / 100</span>';
+            document.getElementById('project-health').innerHTML = '<span style="color: var(--accent-green);">OK</span>';
+            document.getElementById('runtime-health').innerHTML = '<span style="color: var(--accent-green);">Stable</span>';
+            document.getElementById('pipeline-health').innerHTML = '<span style="color: var(--accent-green);">Active</span>';
+            document.getElementById('display-health').innerHTML = '<span style="color: var(--accent-green);">Responsive</span>';
+            
+            // Simulating a warning in Dependency Health
+            document.getElementById('dependency-health').innerHTML = '<span style="color: var(--accent-warning);">1 Update Pending</span>';
+            document.getElementById('console-health').innerHTML = '<span style="color: var(--accent-green);">Clean</span>';
+            document.getElementById('git-status').innerHTML = '<span style="color: var(--accent-green);">Up to date</span>';
+        }
+
+        function handleSearch(query) {
+            const tableBody = document.getElementById('report-body');
+            
+            // Show loading state
+            tableBody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--accent-warning);">Scanning modules for: "${query}"...</td></tr>`;
+
+            // Simulate backend delay (1.5 seconds)
+            setTimeout(() => {
+                // Determine mock response based on query
+                let issues = [];
+                
+                if (query.toLowerCase().includes('lottery')) {
+                    issues.push({
+                        severity: 'CRITICAL',
+                        file: 'modules/digiledger/lottery/controllers/LotteryController.js',
+                        line: '42',
+                        reason: 'Module Registry failed to load Lottery context',
+                        dependency: 'ModuleLoader.js',
+                        risk: 'High - Routing Failure',
+                        fix: 'Check import path mapping in LotteryController'
+                    });
+                } else if (query.toLowerCase().includes('dashboard')) {
+                    issues.push({
+                        severity: 'WARNING',
+                        file: 'frontend/js/admin-dashboard.js',
+                        line: '115',
+                        reason: 'Delayed telemetry response',
+                        dependency: 'ui-telemetry.js',
+                        risk: 'Low - UI Lag',
+                        fix: 'Optimize telemetry refresh rate'
+                    });
+                } else {
+                    issues.push({
+                        severity: 'INFO',
+                        file: 'src/brain/telemetry.js',
+                        line: '-',
+                        reason: 'No critical errors found for this query',
+                        dependency: '-',
+                        risk: 'None',
+                        fix: 'System operating normally'
+                    });
+                }
+
+                generateReport(issues);
+            }, 1500);
+        }
+
+        function generateReport(issues) {
+            const tableBody = document.getElementById('report-body');
+            tableBody.innerHTML = ''; // Clear previous
+
+            issues.forEach((issue, index) => {
+                const severityClass = issue.severity === 'CRITICAL' ? 'badge high' : 
+                                      (issue.severity === 'WARNING' ? 'badge' : 'badge');
+                const severityStyle = issue.severity !== 'CRITICAL' ? 'background: rgba(245, 158, 11, 0.2); color: var(--accent-warning);' : '';
+
+                const row = `
+                    <tr>
+                        <td><span class="${severityClass}" style="${severityStyle}">${issue.severity}</span></td>
+                        <td>${issue.file}</td>
+                        <td>${issue.line}</td>
+                        <td>${issue.reason}</td>
+                        <td>${issue.dependency}</td>
+                        <td>${issue.risk}</td>
+                        <td>${issue.fix}</td>
+                        <td><button onclick="previewFix(${index})" style="background: var(--accent-blue); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">Preview Fix</button></td>
+                    </tr>
+                `;
+                tableBody.innerHTML += row;
+            });
+        }
+
+        function previewFix(id) {
+            // Adhering to the Safe Fix Policy: Scan -> Preview -> Approval
+            alert('Safe Fix Policy Triggered:\n\nOpening Preview for issue ID: ' + id + '\n\nNo code will be modified without explicit Developer approval.');
+        }
+    </script>
 </body>
 </html>
