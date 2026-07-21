@@ -21,8 +21,14 @@ window.ModuleLoader = {
             return;
         }
 
-        // মডিউলের পাথ তৈরি করা (আপনার প্রজেক্টের ফোল্ডার স্ট্রাকচার অনুযায়ী পরিবর্তন হতে পারে)
-        const scriptPath = `/modules/${moduleName}/${moduleName}.js`; 
+        // মডিউলের ডাইনামিক পাথ তৈরি করা
+        let scriptPath = `/modules/${moduleName}/${moduleName}.js`; 
+        
+        // 🚀 লটারির জন্য কাস্টম পাথ আপডেট করা হয়েছে (কারণ এটি digiledger-এর ভেতর আছে)
+        if (moduleName === 'lottery' || moduleName.includes('lottery')) {
+            scriptPath = `/modules/digiledger/lottery/ui/user-view.js`;
+        }
+
         this.injectScript(scriptPath);
     },
 
