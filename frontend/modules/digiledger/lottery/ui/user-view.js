@@ -1,47 +1,122 @@
-console.log("Lottery Module Script Loaded Successfully!"); // 🟢 Fixed uppercase 'C'
+// 📝 user-view.js (ORBIS Integrated Version)
 
 window.LotteryUserUI = {
-    // এই mount ফাংশনটাই আমাদের ModuleLoader খুঁজছিল!
+    db: {
+        parties: JSON.parse(localStorage.getItem('dl_parties')) || [],
+        saveParties: function(data) { localStorage.setItem('dl_parties', JSON.stringify(data)); this.parties = data; }
+    },
+
+    currentUser: { orb_id: 'ORB-ADMIN', name: 'Arkadip Saha', role: 'ADMIN', mahajan_name: null },
+
+    // 🚀 BATCH PRE-LOADER: লটারি মডিউলে ঢোকার সাথে সাথে সাব-মডিউল কানেক্ট হবে
+    preloadModules: function() {
+        const modules = [
+            { name: 'LotterySalesApp', path: '/modules/digiledger/lottery/ui/lottery-app.js' },
+            { name: 'LotteryPaymentApp', path: '/modules/digiledger/lottery/ui/payment-app.js' }
+        ];
+
+        modules.forEach(mod => {
+            if (!window[mod.name]) {
+                const script = document.createElement('script');
+                script.src = mod.path + '?v=' + new Date().getTime();
+                document.body.appendChild(script);
+            }
+        });
+        console.log("[System] Lottery sub-modules pre-loaded and connected.");
+    },
+
     mount: function() {
         console.log("Lottery Module Mount Triggered!");
-        
-        const lotteryHTML = `
-            <div style="padding: 30px; text-align: center; color: #333; background: #ffffff; border-radius: 12px; margin: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-                <h2 style="color: #0056b3; margin-bottom: 10px;">🎉 Welcome to ORBIS Lottery!</h2>
-                <p style="font-size: 16px; color: #666;">The Lottery workspace is now completely live and connected.</p>
-                
-                <div style="margin-top: 25px;">
-                    <button onclick="alert('System Ready for Action!')" style="padding: 12px 24px; background: #28a745; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; font-weight: bold;">
-                        Initialize Ledger
-                    </button>
-                    <button onclick="window.orbisPlatform.unmountModule()" style="padding: 12px 24px; margin-left: 10px; background: #dc3545; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; font-weight: bold;">
-                        Close & Back
-                    </button>
-                </div>
-            </div>
-        `;
+        // ১. সব মডিউল প্রিলোড করা
+        this.preloadModules();
 
-        // লটারির জন্য একটি নির্দিষ্ট ওয়ার্কস্পেস কন্টেইনার তৈরি বা খোঁজা হচ্ছে
-        let workspace = document.getElementById("lottery-user-workspace");
-        
+        // ২. মেইন প্ল্যাটফর্ম হাইড করা
+        const platformRoot = document.getElementById('orbis-platform-root');
+        if (platformRoot) platformRoot.style.display = 'none';
+
+        // ৩. ওয়ার্কস্পেস তৈরি বা আপডেট করা
+        let workspace = document.getElementById('lottery-user-workspace');
         if (!workspace) {
-            // কন্টেইনার না থাকলে বডির ওপর একদম ফুল স্ক্রিন একটা লেয়ার তৈরি হবে
-            workspace = document.createElement("div");
-            workspace.id = "lottery-user-workspace";
+            workspace = document.createElement('div');
+            workspace.id = 'lottery-user-workspace';
+            // ফুলস্ক্রিন অ্যাপের মতো স্টাইল
             workspace.style.position = "absolute";
             workspace.style.top = "0";
             workspace.style.left = "0";
             workspace.style.width = "100%";
             workspace.style.height = "100vh";
-            workspace.style.backgroundColor = "#f8f9fa";
-            workspace.style.zIndex = "1000"; // সবার ওপরে দেখানোর জন্য
+            workspace.style.backgroundColor = "#f0f2f5";
+            workspace.style.zIndex = "1000";
             workspace.style.overflowY = "auto";
-            workspace.style.paddingTop = "20px";
+            
+            workspace.innerHTML = `
+                <div style="background: #FF9933; color: white; padding: 15px 20px; display: flex; align-items: center; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100;">
+                    <div id="erp-back-btn" onclick="if(window.orbisPlatform) window.orbisPlatform.unmountModule(); else window.LotteryUserUI.unmount();" style="cursor: pointer; font-size: 1.2rem; margin-right: 20px; padding: 5px;">
+                        ← Back
+                    </div>
+                    <div style="font-size: 1.3rem; letter-spacing: 0.5px;">DigiLedger Lottery</div>
+                </div>
+                <div id="erp-dynamic-view" style="padding: 20px; padding-bottom: 50px;"></div>
+            `;
             document.body.appendChild(workspace);
         }
+        workspace.style.display = 'block';
         
-        // এবার লটারির ডিজাইনটা কন্টেইনারে বসিয়ে সেটাকে দৃশ্যমান করা হলো
-        workspace.innerHTML = lotteryHTML;
-        workspace.style.display = "block";
+        // ৪. ড্যাশবোর্ড নেভিগেট করা
+        this.navigate('dashboard');
+    },
+
+    navigate: function(view) {
+        const contentBox = document.getElementById('erp-dynamic-view');
+        if (!contentBox) return; // নিরাপত্তা চেক
+
+        if (view === 'sales') {
+            if (window.LotterySalesApp) {
+                window.LotterySalesApp.mount(contentBox);
+            } else {
+                contentBox.innerHTML = `
+                    <div style="text-align: center; padding: 50px;">
+                        <h3 style="color: #666;">⏳ Loading Sales Module...</h3>
+                        <button onclick="window.LotteryUserUI.navigate('sales')" style="margin-top: 15px; padding: 10px 20px; background: #0056b3; color: white; border: none; border-radius: 5px; cursor: pointer;">Refresh</button>
+                    </div>`;
+            }
+        } 
+        else if (view === 'payment') {
+            if (window.LotteryPaymentApp) {
+                window.LotteryPaymentApp.mount(contentBox);
+            } else {
+                contentBox.innerHTML = `
+                    <div style="text-align: center; padding: 50px;">
+                        <h3 style="color: #666;">⏳ Loading Payment Module...</h3>
+                        <button onclick="window.LotteryUserUI.navigate('payment')" style="margin-top: 15px; padding: 10px 20px; background: #138808; color: white; border: none; border-radius: 5px; cursor: pointer;">Refresh</button>
+                    </div>`;
+            }
+        }
+        else if (view === 'dashboard') {
+            contentBox.innerHTML = `
+                <div style="text-align: center; max-width: 600px; margin: 0 auto; padding-top: 20px;">
+                    <h2 style="color: #333; margin-bottom: 30px;">Workspace Area</h2>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 20px;">
+                        <div onclick="window.LotteryUserUI.navigate('sales')" style="background: white; padding: 30px 15px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); cursor: pointer; border: 2px solid transparent; transition: 0.3s;" onmouseover="this.style.borderColor='#FF9933'" onmouseout="this.style.borderColor='transparent'">
+                            <div style="font-size: 3rem; margin-bottom: 15px;">🎟️</div>
+                            <h3 style="margin: 0; color: #0056b3; font-size: 1.1rem;">Sales Entry</h3>
+                        </div>
+                        
+                        <div onclick="window.LotteryUserUI.navigate('payment')" style="background: white; padding: 30px 15px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); cursor: pointer; border: 2px solid transparent; transition: 0.3s;" onmouseover="this.style.borderColor='#138808'" onmouseout="this.style.borderColor='transparent'">
+                            <div style="font-size: 3rem; margin-bottom: 15px;">💰</div>
+                            <h3 style="margin: 0; color: #138808; font-size: 1.1rem;">Payment</h3>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    },
+    
+    unmount: function() {
+        const workspace = document.getElementById('lottery-user-workspace');
+        if (workspace) workspace.style.display = 'none';
+        const platformRoot = document.getElementById('orbis-platform-root');
+        if (platformRoot) platformRoot.style.display = 'block';
     }
 };
