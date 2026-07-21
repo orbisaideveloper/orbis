@@ -9,6 +9,7 @@ import { getTelemetryData, logRequest, addLog } from './brain/telemetry.js';
 import { BrainController } from './brain/BrainController.js'; 
 import adminRoutes from './routes/adminRoutes.js';
 import lotteryRoutes from './modules/digiledger/lottery/routes/lotteryRoutes.js';
+import diagnosticsRoutes from './routes/diagnosticsRoutes.js'; // 🟢 NEW DIAGNOSTICS ROUTE
 
 // 🟢 NEW TRACKING & SECURITY PACKAGES IMPORT
 import statusMonitor from 'express-status-monitor';
@@ -162,6 +163,7 @@ app.get('/admin/login', (req, res) => {
 // Old Routes Intact
 app.use('/api/admin', adminRoutes);
 app.use('/api/lottery', lotteryRoutes);
+app.use('/api/diagnostics', diagnosticsRoutes); // 🟢 NEW DIAGNOSTICS ROUTE
 
 app.get('/api/telemetry', (req, res) => {
     try {
