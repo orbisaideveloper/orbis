@@ -1,5 +1,3 @@
-'use strict';
-
 /*
 STATUS: LOCKED
 
@@ -214,7 +212,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
 
-        // 🟢 MINIMAL FIX: Updated to use ModuleLoader instead of hardcoded paths
         mountLotteryModule: function() {
             console.log("[ORBIS] Triggering Lottery Module via Registry...");
             startHeartbeat('Lottery Module');
@@ -225,9 +222,16 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => { 
                 platformRoot.style.display = 'none'; 
                 
-                // Pipeline handover to Module Loader
                 if (window.ModuleLoader) {
                     window.ModuleLoader.loadModule('lottery');
+                    
+                    // 🟢 SAFETY FIX: মডিউল লোড হওয়ার পর জোর করে মাউন্ট করা হচ্ছে
+                    setTimeout(() => {
+                        if (typeof window.LotteryUserUI?.mount === 'function') {
+                            window.LotteryUserUI.mount();
+                        }
+                    }, 500);
+                    
                 } else {
                     console.error("[ORBIS] Pipeline broken: ModuleLoader not found!");
                     alert("Error 500: Module Loader pipeline failed.");
