@@ -80,7 +80,11 @@
             padding: 20px;
             border-radius: 6px;
         }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        /* Table overflow fix for mobile display */
+        .table-container {
+            overflow-x: auto; 
+        }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; min-width: 800px; }
         th, td { text-align: left; padding: 12px; border-bottom: 1px solid #333; }
         th { color: #8b949e; font-size: 14px; }
         .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; }
@@ -98,7 +102,7 @@
     <div class="health-grid">
         <div class="health-card score-card">
             <h3>Overall Health Score</h3>
-            <div class="value">Pending Scan...</div>
+            <div class="value">Loading Data...</div>
         </div>
         <div class="health-card">
             <h3>Project Health</h3>
@@ -125,7 +129,7 @@
             <div class="value" id="console-health">--</div>
         </div>
         <div class="health-card">
-            <h3>Git Status</h3>
+            <h3>Server RAM Load</h3>
             <div class="value" id="git-status">--</div>
         </div>
     </div>
@@ -139,34 +143,34 @@
     <!-- REPORT FORMAT -->
     <div class="report-section">
         <h3 style="margin-top: 0;">Live Scan Report</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>Severity</th>
-                    <th>File</th>
-                    <th>Line Number</th>
-                    <th>Reason</th>
-                    <th>Dependency</th>
-                    <th>Risk</th>
-                    <th>Suggested Fix</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="report-body">
-                <tr>
-                    <td colspan="8" style="text-align: center; color: #8b949e;">No active scans. Enter a query or run a module scan.</td>
-                </tr>
-            </tbody>
-        </table>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Severity</th>
+                        <th>File</th>
+                        <th>Line Number</th>
+                        <th>Reason</th>
+                        <th>Dependency</th>
+                        <th>Risk</th>
+                        <th>Suggested Fix</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="report-body">
+                    <tr>
+                        <td colspan="8" style="text-align: center; color: #8b949e;">No active scans. Enter a query or run a module scan.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <!-- DIAGNOSTICS LOGIC -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // 1. Initial System Scan Simulation
-            runInitialScan();
+            runInitialScan(); // Fetching REAL data on load
 
-            // 2. Search Box Event Listener
             const searchBox = document.querySelector('.search-box');
             searchBox.addEventListener('keypress', function (e) {
                 if (e.key === 'Enter') {
@@ -178,74 +182,51 @@
             });
         });
 
-        function runInitialScan() {
-            // Update Health Cards with dummy status for now
-            document.querySelector('.score-card .value').innerHTML = '<span style="color: var(--accent-green);">92 / 100</span>';
-            document.getElementById('project-health').innerHTML = '<span style="color: var(--accent-green);">OK</span>';
-            document.getElementById('runtime-health').innerHTML = '<span style="color: var(--accent-green);">Stable</span>';
-            document.getElementById('pipeline-health').innerHTML = '<span style="color: var(--accent-green);">Active</span>';
-            document.getElementById('display-health').innerHTML = '<span style="color: var(--accent-green);">Responsive</span>';
-            
-            // Simulating a warning in Dependency Health
-            document.getElementById('dependency-health').innerHTML = '<span style="color: var(--accent-warning);">1 Update Pending</span>';
-            document.getElementById('console-health').innerHTML = '<span style="color: var(--accent-green);">Clean</span>';
-            document.getElementById('git-status').innerHTML = '<span style="color: var(--accent-green);">Up to date</span>';
+        // 🟢 Fetching Real Data from Backend API
+        async function runInitialScan() {
+            try {
+                const response = await fetch('/api/diagnostics/health');
+                if (!response.ok) throw new Error('API Error');
+                const data = await response.json();
+                
+                document.querySelector('.score-card .value').innerHTML = `<span style="color: var(--accent-green);">${data.score}</span>`;
+                document.getElementById('project-health').innerHTML = `<span style="color: var(--accent-green);">${data.project}</span>`;
+                document.getElementById('runtime-health').innerHTML = `<span style="color: var(--accent-green);">${data.runtime}</span>`;
+                document.getElementById('pipeline-health').innerHTML = `<span style="color: var(--accent-green);">${data.pipeline}</span>`;
+                document.getElementById('display-health').innerHTML = `<span style="color: var(--accent-green);">${data.display}</span>`;
+                document.getElementById('dependency-health').innerHTML = `<span style="color: var(--accent-green);">${data.dependency}</span>`;
+                document.getElementById('console-health').innerHTML = `<span style="color: var(--accent-green);">${data.console}</span>`;
+                document.getElementById('git-status').innerHTML = `<span style="color: var(--accent-warning);">${data.systemLoad}</span>`;
+            } catch (error) {
+                console.error("Health scan failed", error);
+                document.querySelector('.score-card .value').innerHTML = `<span style="color: var(--accent-red);">Connection Failed</span>`;
+            }
         }
 
-        function handleSearch(query) {
+        // 🟢 Fetching Scan Results from Backend API
+        async function handleSearch(query) {
             const tableBody = document.getElementById('report-body');
-            
-            // Show loading state
             tableBody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--accent-warning);">Scanning modules for: "${query}"...</td></tr>`;
 
-            // Simulate backend delay (1.5 seconds)
-            setTimeout(() => {
-                // Determine mock response based on query
-                let issues = [];
-                
-                if (query.toLowerCase().includes('lottery')) {
-                    issues.push({
-                        severity: 'CRITICAL',
-                        file: 'modules/digiledger/lottery/controllers/LotteryController.js',
-                        line: '42',
-                        reason: 'Module Registry failed to load Lottery context',
-                        dependency: 'ModuleLoader.js',
-                        risk: 'High - Routing Failure',
-                        fix: 'Check import path mapping in LotteryController'
-                    });
-                } else if (query.toLowerCase().includes('dashboard')) {
-                    issues.push({
-                        severity: 'WARNING',
-                        file: 'frontend/js/admin-dashboard.js',
-                        line: '115',
-                        reason: 'Delayed telemetry response',
-                        dependency: 'ui-telemetry.js',
-                        risk: 'Low - UI Lag',
-                        fix: 'Optimize telemetry refresh rate'
-                    });
-                } else {
-                    issues.push({
-                        severity: 'INFO',
-                        file: 'src/brain/telemetry.js',
-                        line: '-',
-                        reason: 'No critical errors found for this query',
-                        dependency: '-',
-                        risk: 'None',
-                        fix: 'System operating normally'
-                    });
-                }
-
-                generateReport(issues);
-            }, 1500);
+            try {
+                const response = await fetch('/api/diagnostics/scan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query })
+                });
+                const data = await response.json();
+                generateReport(data.issues || []);
+            } catch (error) {
+                tableBody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--accent-red);">Scan failed. Could not connect to Diagnostics API.</td></tr>`;
+            }
         }
 
         function generateReport(issues) {
             const tableBody = document.getElementById('report-body');
-            tableBody.innerHTML = ''; // Clear previous
+            tableBody.innerHTML = ''; 
 
             issues.forEach((issue, index) => {
-                const severityClass = issue.severity === 'CRITICAL' ? 'badge high' : 
-                                      (issue.severity === 'WARNING' ? 'badge' : 'badge');
+                const severityClass = issue.severity === 'CRITICAL' ? 'badge high' : 'badge';
                 const severityStyle = issue.severity !== 'CRITICAL' ? 'background: rgba(245, 158, 11, 0.2); color: var(--accent-warning);' : '';
 
                 const row = `
@@ -265,7 +246,6 @@
         }
 
         function previewFix(id) {
-            // Adhering to the Safe Fix Policy: Scan -> Preview -> Approval
             alert('Safe Fix Policy Triggered:\n\nOpening Preview for issue ID: ' + id + '\n\nNo code will be modified without explicit Developer approval.');
         }
     </script>
