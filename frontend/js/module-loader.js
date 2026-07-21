@@ -16,14 +16,14 @@ window.ModuleLoader = {
 
         if (moduleName === 'home') return;
 
-        // মডিউল রেজিস্ট্রি থেকে সঠিক পাথ টেনে আনা হচ্ছে (যাতে কোনো কনফ্লিক্ট না হয়)
+        // মডিউল রেজিস্ট্রি থেকে সঠিক পাথ টেনে আনা হচ্ছে
         let scriptPath = '';
         if (window.ModuleRegistry && window.ModuleRegistry.get(moduleName)) {
             scriptPath = window.ModuleRegistry.get(moduleName).scriptPath;
         } else {
-            // ফলব্যাক পাথ
+            // EXTENSION: নতুন মডিউল স্ট্রাকচারের পাথ সেট করা হলো
             scriptPath = moduleName === 'lottery' 
-                ? '/modules/digiledger/lottery/ui/user-view.js' 
+                ? '/src/modules/digiledger/lottery/index.js' 
                 : `/modules/${moduleName}/${moduleName}.js`;
         }
 
@@ -44,7 +44,7 @@ window.ModuleLoader = {
         
         script.onload = () => {
             console.log(`✅ Successfully loaded: ${path}`);
-            // 🚀 আসল ম্যাজিক: ফাইল পুরোপুরি ডাউনলোড হওয়ার পরই মাউন্ট ট্রিগার হবে
+            // আসল ম্যাজিক: ফাইল পুরোপুরি ডাউনলোড হওয়ার পরই মাউন্ট ট্রিগার হবে
             this.triggerMount(moduleName);
         };
         
@@ -57,8 +57,15 @@ window.ModuleLoader = {
 
     // মডিউল স্ক্রিনে রেন্ডার করার ফাংশন
     triggerMount: function(moduleName) {
-        if (moduleName === 'lottery' && typeof window.LotteryUserUI !== 'undefined' && typeof window.LotteryUserUI.mount === 'function') {
-            window.LotteryUserUI.mount();
+        if (moduleName === 'lottery') {
+            // EXTENSION: নতুন Micro-App আর্কিটেকচার সাপোর্ট
+            if (typeof window.LotteryModule !== 'undefined' && typeof window.LotteryModule.mount === 'function') {
+                window.LotteryModule.mount();
+            } 
+            // OLD LOGIC PRESERVED: পুরানো ফাইল সাপোর্ট (যাতে ক্র্যাশ না করে)
+            else if (typeof window.LotteryUserUI !== 'undefined' && typeof window.LotteryUserUI.mount === 'function') {
+                window.LotteryUserUI.mount();
+            }
         }
     }
 };
