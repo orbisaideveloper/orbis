@@ -10,145 +10,189 @@
             --accent-blue: #3b82f6; --accent-green: #10b981; --accent-red: #ef4444; --accent-warn: #f59e0b;
         }
         body { background: var(--bg-dark); color: var(--text-main); font-family: 'Segoe UI', sans-serif; padding: 20px; margin: 0; }
-        .header { display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding-bottom: 15px; margin-bottom: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 15px; margin-bottom: 20px; }
         .header h1 { margin: 0; color: var(--accent-blue); font-size: 24px; }
+        .badge-godmode { background: rgba(239,68,68,0.2); color: #ef4444; padding: 5px 15px; border-radius: 4px; font-weight: bold; border: 1px solid #ef4444; }
         
+        /* Health Grid */
         .health-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
-        .health-card { background: var(--bg-card); padding: 15px; border-radius: 6px; border-left: 4px solid var(--accent-green); }
+        .health-card { background: var(--bg-card); padding: 15px; border-radius: 6px; border-left: 4px solid var(--accent-green); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+        .health-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
         .health-card.FAIL { border-left-color: var(--accent-red); }
         .health-card.WARN { border-left-color: var(--accent-warn); }
-        .health-card h3 { margin: 0 0 10px 0; font-size: 14px; color: #8b949e; }
-        .health-card .value { font-size: 20px; font-weight: bold; }
+        .health-card h3 { margin: 0 0 10px 0; font-size: 14px; color: #8b949e; pointer-events: none; }
+        .health-card .value { font-size: 20px; font-weight: bold; pointer-events: none; }
 
+        /* Search Section */
         .search-box { display: flex; gap: 10px; margin-bottom: 30px; background: var(--bg-card); padding: 20px; border-radius: 6px; }
         input[type="text"] { flex-grow: 1; padding: 12px; background: #000; border: 1px solid #333; color: white; border-radius: 4px; font-size: 16px; }
+        input[type="text"]:focus { outline: none; border-color: var(--accent-blue); }
         button { padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.3s; }
         .btn-blue { background: var(--accent-blue); color: white; }
+        .btn-blue:hover { opacity: 0.9; }
+        .btn-green { background: var(--accent-green); color: white; }
         .btn-red { background: var(--accent-red); color: white; }
+        .mic-btn.recording { background: var(--accent-red); animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
+        /* Execution Tree */
         .tree-container { background: #16192b; border: 1px dashed var(--accent-blue); padding: 15px; border-radius: 6px; margin-bottom: 20px; display: none; }
         .tree-container h4 { margin: 0 0 10px 0; color: var(--accent-blue); }
-        pre.tree-text { color: #34d399; margin: 0; font-family: monospace; white-space: pre-wrap; }
+        pre.tree-text { color: #34d399; margin: 0; font-family: monospace; white-space: pre-wrap; font-size: 13px; }
 
-        table { width: 100%; border-collapse: collapse; background: var(--bg-card); border-radius: 6px; overflow: hidden; }
-        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #333; }
+        /* Report Table */
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .table-wrapper { overflow-x: auto; background: var(--bg-card); border-radius: 6px; margin-bottom: 30px; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #333; font-size: 14px; }
         th { color: #8b949e; background: #16192b; }
         .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
-        .bg-FAIL { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); }
-        .bg-WARN { background: rgba(245, 158, 11, 0.2); color: var(--accent-warn); }
-        .bg-PASS { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); }
+        .bg-FAIL { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); border: 1px solid var(--accent-red); }
+        .bg-WARN { background: rgba(245, 158, 11, 0.2); color: var(--accent-warn); border: 1px solid var(--accent-warn); }
+        .bg-PASS { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); border: 1px solid var(--accent-green); }
 
-        .console-box { background: #000; padding: 15px; border-radius: 6px; border: 1px solid #333; color: var(--accent-green); font-family: monospace; max-height: 250px; overflow-y: auto; }
+        /* Live Console */
+        .console-box { background: #000; padding: 15px; border-radius: 6px; border: 1px solid #333; color: var(--accent-green); font-family: monospace; max-height: 250px; overflow-y: auto; white-space: pre-wrap; font-size: 13px; line-height: 1.5; }
+        
+        /* Modal Popup */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); }
+        .modal-content { background-color: var(--bg-card); margin: 10% auto; padding: 25px; border: 1px solid #333; width: 85%; max-width: 600px; border-radius: 8px; border-left: 5px solid var(--accent-blue); position: relative; }
+        .close-btn { position: absolute; right: 20px; top: 20px; color: #8b949e; font-size: 24px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .close-btn:hover { color: white; }
+        .modal-buttons { margin-top: 20px; display: flex; gap: 10px; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1>ORBIS // Diagnostics Engine V3.6</h1>
-        <div style="background: rgba(239,68,68,0.2); color: #ef4444; padding: 5px 15px; border-radius: 4px; font-weight: bold; border: 1px solid #ef4444;">GOD MODE</div>
+        <h1>ORBIS // Developer Diagnostics V3.6</h1>
+        <div class="badge-godmode">GOD MODE ACTIVE</div>
     </div>
 
     <!-- Health Grid -->
     <div class="health-grid" id="health-grid">
-        <div style="color: #8b949e;">Connecting to ORBIS Server...</div>
+        <div style="color: #8b949e; padding: 10px;">Connecting to ORBIS Core Server...</div>
     </div>
 
     <!-- Search Engine -->
     <div class="search-box">
-        <input type="text" id="search-input" placeholder="Enter developer intent... (e.g., 'Check lottery logic')">
+        <input type="text" id="search-input" placeholder="Ask ORBIS Engine... (e.g., 'Why is the lottery server not connecting?', 'Trace frontend errors')">
         <button class="btn-blue" id="run-btn">🚀 RUN AUDIT</button>
-        <button class="btn-blue" id="mic-btn" title="Voice Input">🎤</button>
+        <button class="btn-blue" id="mic-btn" title="Voice Input (Bengali/English)">🎤</button>
     </div>
 
-    <!-- Visual Tree (From V2) -->
+    <!-- Visual Tree (Restored from V2) -->
     <div class="tree-container" id="tree-container">
         <h4>🌲 Pipeline & Execution Tree</h4>
         <pre class="tree-text" id="tree-output"></pre>
     </div>
 
     <!-- Trace Table -->
-    <h3 style="margin-bottom: 10px;">Execution Trace</h3>
-    <table>
-        <thead>
-            <tr><th>Stage</th><th>Status</th><th>File (Line)</th><th>Reason & Analysis</th></tr>
-        </thead>
-        <tbody id="report-body">
-            <tr><td colspan="4" style="text-align: center; color: #8b949e;">Awaiting system audit...</td></tr>
-        </tbody>
-    </table>
+    <div class="section-header">
+        <h3 style="margin: 0;">System Execution Trace</h3>
+        <button class="btn-green" id="copy-trace-btn" onclick="copyTrace()">📋 Copy Full Trace</button>
+    </div>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr><th>Stage</th><th>Status</th><th>File / Location</th><th>Impact</th><th>Analysis & Root Cause Fix</th></tr>
+            </thead>
+            <tbody id="report-body">
+                <tr><td colspan="5" style="text-align: center; color: #8b949e; padding: 30px;">Awaiting developer commands...</td></tr>
+            </tbody>
+        </table>
+    </div>
 
     <!-- Live Logs -->
-    <h3 style="margin-top: 30px; margin-bottom: 10px;">Live Server Logs</h3>
-    <div class="console-box" id="console-output">Fetching logs...</div>
+    <div class="section-header" style="margin-top: 30px;">
+        <h3 style="margin: 0;">Server Console & Logs</h3>
+        <div>
+            <button class="btn-blue" onclick="fetchLogs()" style="margin-right: 10px;">🔄 Refresh Logs</button>
+            <button class="btn-green" id="copy-log-btn" onclick="copyLogs()">📋 Copy Logs</button>
+        </div>
+    </div>
+    <div class="console-box" id="console-output">Initializing Multi-Log Engine...</div>
+
+    <!-- Modal Popup for Cards & AI Prompt -->
+    <div id="infoModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h2 id="modal-title" style="margin-top: 0; color: var(--accent-blue);">System Module</h2>
+            <div id="modal-desc" style="color: var(--text-main); line-height: 1.6; margin-top: 15px; background: #0f111a; padding: 15px; border-radius: 4px; font-family: monospace; white-space: pre-wrap;">Details loading...</div>
+            <div class="modal-buttons">
+                <button class="btn-green" id="copy-modal-btn" onclick="copyModalData()">📋 Copy Info</button>
+                <button class="btn-blue" id="ai-prompt-btn" onclick="generateAIPrompt()" style="background: #8b5cf6;">🤖 Generate AI Prompt for this Fix</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         // ==========================================
-        // ORBIS DIAGNOSTICS LOGIC (NO SEPARATE JS REQUIRED)
+        // ORBIS V3.6 DIAGNOSTICS ENGINE - MASTER LOGIC
         // ==========================================
+
+        let currentTraceText = ""; // Holds the formatted text for copying
+        let lastQuery = "";
 
         document.addEventListener('DOMContentLoaded', () => {
             fetchHealthData();
             fetchLogs();
             setupVoice();
 
-            // Setup Click and Enter Events
+            // Triggers
             document.getElementById('run-btn').addEventListener('click', executeAudit);
             document.getElementById('search-input').addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') executeAudit();
             });
+
+            // Auto-refresh logs every 15 seconds
+            setInterval(fetchLogs, 15000);
         });
 
-        // 1. Fetch Health
+        // 1. HEALTH ENGINE & MODALS
         async function fetchHealthData() {
             const grid = document.getElementById('health-grid');
             try {
                 const res = await fetch('/api/diagnostics/health');
-                if(!res.ok) throw new Error("Offline");
+                if(!res.ok) throw new Error("API Offline");
                 const data = await res.json();
                 
                 grid.innerHTML = '';
-                const items = [
-                    { title: 'System Score', val: `${data.score}/100`, status: data.score > 80 ? 'PASS' : 'WARN' },
-                    { title: 'Project State', val: data.project.value, status: data.project.status },
-                    { title: 'RAM Load', val: data.ram.value, status: data.ram.status },
-                    { title: 'Dependencies', val: data.dependency.value, status: data.dependency.status }
-                ];
+                
+                const createCard = (title, val, status, detail) => {
+                    const card = document.createElement('div');
+                    card.className = `health-card ${status}`;
+                    // 🟢 FIX: Card Click Logic Restored!
+                    card.onclick = () => openModal(title, detail);
+                    
+                    let color = status === 'FAIL' ? 'var(--accent-red)' : status === 'WARN' ? 'var(--accent-warn)' : 'var(--accent-green)';
+                    card.innerHTML = `<h3>${title}</h3><div class="value" style="color: ${color}">${val}</div>`;
+                    return card;
+                };
 
-                items.forEach(item => {
-                    grid.innerHTML += `
-                        <div class="health-card ${item.status}">
-                            <h3>${item.title}</h3>
-                            <div class="value" style="color: var(--accent-${item.status === 'FAIL' ? 'red' : item.status === 'WARN' ? 'warn' : 'green'})">${item.val}</div>
-                        </div>
-                    `;
-                });
+                grid.appendChild(createCard('Overall Health', `${data.score || 100}/100`, (data.score >= 80 || !data.score) ? 'PASS' : 'WARN', `Overall system score based on current runtime metrics.\nTimestamp: ${new Date().toLocaleString()}`));
+                if(data.project) grid.appendChild(createCard('Project Core', data.project.value, data.project.status, data.project.detail));
+                if(data.ram) grid.appendChild(createCard('RAM Utilization', data.ram.value, data.ram.status, data.ram.detail));
+                if(data.dependency) grid.appendChild(createCard('Dependencies', data.dependency.value, data.dependency.status, data.dependency.detail));
+                if(data.console) grid.appendChild(createCard('Console State', data.console.value, data.console.status, data.console.detail));
+                
             } catch (err) {
-                grid.innerHTML = `<div style="color:var(--accent-red);">⚠️ API Offline. Backend is not reachable.</div>`;
+                grid.innerHTML = `<div style="color:var(--accent-red); padding: 15px; background: rgba(239,68,68,0.1); border: 1px solid var(--accent-red); border-radius: 6px;">⚠️ SYSTEM OFFLINE. Cannot fetch data from /api/diagnostics/health</div>`;
             }
         }
 
-        // 2. Fetch Logs
-        async function fetchLogs() {
-            const consoleBox = document.getElementById('console-output');
-            try {
-                const res = await fetch('/api/diagnostics/logs');
-                const data = await res.json();
-                consoleBox.textContent = data.logs || "No active logs.";
-            } catch (err) {
-                consoleBox.textContent = "Could not fetch logs from server.";
-            }
-        }
-
-        // 3. Execute Audit (The Main Engine)
+        // 2. AUDIT ENGINE & TRACE TABLE
         async function executeAudit() {
-            const query = document.getElementById('search-input').value.trim();
+            const inputEl = document.getElementById('search-input');
+            const query = inputEl.value.trim();
             if(!query) return;
-
+            
+            lastQuery = query;
             const tbody = document.getElementById('report-body');
             const treeContainer = document.getElementById('tree-container');
             const treeOutput = document.getElementById('tree-output');
             
-            tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--accent-warn);">⚙️ Analyzing: "${query}"...</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--accent-warn); padding: 20px;">⚙️ Engine Deep Scanning: "${query}"...</td></tr>`;
             treeContainer.style.display = 'none';
 
             try {
@@ -158,44 +202,154 @@
                     body: JSON.stringify({ query })
                 });
                 
-                if(!res.ok) throw new Error("API Error");
+                if(!res.ok) throw new Error("API Route missing");
                 const data = await res.json();
 
-                // Show Tree if available (V2 Feature restored)
+                // 🟢 Visual Tree Logic
+                let treeDataText = "";
                 if(data.tree) {
                     treeContainer.style.display = 'block';
                     treeOutput.textContent = data.tree;
+                    treeDataText = data.tree;
                 }
 
-                // Render Table
+                // 🟢 Build Report & Prepare Copy Text
                 tbody.innerHTML = '';
-                const issues = data.issues || [];
+                currentTraceText = `=========================================\n 🚀 ORBIS SYSTEM DIAGNOSTIC TRACE \n=========================================\nTimestamp: ${new Date().toLocaleString()}\nQuery: "${query}"\n\n`;
                 
+                if(treeDataText) currentTraceText += `[PIPELINE TREE]\n${treeDataText}\n\n`;
+
+                const issues = data.issues || [];
                 if(issues.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--accent-green);">✅ System Clean. No anomalies found.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--accent-green); padding: 20px;">✅ System Clean. No architectural anomalies or logic breaks detected for this module.</td></tr>`;
+                    currentTraceText += "Status: CLEAN. No errors found.\n";
                     return;
                 }
 
-                issues.forEach(issue => {
+                issues.forEach((issue, index) => {
+                    // Update HTML Table
+                    const fixText = issue.suggestedFix || issue.fix || 'Manual review required';
+                    const impactText = issue.impact || 'Standard';
+                    const impactColor = impactText.toLowerCase().includes('critical') ? 'var(--accent-red)' : 'var(--accent-warn)';
+
                     tbody.innerHTML += `
                         <tr>
-                            <td><strong>${issue.stage}</strong></td>
-                            <td><span class="badge bg-${issue.status}">${issue.status}</span></td>
-                            <td style="color: #93c5fd; font-family: monospace;">${issue.file} <br><small>Line: ${issue.line || 'N/A'}</small></td>
+                            <td><strong>${issue.stage || 'Runtime'}</strong></td>
+                            <td><span class="badge bg-${issue.status || 'WARN'}">${issue.status || 'WARN'}</span></td>
+                            <td style="color: #93c5fd; font-family: monospace;">${issue.file || 'Unknown'} <br><small style="color:#6b7280">Line: ${issue.line || 'N/A'}</small></td>
+                            <td style="color: ${impactColor}; font-weight: bold;">${impactText}</td>
                             <td>
-                                <div style="margin-bottom: 5px; color: #d1d5db;">${issue.reason}</div>
-                                <span style="background: rgba(16,185,129,0.1); color: var(--accent-green); padding: 3px 6px; border-radius: 4px; font-size: 12px;">🛠️ Fix: ${issue.suggestedFix || issue.fix || 'Review Logic'}</span>
+                                <div style="margin-bottom: 6px; color: #d1d5db; line-height: 1.4;">${issue.reason || 'N/A'}</div>
+                                <span style="background: rgba(16,185,129,0.15); color: var(--accent-green); padding: 4px 8px; border-radius: 4px; font-size: 12px; display: inline-block;">🛠️ <strong>Fix:</strong> ${fixText}</span>
                             </td>
                         </tr>
                     `;
+
+                    // Update Clipboard Text
+                    currentTraceText += `[Issue #${index + 1}]\n`;
+                    currentTraceText += `> Stage  : ${issue.stage}\n`;
+                    currentTraceText += `> Status : ${issue.status}\n`;
+                    currentTraceText += `> File   : ${issue.file} (Line: ${issue.line})\n`;
+                    currentTraceText += `> Reason : ${issue.reason}\n`;
+                    currentTraceText += `> Fix    : ${fixText}\n`;
+                    currentTraceText += `-----------------------------------------\n`;
                 });
 
+                // Auto-fetch logs after audit to get latest console state
+                fetchLogs();
+
             } catch (err) {
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--accent-red);">❌ Scan Failed. Server unreachable.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--accent-red); padding: 20px;">❌ Root Cause Engine Unreachable. Check Backend API.</td></tr>`;
             }
         }
 
-        // 4. Voice Support
+        // 3. LOGS ENGINE
+        async function fetchLogs() {
+            const consoleBox = document.getElementById('console-output');
+            try {
+                const res = await fetch('/api/diagnostics/logs');
+                const data = await res.json();
+                consoleBox.textContent = data.logs || "[System] No recent logs captured.";
+                // Auto scroll to bottom
+                consoleBox.scrollTop = consoleBox.scrollHeight;
+            } catch (err) {
+                consoleBox.textContent = "[ERROR] Could not establish connection to ORBIS Logger.";
+            }
+        }
+
+        // 4. SMART CLIPBOARD & AI PROMPT ENGINE
+        function copyTrace() {
+            if(!currentTraceText) return alert("Run an audit first to generate a trace!");
+            navigator.clipboard.writeText(currentTraceText).then(() => {
+                const btn = document.getElementById('copy-trace-btn');
+                btn.innerHTML = '✅ Trace Copied!';
+                setTimeout(() => btn.innerHTML = '📋 Copy Full Trace', 2000);
+            });
+        }
+
+        function copyLogs() {
+            const logs = document.getElementById('console-output').textContent;
+            navigator.clipboard.writeText(logs).then(() => {
+                const btn = document.getElementById('copy-log-btn');
+                btn.innerHTML = '✅ Logs Copied!';
+                setTimeout(() => btn.innerHTML = '📋 Copy Logs', 2000);
+            });
+        }
+
+        function copyModalData() {
+            const title = document.getElementById('modal-title').innerText;
+            const desc = document.getElementById('modal-desc').innerText;
+            navigator.clipboard.writeText(`[ORBIS DIAGNOSTIC - ${title}]\n${desc}`).then(() => {
+                const btn = document.getElementById('copy-modal-btn');
+                btn.innerHTML = '✅ Copied!';
+                setTimeout(() => btn.innerHTML = '📋 Copy Info', 2000);
+            });
+        }
+
+        // 🟢 FIX: THE ULTIMATE AI PROMPT GENERATOR RESTORED
+        function generateAIPrompt() {
+            const title = document.getElementById('modal-title').innerText;
+            const desc = document.getElementById('modal-desc').innerText;
+            const logs = document.getElementById('console-output').textContent.substring(0, 1000); // Grab last 1000 chars of logs
+            
+            const prompt = `Act as an Expert Principal Software Engineer for the "ORBIS Platform" (Node.js/Express Backend, Vanilla JS/HTML Frontend). I have encountered an issue and used my Developer Diagnostics Engine to scan the system.
+
+=== 1. USER QUERY / INTENT ===
+${lastQuery || "System Health Check"}
+
+=== 2. MODULE CONTEXT (${title}) ===
+${desc}
+
+=== 3. DIAGNOSTIC TRACE REPORT ===
+${currentTraceText || "No trace run yet."}
+
+=== 4. LATEST SERVER LOGS ===
+${logs}
+
+=== YOUR TASK ===
+Analyze the data provided above. 
+1. Identify the exact root cause of the failure or connection issue.
+2. Provide the exact corrected code required to fix it. 
+3. DO NOT change the core architecture. Give me a direct, copy-pasteable solution.`;
+
+            navigator.clipboard.writeText(prompt).then(() => {
+                const btn = document.getElementById('ai-prompt-btn');
+                btn.innerHTML = '✅ Master Prompt Copied!';
+                setTimeout(() => btn.innerHTML = '🤖 Generate AI Prompt for this Fix', 3000);
+            });
+        }
+
+        // 5. MODAL SYSTEM LOGIC
+        const modal = document.getElementById('infoModal');
+        function openModal(title, detail) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-desc').innerText = detail || "No additional data provided.";
+            modal.style.display = 'block';
+        }
+        function closeModal() { modal.style.display = 'none'; }
+        window.onclick = function(event) { if (event.target == modal) closeModal(); }
+
+        // 6. VOICE RECOGNITION (Bengali/English)
         function setupVoice() {
             const micBtn = document.getElementById('mic-btn');
             const searchInput = document.getElementById('search-input');
@@ -203,20 +357,4 @@
 
             if(SpeechRec) {
                 const rec = new SpeechRec();
-                rec.lang = 'bn-BD'; // 🟢 Bangla Support Added
-                
-                rec.onstart = () => { micBtn.classList.replace('btn-blue', 'btn-red'); searchInput.placeholder = "Listening..."; };
-                rec.onspeechend = () => { micBtn.classList.replace('btn-red', 'btn-blue'); rec.stop(); };
-                rec.onresult = (e) => { 
-                    searchInput.value = e.results[0][0].transcript; 
-                    executeAudit(); 
-                };
-                
-                micBtn.addEventListener('click', () => rec.start());
-            } else {
-                micBtn.style.display = 'none';
-            }
-        }
-    </script>
-</body>
-</html>
+                rec.lan
