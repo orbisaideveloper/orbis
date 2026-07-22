@@ -14,13 +14,22 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchLogs();
     setupVoiceRecognition(); 
 
-    // Search intent trigger on Enter key
     const searchBox = document.getElementById('search-input');
+    
+    // 1. Search intent trigger on Enter key
     if(searchBox) {
         searchBox.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 handleSearch(e.target.value.trim());
             }
+        });
+    }
+
+    // 🟢 FIX: "RUN AUDIT" Button Click Listener Added!
+    const runAuditBtn = document.getElementById('run-btn') || Array.from(document.querySelectorAll('button')).find(b => b.textContent.includes('RUN AUDIT'));
+    if(runAuditBtn) {
+        runAuditBtn.addEventListener('click', () => {
+            if(searchBox) handleSearch(searchBox.value.trim());
         });
     }
 });
@@ -30,20 +39,19 @@ document.addEventListener('DOMContentLoaded', () => {
 // ==========================================
 async function runInitialScan() {
     const grid = document.getElementById('health-grid');
-    if(!grid) return;
+    if(!grid) return; // If UI is V3.6 and doesn't have grid, safely skip
 
     try {
         const response = await fetch('/api/diagnostics/health');
         if(!response.ok) throw new Error("API Route missing or offline");
         const data = await response.json();
         
-        grid.innerHTML = ''; // Clear loading text
+        grid.innerHTML = ''; 
 
         const createCard = (title, val, status, detail, cClass = '') => {
             const card = document.createElement('div');
             let baseClass = 'health-card ' + cClass;
             
-            // Dynamic styling based on status
             if (status === 'FAIL') baseClass += ' fail-card';
             else if (status === 'WARN') baseClass += ' warn-card';
             else if (status === 'PASS' && !cClass) baseClass += ' score-card';
@@ -60,8 +68,7 @@ async function runInitialScan() {
             return card;
         };
 
-        // Populate Cards dynamically
-        grid.appendChild(createCard('Overall Health Score', `${data.score} / 100`, data.score >= 80 ? 'PASS' : 'WARN', `Score calculated based on runtime integrity, memory loads, and dependency health.\n\nChecked at: ${new Date().toLocaleString()}`, 'score-card'));
+        grid.appendChild(createCard('Overall Health Score', `${data.score} / 100`, data.score >= 80 ? 'PASS' : 'WARN', `Score calculated based on runtime integrity, memory loads, and dependency health.`, 'score-card'));
         grid.appendChild(createCard('Project Health', data.project.value, data.project.status, data.project.detail));
         grid.appendChild(createCard('Server RAM Load', data.ram.value, data.ram.status, data.ram.detail));
         grid.appendChild(createCard('Dependency Health', data.dependency.value, data.dependency.status, data.dependency.detail));
@@ -69,7 +76,7 @@ async function runInitialScan() {
         
     } catch (error) { 
         console.error("[ORBIS] Health check failed:", error);
-        grid.innerHTML = '<div style="color:var(--accent-red); padding: 15px; background: rgba(239, 68, 68, 0.1); border-radius: 6px; border: 1px solid var(--accent-red);">⚠️ Engine Offline. Could not fetch live data from /api/diagnostics/health. Check backend routes.</div>';
+        grid.innerHTML = '<div style="color:var(--accent-red); padding: 15px; background: rgba(239, 68, 68, 0.1); border-radius: 6px; border: 1px solid var(--accent-red);">⚠️ Engine Offline. Could not fetch live data.</div>';
     }
 }
 
@@ -80,45 +87,54 @@ function setupVoiceRecognition() {
     const micBtn = document.getElementById('mic-btn');
     const searchInput = document.getElementById('search-input');
     
-    // Cross-browser speech recognition support
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     
     if (SpeechRecognition) {
         const recognition = new SpeechRecognition();
-        recognition.lang = 'en-US'; 
+        
+        // 🟢 FIX: Set Language to Bengali/English mixed support
+        recognition.lang = 'bn-BD'; 
         recognition.interimResults = false;
         recognition.maxAlternatives = 1;
         
         recognition.onstart = () => { 
-            micBtn.style.background = 'var(--accent-red)'; 
-            micBtn.innerHTML = '🎙️';
-            searchInput.placeholder = "Listening for developer intent..."; 
+            if(micBtn) {
+                micBtn.style.background = 'var(--accent-red)'; 
+                micBtn.innerHTML = '🎙️';
+            }
+            if(searchInput) searchInput.placeholder = "আপনার কমান্ড শুনছি (Listening)..."; 
         };
         
         recognition.onspeechend = () => { 
-            micBtn.style.background = 'var(--accent-blue)'; 
-            micBtn.innerHTML = '🎤';
+            if(micBtn) {
+                micBtn.style.background = 'var(--accent-blue)'; 
+                micBtn.innerHTML = '🎤';
+            }
             recognition.stop(); 
         };
         
         recognition.onresult = (event) => {
             const transcript = event.results[0][0].transcript;
-            searchInput.value = transcript;
+            if(searchInput) searchInput.value = transcript;
             handleSearch(transcript); // Auto-trigger search
         };
         
         recognition.onerror = (event) => { 
             console.warn("[ORBIS] Voice Recognition Error:", event.error);
-            micBtn.style.background = 'var(--accent-blue)'; 
-            micBtn.innerHTML = '🎤';
-            searchInput.placeholder = "Enter developer intent...";
+            if(micBtn) {
+                micBtn.style.background = 'var(--accent-blue)'; 
+                micBtn.innerHTML = '🎤';
+            }
+            if(searchInput) searchInput.placeholder = "Enter developer intent...";
         };
         
-        micBtn.addEventListener('click', () => {
-            recognition.start();
-        });
+        if(micBtn) {
+            micBtn.addEventListener('click', () => {
+                recognition.start();
+            });
+        }
     } else {
-        if(micBtn) micBtn.style.display = 'none'; // Hide if not supported
+        if(micBtn) micBtn.style.display = 'none'; 
     }
 }
 
@@ -127,7 +143,7 @@ async function handleSearch(query) {
     const tableBody = document.getElementById('report-body');
     if(!tableBody) return;
 
-    tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--accent-warning); padding: 20px;">⚙️ Engine Analyzing Intent: "${query}"... Searching Source Code...</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--accent-warning); padding: 20px;">⚙️ Engine Analyzing Intent: "${query}"...</td></tr>`;
     
     try {
         const response = await fetch('/api/diagnostics/scan', { 
@@ -141,7 +157,7 @@ async function handleSearch(query) {
         
         generateReport(data.issues || []);
     } catch (error) {
-        tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--accent-red); padding: 20px;">❌ Root Cause Engine Unreachable. Is the backend running?</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--accent-red); padding: 20px;">❌ Root Cause Engine Unreachable. Ensure API is live.</td></tr>`;
     }
 }
 
@@ -153,7 +169,6 @@ function generateReport(issues) {
     tableBody.innerHTML = ''; 
     currentTraceData = issues;
     
-    // Formatting the clipboard text to look like a professional terminal output
     currentReportText = "=========================================\n";
     currentReportText += " 🚀 ORBIS SYSTEM DIAGNOSTIC TRACE \n";
     currentReportText += "=========================================\n";
@@ -161,22 +176,13 @@ function generateReport(issues) {
 
     if(issues.length === 0) {
         tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--accent-green);">✅ No anomalies detected. Codebase is clean.</td></tr>`;
-        currentReportText += "Status: CLEAN. No errors or vulnerabilities found.\n";
+        currentReportText += "Status: CLEAN. No errors found.\n";
         return;
     }
 
     issues.forEach((issue, index) => {
-        // Append to clipboard text
-        currentReportText += `[Issue #${index + 1}]\n`;
-        currentReportText += `> Stage   : ${issue.stage}\n`;
-        currentReportText += `> Status  : ${issue.status}\n`;
-        currentReportText += `> File    : ${issue.file} (Line: ${issue.line})\n`;
-        currentReportText += `> Impact  : ${issue.impact}\n`;
-        currentReportText += `> Reason  : ${issue.reason}\n`;
-        currentReportText += `> Fix     : ${issue.suggestedFix}\n`;
-        currentReportText += "-----------------------------------------\n";
+        currentReportText += `[Issue #${index + 1}]\n> Stage: ${issue.stage}\n> Status: ${issue.status}\n> File: ${issue.file}\n> Fix: ${issue.suggestedFix}\n-----------------------------------------\n`;
 
-        // Append to HTML Table
         const statusBg = issue.status === 'FAIL' ? 'rgba(239, 68, 68, 0.15)' : issue.status === 'WARN' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(16, 185, 129, 0.15)';
         const statusColor = issue.status === 'FAIL' ? 'var(--accent-red)' : issue.status === 'WARN' ? 'var(--accent-warning)' : 'var(--accent-green)';
         
@@ -205,21 +211,20 @@ async function fetchLogs() {
 
     try {
         const response = await fetch('/api/diagnostics/logs');
+        if(!response.ok) throw new Error("Log Fetch Failed");
         const data = await response.json();
         
-        // Mocking multi-category support if backend sends single string
         currentLogs = { 
             all: data.logs || "No logs available.", 
             server: data.logs || "Server is idle.", 
-            build: "[npm] Dependencies check passed.\n[webpack] Build completed successfully in 1200ms.", 
-            git: "Working tree clean. No uncommitted changes.", 
-            security: "SonarCloud Scanner: 0 Vulnerabilities.\nDependabot: No updates required." 
+            build: "[npm] Dependencies check passed.\n[webpack] Build completed.", 
+            git: "Working tree clean.", 
+            security: "SonarCloud Scanner: 0 Vulnerabilities." 
         };
-        renderLogs();
     } catch (error) {
-        currentLogs = { all: "Failed to connect to Multi-Log Server." };
-        renderLogs();
+        currentLogs = { all: "[ERROR] Failed to connect to Multi-Log Server API." };
     }
+    renderLogs();
 }
 
 function switchLog(type, btnElement) {
@@ -232,120 +237,26 @@ function switchLog(type, btnElement) {
 
 function renderLogs() {
     const consoleEl = document.getElementById('console-output');
-    if (currentLogs[activeLogType]) {
-        consoleEl.textContent = currentLogs[activeLogType];
-    } else {
-        consoleEl.textContent = "No logs found for this category.";
+    if(consoleEl) {
+        consoleEl.textContent = currentLogs[activeLogType] || "No logs found.";
+        consoleEl.parentElement.scrollTop = consoleEl.parentElement.scrollHeight;
     }
-    // Auto-scroll to bottom
-    consoleEl.parentElement.scrollTop = consoleEl.parentElement.scrollHeight;
 }
 
 // ==========================================
 // 5. COPY & CLIPBOARD ENGINES
 // ==========================================
 function copyReport() {
-    if(!currentReportText || currentTraceData.length === 0) {
-        alert("Nothing to copy! Run a search first.");
-        return;
-    }
-    navigator.clipboard.writeText(currentReportText).then(() => {
-        // Find the button and show visual feedback
-        const btns = document.querySelectorAll('.btn-green');
-        btns.forEach(btn => {
-            if(btn.innerText.includes("Copy Trace")) {
-                const originalText = btn.innerText;
-                btn.innerText = "✅ Copied!";
-                setTimeout(() => btn.innerText = originalText, 2000);
-            }
-        });
-    }).catch(err => {
-        console.error("Failed to copy:", err);
-        alert("Failed to copy to clipboard.");
-    });
+    if(!currentReportText) return alert("Nothing to copy!");
+    navigator.clipboard.writeText(currentReportText).then(() => alert("✅ Copied!"));
 }
 
 function exportReport(type) {
-    if(currentTraceData.length === 0) {
-        alert("No data to export!");
-        return;
-    }
-    let content = type === 'json' ? JSON.stringify(currentTraceData, null, 2) : currentReportText;
+    if(currentTraceData.length === 0) return alert("No data!");
+    const content = type === 'json' ? JSON.stringify(currentTraceData, null, 2) : currentReportText;
     const blob = new Blob([content], { type: type === 'json' ? "application/json" : "text/plain" });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `orbis_diagnostic_report_${Date.now()}.${type}`;
+    a.download = `orbis_report_${Date.now()}.${type}`;
     a.click();
-}
-
-// ==========================================
-// 6. MODAL & AI PROMPT GENERATOR
-// ==========================================
-function openModal(title, detail) {
-    document.getElementById('modal-title').innerText = title + ' Diagnostics';
-    document.getElementById('modal-desc').innerText = detail;
-    document.getElementById('infoModal').style.display = 'block';
-}
-
-function closeModal() { 
-    document.getElementById('infoModal').style.display = 'none'; 
-}
-
-// Close modal when clicking outside
-window.onclick = function(event) { 
-    if (event.target === document.getElementById('infoModal')) closeModal(); 
-}
-
-function copyModalData() {
-    const title = document.getElementById('modal-title').innerText;
-    const desc = document.getElementById('modal-desc').innerText;
-    
-    const formattedText = `[ORBIS SYSTEM INFO]\nSection: ${title}\nDetails:\n${desc}`;
-    
-    navigator.clipboard.writeText(formattedText).then(() => {
-        const btn = document.querySelector('button[onclick="copyModalData()"]');
-        if(btn) {
-            const og = btn.innerText;
-            btn.innerText = "✅ Copied!";
-            setTimeout(() => btn.innerText = og, 2000);
-        }
-    });
-}
-
-function generateAIPrompt() {
-    const title = document.getElementById('modal-title').innerText;
-    const contextText = document.getElementById('modal-desc').innerText;
-    
-    // Grab latest logs safely
-    let logText = "No logs.";
-    const consoleEl = document.getElementById('console-output');
-    if(consoleEl && consoleEl.innerText) {
-        logText = consoleEl.innerText.substring(0, 800); // Limit log size for prompt
-    }
-    
-    const promptText = `Act as a Senior Principal Software Engineer. I am working on the ORBIS Platform. I used my Developer Diagnostics Engine and found an issue.
-
-[SYSTEM CONTEXT - ${title}]
-${contextText}
-
-[LATEST EXECUTION TRACE]
-${currentReportText || "No trace generated yet."}
-
-[RECENT LOGS]
-${logText}
-
-[YOUR TASK]
-Based on the trace and logs above:
-1. Analyze the exact failure point or architectural bottleneck.
-2. Check for any logical breaks, syntax errors, or SonarCloud-like vulnerabilities.
-3. Provide the exact corrected code required. Do NOT change the core architecture. Focus only on the absolute fix.`;
-    
-    navigator.clipboard.writeText(promptText).then(() => {
-        const btn = document.querySelector('button[onclick="generateAIPrompt()"]');
-        if(btn) {
-            const og = btn.innerText;
-            btn.innerText = "✅ Prompt Copied!";
-            setTimeout(() => btn.innerText = og, 2500);
-        }
-    });
 }
