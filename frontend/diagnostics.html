@@ -1,10 +1,9 @@
-</html>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ORBIS Developer Diagnostics v2</title>
+    <title>ORBIS Developer Diagnostics v2.5</title>
     <style>
         :root {
             --bg-dark: #0f111a;
@@ -16,172 +15,86 @@
             --accent-warning: #f59e0b;
             --accent-unknown: #6b7280;
         }
-        body {
-            margin: 0;
-            padding: 20px;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-        }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #333;
-            padding-bottom: 15px;
-            margin-bottom: 25px;
-        }
+        body { margin: 0; padding: 20px; font-family: 'Segoe UI', sans-serif; background-color: var(--bg-dark); color: var(--text-main); }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 15px; margin-bottom: 25px; }
         .header h1 { margin: 0; font-size: 24px; color: var(--accent-blue); }
-        .auth-badge {
-            background: rgba(239, 68, 68, 0.1);
-            color: var(--accent-red);
-            padding: 5px 12px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: bold;
-            border: 1px solid var(--accent-red);
-        }
-        .health-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-        .health-card {
-            background-color: var(--bg-card);
-            padding: 15px;
-            border-radius: 6px;
-            border-left: 4px solid var(--accent-green);
-        }
-        .health-card h3 { margin: 0 0 10px 0; font-size: 14px; color: #8b949e; }
-        .health-card .value { font-size: 20px; font-weight: bold; }
-        .score-card { border-left-color: var(--accent-blue); }
+        .auth-badge { background: rgba(239, 68, 68, 0.1); color: var(--accent-red); padding: 5px 12px; border-radius: 4px; font-size: 12px; font-weight: bold; border: 1px solid var(--accent-red); }
         
-        .search-section {
-            background-color: var(--bg-card);
-            padding: 20px;
-            border-radius: 6px;
-            margin-bottom: 30px;
-        }
-        .search-box {
-            width: 100%;
-            padding: 12px;
-            background: #0f111a;
-            border: 1px solid #333;
-            color: white;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-        .search-box:focus { outline: none; border-color: var(--accent-blue); }
+        /* 🟢 ACTIVE CARDS CSS */
+        .health-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .health-card { background-color: var(--bg-card); padding: 15px; border-radius: 6px; border-left: 4px solid var(--accent-green); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+        .health-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        .health-card h3 { margin: 0 0 10px 0; font-size: 14px; color: #8b949e; pointer-events: none; }
+        .health-card .value { font-size: 20px; font-weight: bold; pointer-events: none; }
+        .score-card { border-left-color: var(--accent-blue); }
 
-        .report-section {
-            background-color: var(--bg-card);
-            padding: 20px;
-            border-radius: 6px;
-            margin-bottom: 30px;
-        }
+        /* 🟢 SEARCH BAR & MIC CSS */
+        .search-section { background-color: var(--bg-card); padding: 20px; border-radius: 6px; margin-bottom: 30px; }
+        .search-wrapper { display: flex; gap: 10px; margin-top: 10px; }
+        .search-box { flex-grow: 1; padding: 12px; background: #0f111a; border: 1px solid #333; color: white; border-radius: 4px; font-size: 16px; }
+        .search-box:focus { outline: none; border-color: var(--accent-blue); }
+        .mic-btn { background: var(--accent-blue); color: white; border: none; border-radius: 4px; padding: 0 20px; font-size: 20px; cursor: pointer; transition: 0.3s; }
+        .mic-btn.recording { background: var(--accent-red); animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+
+        /* MODAL CSS */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); }
+        .modal-content { background-color: var(--bg-card); margin: 15% auto; padding: 20px; border: 1px solid #333; width: 80%; max-width: 500px; border-radius: 8px; border-left: 5px solid var(--accent-blue); }
+        .close-btn { color: #8b949e; float: right; font-size: 24px; font-weight: bold; cursor: pointer; }
+        .close-btn:hover { color: white; }
+
+        /* TABLE CSS */
+        .report-section { background-color: var(--bg-card); padding: 20px; border-radius: 6px; margin-bottom: 30px; }
         .table-container { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; min-width: 900px; }
         th, td { text-align: left; padding: 12px; border-bottom: 1px solid #333; font-size: 13px; }
         th { color: #8b949e; font-size: 14px; }
-        
         .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
         .bg-pass { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); }
         .bg-fail { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); }
         .bg-warn { background: rgba(245, 158, 11, 0.2); color: var(--accent-warning); }
         .bg-unknown { background: rgba(107, 114, 128, 0.2); color: var(--accent-unknown); }
-
-        .console-container {
-            background: #000;
-            padding: 15px;
-            border-radius: 6px;
-            border: 1px solid #333;
-            max-height: 250px;
-            overflow-y: auto;
-            overflow-x: auto;
-        }
-        pre#console-output {
-            color: #10b981;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 13px;
-            margin: 0;
-            line-height: 1.5;
-        }
+        
+        .console-container { background: #000; padding: 15px; border-radius: 6px; border: 1px solid #333; max-height: 250px; overflow-y: auto; overflow-x: auto; }
+        pre#console-output { color: #10b981; font-family: 'Courier New', Courier, monospace; font-size: 13px; margin: 0; line-height: 1.5; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1>ORBIS // Developer Diagnostics v2 (Runtime Engine)</h1>
+        <h1>ORBIS // Developer Diagnostics v2.5 (Smart UI & Voice)</h1>
         <div class="auth-badge">ADMIN + DEVELOPER ONLY</div>
     </div>
 
-    <!-- MAIN DASHBOARD HEALTH METRICS -->
-    <div class="health-grid">
-        <div class="health-card score-card">
-            <h3>Overall Runtime Score</h3>
-            <div class="value">Loading...</div>
-        </div>
-        <div class="health-card">
-            <h3>Project Health</h3>
-            <div class="value" id="project-health">--</div>
-        </div>
-        <div class="health-card">
-            <h3>Runtime Health</h3>
-            <div class="value" id="runtime-health">--</div>
-        </div>
-        <div class="health-card">
-            <h3>Pipeline Health</h3>
-            <div class="value" id="pipeline-health">--</div>
-        </div>
-        <div class="health-card">
-            <h3>Display Health</h3>
-            <div class="value" id="display-health">--</div>
-        </div>
-        <div class="health-card">
-            <h3>Dependency Health</h3>
-            <div class="value" id="dependency-health">--</div>
-        </div>
-        <div class="health-card">
-            <h3>Console Health</h3>
-            <div class="value" id="console-health">--</div>
-        </div>
-        <div class="health-card">
-            <h3>Server RAM Load</h3>
-            <div class="value" id="git-status">--</div>
-        </div>
+    <!-- 🟢 ACTIVE HEALTH CARDS -->
+    <div class="health-grid" id="health-grid">
+        <!-- Cards will be injected by JS dynamically -->
     </div>
 
-    <!-- SEARCH BOX -->
+    <!-- 🟢 SEARCH BOX WITH VOICE INPUT -->
     <div class="search-section">
         <h3 style="margin-top: 0;">Execution Flow Analyzer</h3>
-        <input type="text" class="search-box" placeholder="Try asking: 'Why Lottery is not loading?' or 'Show Module Dependencies'">
+        <div class="search-wrapper">
+            <input type="text" class="search-box" id="search-input" placeholder="Type or use Voice (e.g., 'আমি ডেটাবেসের কাজ করব')">
+            <button class="mic-btn" id="mic-btn" title="Speak in Bengali">🎤</button>
+        </div>
     </div>
 
-    <!-- REPORT FORMAT -->
+    <!-- REPORT TABLE -->
     <div class="report-section">
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <h3 style="margin: 0;">Runtime Execution Tree</h3>
-            <button id="copy-btn" onclick="copyReport()" style="background: var(--accent-green); color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">📋 Copy Execution Trace</button>
+            <button id="copy-btn" onclick="copyReport()" style="background: var(--accent-green); color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">📋 Copy Trace</button>
         </div>
         <div class="table-container">
             <table>
                 <thead>
                     <tr>
-                        <th>Stage</th>
-                        <th>Status</th>
-                        <th>File</th>
-                        <th>Function</th>
-                        <th>Reason</th>
-                        <th>Dependency</th>
-                        <th>Suggested Fix</th>
-                        <th>Confidence %</th>
+                        <th>Stage</th><th>Status</th><th>File</th><th>Function</th><th>Reason</th><th>Dependency</th><th>Fix</th><th>Confidence</th>
                     </tr>
                 </thead>
                 <tbody id="report-body">
-                    <tr>
-                        <td colspan="8" style="text-align: center; color: #8b949e;">Awaiting runtime execution query...</td>
-                    </tr>
+                    <tr><td colspan="8" style="text-align: center; color: #8b949e;">Awaiting runtime execution query...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -201,41 +114,110 @@
         </div>
     </div>
 
-    <!-- DIAGNOSTICS LOGIC -->
+    <!-- MODAL POPUP -->
+    <div id="infoModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h2 id="modal-title" style="margin-top: 0; color: var(--accent-blue);">Title</h2>
+            <p id="modal-desc" style="color: var(--text-main); line-height: 1.6;"></p>
+        </div>
+    </div>
+
+    <!-- 🟢 SCRIPTS -->
     <script>
         let currentReportText = ""; 
 
         document.addEventListener('DOMContentLoaded', () => {
             runInitialScan();
-            fetchLogs(); 
+            fetchLogs();
+            setupVoiceRecognition(); 
 
-            const searchBox = document.querySelector('.search-box');
+            const searchBox = document.getElementById('search-input');
             searchBox.addEventListener('keypress', function (e) {
-                if (e.key === 'Enter') {
-                    const query = e.target.value.trim();
-                    if (query) handleSearch(query);
-                }
+                if (e.key === 'Enter') handleSearch(e.target.value.trim());
             });
         });
 
+        // 🟢 LOAD ACTIVE CARDS
         async function runInitialScan() {
             try {
                 const response = await fetch('/api/diagnostics/health');
                 const data = await response.json();
                 
-                document.querySelector('.score-card .value').innerHTML = `<span style="color: var(--accent-green);">${data.score}</span>`;
-                document.getElementById('project-health').innerHTML = `<span style="color: var(--accent-green);">${data.project}</span>`;
-                document.getElementById('runtime-health').innerHTML = `<span style="color: var(--accent-green);">${data.runtime}</span>`;
-                document.getElementById('pipeline-health').innerHTML = `<span style="color: var(--accent-green);">${data.pipeline}</span>`;
-                document.getElementById('display-health').innerHTML = `<span style="color: var(--accent-green);">${data.display}</span>`;
-                document.getElementById('dependency-health').innerHTML = `<span style="color: var(--accent-green);">${data.dependency}</span>`;
-                document.getElementById('console-health').innerHTML = `<span style="color: var(--accent-green);">${data.console}</span>`;
-                document.getElementById('git-status').innerHTML = `<span style="color: var(--accent-warning);">${data.systemLoad}</span>`;
-            } catch (error) {
-                console.error("Health scan failed");
+                const grid = document.getElementById('health-grid');
+                grid.innerHTML = ''; 
+
+                const createCard = (title, dataObj, isScore = false) => {
+                    const card = document.createElement('div');
+                    card.className = `health-card ${isScore ? 'score-card' : ''}`;
+                    card.onclick = () => openModal(title, dataObj.detail);
+                    card.innerHTML = `<h3>${title}</h3><div class="value"><span style="color: var(--accent-green);">${dataObj.value}</span></div>`;
+                    return card;
+                };
+
+                grid.appendChild(createCard('Overall Runtime Score', data.score, true));
+                grid.appendChild(createCard('Project Health', data.project));
+                grid.appendChild(createCard('Runtime Health', data.runtime));
+                grid.appendChild(createCard('Pipeline Health', data.pipeline));
+                grid.appendChild(createCard('Dependency Graph', data.dependency));
+                grid.appendChild(createCard('Server RAM Load', data.systemLoad));
+                
+            } catch (error) { console.error("Health scan failed"); }
+        }
+
+        // 🟢 MODAL LOGIC
+        function openModal(title, detail) {
+            document.getElementById('modal-title').innerText = title + ' Details';
+            document.getElementById('modal-desc').innerText = detail;
+            document.getElementById('infoModal').style.display = 'block';
+        }
+        function closeModal() { document.getElementById('infoModal').style.display = 'none'; }
+        window.onclick = function(event) {
+            const modal = document.getElementById('infoModal');
+            if (event.target == modal) closeModal();
+        }
+
+        // 🟢 BENGALI VOICE RECOGNITION (Web Speech API)
+        function setupVoiceRecognition() {
+            const micBtn = document.getElementById('mic-btn');
+            const searchInput = document.getElementById('search-input');
+
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (SpeechRecognition) {
+                const recognition = new SpeechRecognition();
+                recognition.lang = 'bn-IN'; 
+                recognition.interimResults = false;
+                
+                recognition.onstart = function() {
+                    micBtn.classList.add('recording');
+                    searchInput.placeholder = "Listening in Bengali...";
+                };
+                
+                recognition.onspeechend = function() {
+                    micBtn.classList.remove('recording');
+                    recognition.stop();
+                };
+
+                recognition.onresult = function(event) {
+                    const transcript = event.results[0][0].transcript;
+                    searchInput.value = transcript;
+                    searchInput.placeholder = "Type or use Voice...";
+                    handleSearch(transcript); 
+                };
+
+                recognition.onerror = function(event) {
+                    micBtn.classList.remove('recording');
+                    searchInput.placeholder = "Voice error. Try typing.";
+                };
+
+                micBtn.addEventListener('click', () => recognition.start());
+            } else {
+                micBtn.style.display = 'none'; 
+                searchInput.placeholder = "Voice not supported in this browser. Please type.";
             }
         }
 
+        // 🟢 FETCH LOGS
         async function fetchLogs() {
             const consoleEl = document.getElementById('console-output');
             try {
@@ -248,23 +230,18 @@
             }
         }
 
+        // 🟢 SCANNER REPORT 
         async function handleSearch(query) {
             const tableBody = document.getElementById('report-body');
-            tableBody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--accent-warning);">Tracing execution flow for: "${query}"...</td></tr>`;
-
+            tableBody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--accent-warning);">Analyzing Execution Flow for: "${query}"...</td></tr>`;
             try {
-                const response = await fetch('/api/diagnostics/scan', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ query })
-                });
+                const response = await fetch('/api/diagnostics/scan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query }) });
                 const data = await response.json();
                 generateReport(data.issues || []);
-            } catch (error) {
-                tableBody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--accent-red);">Scan failed. Engine unreachable.</td></tr>`;
-            }
+            } catch (error) {}
         }
 
+        // 🟢 GENERATE REPORT HTML & PREPARE TEXT FOR COPY
         function generateReport(issues) {
             const tableBody = document.getElementById('report-body');
             tableBody.innerHTML = ''; 
@@ -278,23 +255,13 @@
                 if (issue.status === 'PASS') badgeClass = 'bg-pass';
                 if (issue.status === 'FAIL') badgeClass = 'bg-fail';
                 if (issue.status === 'WARNING') badgeClass = 'bg-warn';
-
-                const row = `
-                    <tr>
-                        <td><strong>${issue.stage}</strong></td>
-                        <td><span class="badge ${badgeClass}">${issue.status}</span></td>
-                        <td><span style="color: #93c5fd;">${issue.file}</span></td>
-                        <td>${issue.func}</td>
-                        <td>${issue.reason}</td>
-                        <td>${issue.dependency}</td>
-                        <td>${issue.fix}</td>
-                        <td><strong>${issue.confidence}</strong></td>
-                    </tr>
-                `;
+                
+                const row = `<tr><td><strong>${issue.stage}</strong></td><td><span class="badge ${badgeClass}">${issue.status}</span></td><td><span style="color: #93c5fd;">${issue.file}</span></td><td>${issue.func}</td><td>${issue.reason}</td><td>${issue.dependency}</td><td>${issue.fix}</td><td><strong>${issue.confidence}</strong></td></tr>`;
                 tableBody.innerHTML += row;
             });
         }
 
+        // 🟢 COPY REPORT
         function copyReport() {
             if (!currentReportText || currentReportText.length < 70) {
                 alert("No execution trace to copy.");
@@ -305,14 +272,13 @@
                 btn.innerHTML = '✅ Copied!';
                 btn.style.background = '#10b981';
                 setTimeout(() => {
-                    btn.innerHTML = '📋 Copy Execution Trace';
+                    btn.innerHTML = '📋 Copy Trace';
                     btn.style.background = 'var(--accent-green)';
                 }, 2000);
-            }).catch(err => {
-                alert("Failed to copy.");
-            });
+            }).catch(err => alert("Failed to copy."));
         }
 
+        // 🟢 COPY LOGS
         function copyLogs() {
             const consoleText = document.getElementById('console-output').innerText;
             if (!consoleText || consoleText.includes("Connecting to ORBIS Logger")) {
@@ -327,9 +293,7 @@
                     btn.innerHTML = '📋 Copy Logs';
                     btn.style.background = 'var(--accent-green)';
                 }, 2000);
-            }).catch(err => {
-                alert("Failed to copy logs.");
-            });
+            }).catch(err => alert("Failed to copy logs."));
         }
     </script>
 </body>
