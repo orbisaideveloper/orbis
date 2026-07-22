@@ -1,108 +1,126 @@
-import express from 'express';
-import path from 'node:path';
-import { scanProjectInventory, getRealHealthData, getRealFileContext } from '../utils/RealDataEngine.js';
+let currentReportText = ""; 
+let currentTraceData = [];
 
-const router = express.Router();
-const ROOT_DIR = process.cwd();
-
-// --- SCHEMA ENFORCER (CRITICAL BUG FIX: camelCase Keys & N/A Enforcement) ---
-const createAnalyzerResult = (stage, status, file, line, func, reason, impact, dependency, suggestedFix, confidence, evidenceSource) => ({
-    stage: stage || 'N/A',
-    status: status || 'N/A',
-    file: file || 'N/A',
-    line: line || 'N/A',
-    function: func || 'N/A',
-    reason: reason || 'N/A',
-    impact: impact || 'N/A',
-    dependency: dependency || 'N/A',
-    suggestedFix: suggestedFix || 'N/A',
-    confidence: confidence || 'N/A',
-    evidenceSource: evidenceSource || 'N/A',
-    timestamp: new Date().toISOString()
-});
-
-// --- INTENT ENGINE ---
-const analyzeIntent = (query) => {
-    const q = query.toLowerCase();
-    const intentTable = [
-        { id: 'inventory', keywords: ['inventory', 'project inventory'], analyzer: 'Inventory Engine' },
-        { id: 'system_audit', keywords: ['system audit', 'full audit', 'runtime audit', 'developer report', 'health check', 'project health'], analyzer: 'System Audit Engine' },
-        { id: 'lottery', keywords: ['lottery', 'লটারি'], analyzer: 'Lottery Analyzer' },
-        { id: 'dashboard', keywords: ['dashboard', 'ড্যাশবোর্ড'], analyzer: 'Dashboard Analyzer' },
-        { id: 'html', keywords: ['html'], analyzer: 'HTML Analyzer' },
-        { id: 'js', keywords: ['javascript', 'js'], analyzer: 'JavaScript Analyzer' }
-    ];
-
-    let matched = null;
-
-    for (const intent of intentTable) {
-        if (intent.keywords.some(kw => q.includes(kw))) {
-            matched = intent;
-            break;
-        }
-    }
-
-    if (matched) return { matched, confidence: '100% (Calculated)', reason: 'Direct matching from Request' };
-    return { matched: { id: 'generic', analyzer: 'Generic Engine' }, confidence: 'N/A', reason: 'No specific intent matched. Running generic scan.' };
-};
-
-// --- MAIN SCAN ENGINE V3.6 ---
-router.post('/scan', express.json(), (req, res) => {
-    const { query } = req.body;
-    if (!query) return res.json({ success: false, error: 'Query is missing', timestamp: new Date().toISOString() });
-
-    const { matched, confidence, reason } = analyzeIntent(query);
-    const healthData = getRealHealthData();
+document.addEventListener('DOMContentLoaded', () => {
+    runInitialScan();
+    fetchLogs();
     
-    let flow = [];
-    let evidencePack = null;
-    let smartFix = null;
-    let inventoryReport = null;
-
-    if (matched.id === 'inventory') {
-        inventoryReport = scanProjectInventory();
-        flow.push(createAnalyzerResult('File Scan', 'PASS', 'Root Directory', 'N/A', 'scanProjectInventory()', 'Successfully counted real files.', 'None', 'Node fs module', 'N/A', '100%', 'Filesystem'));
-    } 
-    else if (matched.id === 'system_audit') {
-        const pkgContext = getRealFileContext('package.json');
-        flow.push(createAnalyzerResult('Runtime Mem', 'INFO', 'OS', 'N/A', 'os.freemem()', `Memory: ${healthData.memory}`, 'System Performance', 'Node OS module', 'N/A', '100%', 'Runtime'));
-        flow.push(createAnalyzerResult('Dependencies', pkgContext.exists ? 'PASS' : 'WARN', 'package.json', 'N/A', 'JSON.parse()', `Found ${healthData.dependencies} dependencies`, 'Application Stability', 'NPM', pkgContext.exists ? 'N/A' : 'Create package.json', '100%', 'Filesystem'));
-        
-        evidencePack = {
-            File: 'package.json', Line: 'N/A', Function: 'N/A',
-            CodeContext: pkgContext.snippet,
-            DependencyChain: 'Core -> Modules',
-            RuntimeEvidence: `Uptime: ${healthData.uptime}`,
-            ConsoleEvidence: 'N/A',
-            EvidenceSource: 'Filesystem & Runtime'
-        };
-    } 
-    else if (matched.id === 'lottery' || matched.id === 'dashboard') {
-        const targetPath = `src/modules/${matched.id}/index.js`;
-        const fileData = getRealFileContext(targetPath);
-        
-        if (fileData.exists) {
-            flow.push(createAnalyzerResult('Module Scan', 'PASS', targetPath, 'N/A', 'N/A', 'File exists and is readable.', 'High', 'Express', 'N/A', '100%', 'Filesystem'));
-            evidencePack = { File: targetPath, Line: '1-3', Function: 'N/A', CodeContext: fileData.snippet, DependencyChain: 'Router -> Module', RuntimeEvidence: 'N/A', ConsoleEvidence: 'N/A', EvidenceSource: 'Filesystem' };
-        } else {
-            flow.push(createAnalyzerResult('Module Scan', 'FAIL', targetPath, 'N/A', 'N/A', 'Real file not found in directory.', 'Critical', 'Express', `Create file at ${targetPath}`, '100%', 'Filesystem'));
-            smartFix = { File: targetPath, SuggestedCode: `export const init = () => { console.log('${matched.id} loaded'); }`, Reason: 'Missing entry point', EvidenceSource: 'Filesystem' };
-        }
-    } 
-    else {
-        flow.push(createAnalyzerResult('Generic Trace', 'INFO', 'N/A', 'N/A', 'N/A', 'Executing standard validation fallback', 'Low', 'N/A', 'N/A', 'N/A', 'Runtime'));
-    }
-
-    res.json({
-        success: true,
-        queryVerification: { intent: matched.id, analyzer: matched.analyzer, confidence, reason, timestamp: new Date().toISOString() },
-        issues: flow,
-        smartReport: {
-            evidencePack: evidencePack || 'N/A (No critical evidence found)',
-            smartFixPreview: smartFix || 'N/A (No fixes required)',
-            inventory: inventoryReport || 'N/A (Not requested)'
-        }
+    const searchBox = document.getElementById('search-input');
+    searchBox.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') handleSearch(e.target.value.trim());
     });
 });
 
-export default router;
+async function runInitialScan() {
+    try {
+        const response = await fetch('/api/diagnostics/health');
+        const data = await response.json();
+        const grid = document.getElementById('health-grid');
+        grid.innerHTML = ''; 
+
+        const createCard = (title, val, status, detail, cClass = '') => {
+            const card = document.createElement('div');
+            let baseClass = 'health-card ' + cClass;
+            if (status === 'FAIL') baseClass += ' fail-card';
+            else if (status === 'WARN') baseClass += ' warn-card';
+            
+            card.className = baseClass.trim();
+            card.onclick = () => openModal(title, detail);
+            
+            card.innerHTML = `
+                <h3>${title}</h3>
+                <div class="value" style="color: ${status === 'FAIL' ? 'var(--accent-red)' : status === 'WARN' ? 'var(--accent-warning)' : 'var(--accent-green)'}">
+                    ${val}
+                </div>
+            `;
+            return card;
+        };
+
+        grid.appendChild(createCard('Overall Health Score', `${data.score} / 100`, data.score > 80 ? 'PASS' : 'WARN', `Score calculated based on runtime integrity.\nChecked at: ${new Date().toLocaleTimeString()}`, 'score-card'));
+        grid.appendChild(createCard('Project Health', data.project.value, data.project.status, data.project.detail));
+        grid.appendChild(createCard('Server RAM Load', data.ram.value, data.ram.status, data.ram.detail));
+        grid.appendChild(createCard('Dependency Health', data.dependency.value, data.dependency.status, data.dependency.detail));
+        grid.appendChild(createCard('Console Health', data.console.value, data.console.status, data.console.detail));
+        
+    } catch (error) { 
+        document.getElementById('health-grid').innerHTML = '<div style="color:red;">Engine Offline. Could not fetch live data.</div>';
+    }
+}
+
+async function fetchLogs() {
+    const consoleEl = document.getElementById('console-output');
+    try {
+        const response = await fetch('/api/diagnostics/logs');
+        const data = await response.json();
+        consoleEl.textContent = data.logs || "System logs are clean.";
+    } catch (error) {
+        consoleEl.textContent = "Failed to connect to Multi-Log Server.";
+    }
+}
+
+async function handleSearch(query) {
+    if(!query) return;
+    const tableBody = document.getElementById('report-body');
+    tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--accent-warning);">Engine Analyzing Intent: "${query}"...</td></tr>`;
+    
+    try {
+        const response = await fetch('/api/diagnostics/scan', { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify({ query }) 
+        });
+        const data = await response.json();
+        generateReport(data.issues || []);
+    } catch (error) {
+        tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--accent-red);">Root Cause Engine Unreachable.</td></tr>`;
+    }
+}
+
+function generateReport(issues) {
+    const tableBody = document.getElementById('report-body');
+    tableBody.innerHTML = ''; 
+    currentTraceData = issues;
+    currentReportText = "ORBIS ROOT CAUSE EXPORT\n=======================\n\n";
+
+    if(issues.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center;">No anomalies detected.</td></tr>`;
+        return;
+    }
+
+    issues.forEach(issue => {
+        currentReportText += `Stage: ${issue.stage}\nStatus: ${issue.status}\nFile: ${issue.file}:${issue.line}\nImpact: ${issue.impact}\nReason: ${issue.reason}\nFix: ${issue.suggestedFix}\n-----------------------\n`;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><strong>${issue.stage}</strong></td>
+            <td><span style="color: ${issue.status==='FAIL' ? '#ef4444' : issue.status==='WARN' ? '#f59e0b' : '#10b981'}">${issue.status}</span></td>
+            <td style="color: #93c5fd;">${issue.file}</td>
+            <td>${issue.line}</td>
+            <td style="color: #f59e0b;">${issue.impact}</td>
+            <td><div style="font-size:11px; margin-bottom:4px;">${issue.reason}</div><strong style="color:#10b981; font-size:11px;">Fix: ${issue.suggestedFix}</strong></td>
+        `;
+        tableBody.appendChild(tr);
+    });
+}
+
+function copyReport() {
+    navigator.clipboard.writeText(currentReportText).then(() => alert("Trace copied!"));
+}
+
+function exportReport(type) {
+    let content = type === 'json' ? JSON.stringify(currentTraceData, null, 2) : currentReportText;
+    const blob = new Blob([content], { type: type === 'json' ? "application/json" : "text/plain" });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `orbis_report.${type}`;
+    a.click();
+}
+
+function openModal(title, detail) {
+    document.getElementById('modal-title').innerText = title;
+    document.getElementById('modal-desc').innerText = detail;
+    document.getElementById('infoModal').style.display = 'block';
+}
+
+function closeModal() { document.getElementById('infoModal').style.display = 'none'; }
+window.onclick = function(event) { if (event.target === document.getElementById('infoModal')) closeModal(); }
