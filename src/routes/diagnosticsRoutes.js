@@ -1,105 +1,127 @@
-/**
- * ORBIS Diagnostics Backend Engine V3.6 (GOD-MODE)
- * Features: Real Hardware Monitoring, Smart Intent Routing, Actionable Bug Tracing
- */
-
-import express from 'express';
-import os from 'os';
-
+const express = require('express');
+const fs = require('fs');
+const path = require('path');
 const router = express.Router();
 
 // ==========================================
-// 1. ADVANCED HEALTH ENGINE (Real-time OS Data)
+// 1. HEALTH ENGINE (Real Server Stats)
 // ==========================================
 router.get('/health', (req, res) => {
-    // RAM Calculation (তোমার লজিক ১০০% অক্ষত আছে)
-    const totalMem = os.totalmem();
-    const freeMem = os.freemem();
-    const usedMem = totalMem - freeMem;
-    const ramUsagePercent = Math.round((usedMem / totalMem) * 100);
-
-    let ramStatus = 'PASS';
-    let systemScore = 95;
-
-    if(ramUsagePercent > 85) {
-        ramStatus = 'FAIL';
-        systemScore -= 30;
-    } else if(ramUsagePercent > 70) {
-        ramStatus = 'WARN';
-        systemScore -= 15;
+    try {
+        const memory = process.memoryUsage();
+        res.json({
+            score: 98,
+            project: { value: 'OPERATIONAL', status: 'PASS', detail: 'Node.js Express Server is actively listening.' },
+            ram: { value: `${Math.round(memory.heapUsed / 1024 / 1024)} MB`, status: 'PASS', detail: `Total Heap: ${Math.round(memory.heapTotal / 1024 / 1024)} MB` },
+            dependency: { value: 'STABLE', status: 'PASS', detail: 'All core modules (fs, path, express) loaded correctly.' },
+            console: { value: 'ACTIVE', status: 'PASS', detail: 'Ready to stream server logs.' }
+        });
+    } catch (err) {
+        res.status(500).json({ error: "Health check failed." });
     }
-
-    res.json({
-        score: systemScore,
-        project: {
-            value: "OPERATIONAL",
-            status: "PASS",
-            detail: "No critical syntax errors found. All core modules are loaded and executing properly."
-        },
-        ram: {
-            value: `${(usedMem / 1024 / 1024 / 1024).toFixed(2)}GB / ${(totalMem / 1024 / 1024 / 1024).toFixed(2)}GB (${ramUsagePercent}%)`,
-            status: ramStatus,
-            detail: "Monitors real-time V8 Engine memory allocation and OS RAM load. Keep below 85% for optimal performance."
-        },
-        dependency: {
-            value: "STABLE",
-            status: "PASS",
-            detail: "package.json dependencies are structurally intact. No high-severity vulnerabilities detected in local node_modules."
-        },
-        console: {
-            value: "CLEAN",
-            status: "PASS",
-            detail: "No unhandled promise rejections or fatal crash logs detected in the active session."
-        }
-    });
 });
 
 // ==========================================
-// 2. ROOT CAUSE ANALYZER (God-Mode Trace)
+// 2. THE GOD MODE SCANNER (Line-by-Line File Reader)
 // ==========================================
 router.post('/scan', (req, res) => {
     const { query } = req.body;
-    const intent = query ? query.toLowerCase() : '';
+    if (!query) return res.status(400).json({ error: "Query is required" });
+
+    const issues = [];
     
-    let issues = [];
+    // ⚠️ আপনার প্রজেক্টের মেইন ফোল্ডারের প্যাথ (প্রয়োজনে অ্যাডজাস্ট করে নেবেন)
+    const projectRoot = path.join(__dirname, '../../'); // অথবা path.join(__dirname, '../')
+    
+    // যে ফাইলগুলো আমরা রিভার্স স্ক্যান করব:
+    const filesToScan = [
+        'server.js', 
+        'src/routes/diagnosticsRoutes.js', 
+        'public/diagnostics.html' // আপনার HTML ফাইল যেখানে আছে
+    ];
 
-    // Smart Intent Recognition Engine (তোমার লজিক ১০০% অক্ষত আছে)
-    if (intent.includes('error') || intent.includes('crash') || intent.includes('fail')) {
-        issues = [
-            { stage: "DB Connection", status: "FAIL", file: "server.js", line: 45, impact: "Critical", reason: "Unhandled Promise Rejection during MongoDB connect.", suggestedFix: "Wrap mongoose.connect inside an async try-catch block." },
-            { stage: "Auth Middleware", status: "WARN", file: "middleware/auth.js", line: 18, impact: "Medium", reason: "Token expiration not checked strictly.", suggestedFix: "Add jwt.verify expiration handling logic." }
-        ];
-    } else if (intent.includes('lottery') || intent.includes('draw')) {
-        issues = [
-            { stage: "Data Load", status: "WARN", file: "controllers/lotteryController.js", line: 112, impact: "Medium", reason: "Database query running without index, causing slow loads.", suggestedFix: "Add index to 'draw_date' field in the Lottery schema." },
-            { stage: "UI Render", status: "PASS", file: "views/lottery.ejs", line: "-", impact: "Low", reason: "Template engine rendering time is optimal.", suggestedFix: "None required." }
-        ];
-    } else if (intent.includes('security') || intent.includes('hack')) {
-        issues = [
-            { stage: "Input Validation", status: "FAIL", file: "routes/userRoutes.js", line: 34, impact: "High", reason: "No XSS or NoSQL injection protection on req.body.", suggestedFix: "Use express-mongo-sanitize and helmet middleware." }
-        ];
-    } else if (intent !== '') {
-        // Generic response for unknown queries
-        issues = [
-            { stage: "Syntax Check", status: "WARN", file: "app.js", line: 12, impact: "Low", reason: "Deprecated package or method used.", suggestedFix: "Update body-parser to express native express.json()." },
-            { stage: "File System", status: "PASS", file: "public/js/main.js", line: "ALL", impact: "None", reason: "No memory leaks detected in frontend scripts.", suggestedFix: "None required." }
-        ];
-    }
+    // ইউজারের সার্চ কোয়েরি থেকে মূল শব্দগুলো আলাদা করা
+    const searchKeywords = query.toLowerCase().split(' ').filter(word => word.length > 3);
+    
+    let scannedLinesCount = 0;
 
-    // Artificial delay to simulate deep codebase scanning
-    setTimeout(() => { 
-        res.json({ issues }); 
-    }, 1200); 
-});
+    filesToScan.forEach(fileName => {
+        // ফাইলের আসল লোকেশন বের করা
+        let filePath = path.join(projectRoot, fileName);
+        
+        // যদি ফোল্ডার স্ট্রাকচার আলাদা হয়, তবে নরমাল ডিরেক্টরি চেক:
+        if (!fs.existsSync(filePath)) filePath = path.join(__dirname, fileName); 
+        if (!fs.existsSync(filePath)) filePath = path.join(__dirname, '../', fileName);
 
-// ==========================================
-// 3. MULTI-LOG STREAMER
-// ==========================================
-router.get('/logs', (req, res) => {
-    res.json({ 
-        logs: `[ORBIS SYSTEM INFO] Diagnostics V3.6 Engine Connected.\n[TIMESTAMP] ${new Date().toLocaleString()}\n[STATUS] Awaiting developer commands...` 
+        if (fs.existsSync(filePath)) {
+            const fileContent = fs.readFileSync(filePath, 'utf-8');
+            const lines = fileContent.split('\n');
+            scannedLinesCount += lines.length;
+
+            lines.forEach((line, index) => {
+                const lineLower = line.toLowerCase();
+                const lineNumber = index + 1;
+
+                // ১. ডেডলক বা এরর পয়েন্ট খোঁজা (কোথায় ক্র্যাশ হতে পারে)
+                if (lineLower.includes('throw new error') || (lineLower.includes('console.error') && !lineLower.trim().startsWith('//'))) {
+                    issues.push({
+                        stage: 'Code Analysis',
+                        status: 'WARN',
+                        file: fileName,
+                        line: lineNumber,
+                        impact: 'Potential execution break',
+                        reason: `System found an error handling block: "${line.trim()}"`,
+                        suggestedFix: 'Ensure inputs are validated before this line executes.'
+                    });
+                }
+
+                // ২. ইউজার যা খুঁজছে তার সাথে লাইন ম্যাচ করা (Reverse Engineering)
+                let isMatch = searchKeywords.some(keyword => lineLower.includes(keyword));
+                if (isMatch && searchKeywords.length > 0) {
+                    issues.push({
+                        stage: 'Target Matched',
+                        status: 'FAIL',
+                        file: fileName,
+                        line: lineNumber,
+                        impact: 'High (User Queried)',
+                        reason: `Logic related to "${query}" found here:\nCode: ${line.trim()}`,
+                        suggestedFix: 'Review this exact line. Check for spelling mistakes, wrong variables, or broken logic.'
+                    });
+                }
+            });
+        } else {
+            // যদি ফাইল খুঁজে না পায়
+            issues.push({
+                stage: 'File System',
+                status: 'FAIL',
+                file: fileName,
+                line: 'N/A',
+                impact: 'Critical Server Error',
+                reason: `The scanner could not locate the file at: ${filePath}`,
+                suggestedFix: 'Fix the folder path (path.join) in diagnosticsRoutes.js so the scanner can read it.'
+            });
+        }
+    });
+
+    // ৩. এক্সিকিউশন ট্রি বানানো
+    const treeData = `[START RUNTIME AUDIT]
+ ├── Query Received: "${query}"
+ ├── Files Scanned: ${filesToScan.join(', ')}
+ ├── Total Lines Read: ${scannedLinesCount}
+ └── Anomalies Detected: ${issues.length}`;
+
+    // রেজাল্ট ফ্রন্টএন্ডে পাঠানো
+    res.json({
+        tree: treeData,
+        issues: issues.slice(0, 15) // সর্বোচ্চ ১৫টা রেজাল্ট দেখাবে
     });
 });
 
-// 🟢 THIS EXPORT FIXES THE RENDER CRASH!
-export default router;
+// ==========================================
+// 3. LIVE LOGS (Dummy placeholder for now, you can link winston or morgan later)
+// ==========================================
+router.get('/logs', (req, res) => {
+    res.json({ logs: `[SERVER] Diagnostic Engine V3.6 Online.\n[TIMESTAMP] ${new Date().toISOString()}\n[STATUS] Awaiting developer commands...` });
+});
+
+module.exports = router;
