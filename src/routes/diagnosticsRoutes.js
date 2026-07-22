@@ -1,6 +1,12 @@
-const express = require('express');
-const fs = require('fs');
-const path = require('path');
+import express from 'express';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+// ES Module-এর জন্য __dirname তৈরি করা (যেহেতু import-এ বাই ডিফল্ট এটি থাকে না)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const router = express.Router();
 
 // ==========================================
@@ -30,14 +36,14 @@ router.post('/scan', (req, res) => {
 
     const issues = [];
     
-    // ⚠️ আপনার প্রজেক্টের মেইন ফোল্ডারের প্যাথ (প্রয়োজনে অ্যাডজাস্ট করে নেবেন)
-    const projectRoot = path.join(__dirname, '../../'); // অথবা path.join(__dirname, '../')
+    // ⚠️ প্রজেক্টের মেইন ফোল্ডারের প্যাথ
+    const projectRoot = path.join(__dirname, '../../'); 
     
     // যে ফাইলগুলো আমরা রিভার্স স্ক্যান করব:
     const filesToScan = [
         'server.js', 
         'src/routes/diagnosticsRoutes.js', 
-        'public/diagnostics.html' // আপনার HTML ফাইল যেখানে আছে
+        'frontend/diagnostics.html' // আপনার HTML ফাইল যেখানে আছে (frontend ফোল্ডার)
     ];
 
     // ইউজারের সার্চ কোয়েরি থেকে মূল শব্দগুলো আলাদা করা
@@ -62,7 +68,7 @@ router.post('/scan', (req, res) => {
                 const lineLower = line.toLowerCase();
                 const lineNumber = index + 1;
 
-                // ১. ডেডলক বা এরর পয়েন্ট খোঁজা (কোথায় ক্র্যাশ হতে পারে)
+                // ১. ডেডলক বা এরর পয়েন্ট খোঁজা
                 if (lineLower.includes('throw new error') || (lineLower.includes('console.error') && !lineLower.trim().startsWith('//'))) {
                     issues.push({
                         stage: 'Code Analysis',
@@ -75,7 +81,7 @@ router.post('/scan', (req, res) => {
                     });
                 }
 
-                // ২. ইউজার যা খুঁজছে তার সাথে লাইন ম্যাচ করা (Reverse Engineering)
+                // ২. ইউজার যা খুঁজছে তার সাথে লাইন ম্যাচ করা
                 let isMatch = searchKeywords.some(keyword => lineLower.includes(keyword));
                 if (isMatch && searchKeywords.length > 0) {
                     issues.push({
@@ -98,7 +104,7 @@ router.post('/scan', (req, res) => {
                 line: 'N/A',
                 impact: 'Critical Server Error',
                 reason: `The scanner could not locate the file at: ${filePath}`,
-                suggestedFix: 'Fix the folder path (path.join) in diagnosticsRoutes.js so the scanner can read it.'
+                suggestedFix: 'Fix the folder path (path.join) so the scanner can read it.'
             });
         }
     });
@@ -118,10 +124,11 @@ router.post('/scan', (req, res) => {
 });
 
 // ==========================================
-// 3. LIVE LOGS (Dummy placeholder for now, you can link winston or morgan later)
+// 3. LIVE LOGS 
 // ==========================================
 router.get('/logs', (req, res) => {
     res.json({ logs: `[SERVER] Diagnostic Engine V3.6 Online.\n[TIMESTAMP] ${new Date().toISOString()}\n[STATUS] Awaiting developer commands...` });
 });
 
-module.exports = router;
+// 🟢 NEW: Export default router (ES Module Support)
+export default router;
