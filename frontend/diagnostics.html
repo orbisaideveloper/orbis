@@ -186,7 +186,10 @@
     <div class="report-section">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <h3 style="margin: 0;">Server Console Logs (system.log)</h3>
-            <button onclick="fetchLogs()" style="background: var(--accent-blue); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">🔄 Refresh Logs</button>
+            <div>
+                <button id="copy-log-btn" onclick="copyLogs()" style="background: var(--accent-green); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; margin-right: 10px;">📋 Copy Logs</button>
+                <button onclick="fetchLogs()" style="background: var(--accent-blue); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">🔄 Refresh Logs</button>
+            </div>
         </div>
         <div class="console-container">
             <pre id="console-output">Connecting to ORBIS Logger...</pre>
@@ -195,11 +198,11 @@
 
     <!-- DIAGNOSTICS LOGIC -->
     <script>
-        let currentReportText = ""; // To store text for copying
+        let currentReportText = ""; 
 
         document.addEventListener('DOMContentLoaded', () => {
             runInitialScan();
-            fetchLogs(); // Load logs on startup
+            fetchLogs(); 
 
             const searchBox = document.querySelector('.search-box');
             searchBox.addEventListener('keypress', function (e) {
@@ -236,7 +239,6 @@
                 const response = await fetch('/api/diagnostics/logs');
                 const data = await response.json();
                 consoleEl.textContent = data.logs;
-                // Auto scroll to bottom
                 consoleEl.parentElement.scrollTop = consoleEl.parentElement.scrollHeight;
             } catch (error) {
                 consoleEl.textContent = "Failed to connect to log server.";
@@ -266,14 +268,11 @@
             const tableBody = document.getElementById('report-body');
             tableBody.innerHTML = ''; 
             
-            // Format for clipboard
             currentReportText = "ORBIS Developer Diagnostics Report\n================================\n\n";
 
             issues.forEach((issue, index) => {
-                // Formatting for Copy
                 currentReportText += `[${issue.severity}] File: ${issue.file}\nReason: ${issue.reason}\nSuggested Fix: ${issue.fix}\n----------------------------------\n`;
 
-                // Formatting for HTML Table
                 const severityClass = issue.severity === 'CRITICAL' ? 'badge high' : (issue.severity === 'WARNING' ? 'badge' : 'badge');
                 const severityStyle = issue.severity !== 'CRITICAL' ? 'background: rgba(245, 158, 11, 0.2); color: var(--accent-warning);' : '';
 
@@ -293,7 +292,7 @@
             });
         }
 
-        // 🟢 Copy to Clipboard Logic
+        // 🟢 Copy Report Logic
         function copyReport() {
             if (!currentReportText || currentReportText.length < 70) {
                 alert("No active scan report to copy.");
@@ -309,6 +308,26 @@
                 }, 2000);
             }).catch(err => {
                 alert("Failed to copy. Your browser might block clipboard access.");
+            });
+        }
+
+        // 🟢 Copy Logs Logic (NEW)
+        function copyLogs() {
+            const consoleText = document.getElementById('console-output').innerText;
+            if (!consoleText || consoleText.includes("Connecting to ORBIS Logger")) {
+                alert("No logs available to copy.");
+                return;
+            }
+            navigator.clipboard.writeText(consoleText).then(() => {
+                const btn = document.getElementById('copy-log-btn');
+                btn.innerHTML = '✅ Copied!';
+                btn.style.background = '#10b981';
+                setTimeout(() => {
+                    btn.innerHTML = '📋 Copy Logs';
+                    btn.style.background = 'var(--accent-green)';
+                }, 2000);
+            }).catch(err => {
+                alert("Failed to copy logs.");
             });
         }
 
