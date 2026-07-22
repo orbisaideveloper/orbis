@@ -1,9 +1,10 @@
+</html>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ORBIS Developer Diagnostics v1</title>
+    <title>ORBIS Developer Diagnostics v2</title>
     <style>
         :root {
             --bg-dark: #0f111a;
@@ -13,6 +14,7 @@
             --accent-green: #10b981;
             --accent-red: #ef4444;
             --accent-warning: #f59e0b;
+            --accent-unknown: #6b7280;
         }
         body {
             margin: 0;
@@ -79,13 +81,16 @@
             margin-bottom: 30px;
         }
         .table-container { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; min-width: 800px; }
-        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; min-width: 900px; }
+        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #333; font-size: 13px; }
         th { color: #8b949e; font-size: 14px; }
-        .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; }
-        .badge.high { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); }
+        
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+        .bg-pass { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); }
+        .bg-fail { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); }
+        .bg-warn { background: rgba(245, 158, 11, 0.2); color: var(--accent-warning); }
+        .bg-unknown { background: rgba(107, 114, 128, 0.2); color: var(--accent-unknown); }
 
-        /* Console styling */
         .console-container {
             background: #000;
             padding: 15px;
@@ -107,14 +112,14 @@
 <body>
 
     <div class="header">
-        <h1>ORBIS // Developer Diagnostics v1</h1>
+        <h1>ORBIS // Developer Diagnostics v2 (Runtime Engine)</h1>
         <div class="auth-badge">ADMIN + DEVELOPER ONLY</div>
     </div>
 
     <!-- MAIN DASHBOARD HEALTH METRICS -->
     <div class="health-grid">
         <div class="health-card score-card">
-            <h3>Overall Health Score</h3>
+            <h3>Overall Runtime Score</h3>
             <div class="value">Loading...</div>
         </div>
         <div class="health-card">
@@ -149,33 +154,33 @@
 
     <!-- SEARCH BOX -->
     <div class="search-section">
-        <h3 style="margin-top: 0;">Diagnostic Query (Real File Scanner)</h3>
-        <input type="text" class="search-box" placeholder="Try searching a module name (e.g., 'dashboard', 'lottery', 'brain')">
+        <h3 style="margin-top: 0;">Execution Flow Analyzer</h3>
+        <input type="text" class="search-box" placeholder="Try asking: 'Why Lottery is not loading?' or 'Show Module Dependencies'">
     </div>
 
     <!-- REPORT FORMAT -->
     <div class="report-section">
         <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h3 style="margin: 0;">Live Scan Report</h3>
-            <button id="copy-btn" onclick="copyReport()" style="background: var(--accent-green); color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">📋 Copy Text Report</button>
+            <h3 style="margin: 0;">Runtime Execution Tree</h3>
+            <button id="copy-btn" onclick="copyReport()" style="background: var(--accent-green); color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">📋 Copy Execution Trace</button>
         </div>
         <div class="table-container">
             <table>
                 <thead>
                     <tr>
-                        <th>Severity</th>
+                        <th>Stage</th>
+                        <th>Status</th>
                         <th>File</th>
-                        <th>Line Number</th>
+                        <th>Function</th>
                         <th>Reason</th>
                         <th>Dependency</th>
-                        <th>Risk</th>
                         <th>Suggested Fix</th>
-                        <th>Action</th>
+                        <th>Confidence %</th>
                     </tr>
                 </thead>
                 <tbody id="report-body">
                     <tr>
-                        <td colspan="8" style="text-align: center; color: #8b949e;">No active scans. Enter a query to scan the file system.</td>
+                        <td colspan="8" style="text-align: center; color: #8b949e;">Awaiting runtime execution query...</td>
                     </tr>
                 </tbody>
             </table>
@@ -185,7 +190,7 @@
     <!-- CONSOLE LOG TERMINAL -->
     <div class="report-section">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <h3 style="margin: 0;">Server Console Logs (system.log)</h3>
+            <h3 style="margin: 0;">System Logs & Trace</h3>
             <div>
                 <button id="copy-log-btn" onclick="copyLogs()" style="background: var(--accent-green); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; margin-right: 10px;">📋 Copy Logs</button>
                 <button onclick="fetchLogs()" style="background: var(--accent-blue); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">🔄 Refresh Logs</button>
@@ -213,7 +218,6 @@
             });
         });
 
-        // 🟢 Fetch System Health
         async function runInitialScan() {
             try {
                 const response = await fetch('/api/diagnostics/health');
@@ -232,7 +236,6 @@
             }
         }
 
-        // 🟢 Fetch Console Logs
         async function fetchLogs() {
             const consoleEl = document.getElementById('console-output');
             try {
@@ -245,10 +248,9 @@
             }
         }
 
-        // 🟢 Run File Scanner
         async function handleSearch(query) {
             const tableBody = document.getElementById('report-body');
-            tableBody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--accent-warning);">Scanning file system for: "${query}"...</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--accent-warning);">Tracing execution flow for: "${query}"...</td></tr>`;
 
             try {
                 const response = await fetch('/api/diagnostics/scan', {
@@ -263,39 +265,39 @@
             }
         }
 
-        // 🟢 Generate HTML Table & Prepare Text for Copying
         function generateReport(issues) {
             const tableBody = document.getElementById('report-body');
             tableBody.innerHTML = ''; 
             
-            currentReportText = "ORBIS Developer Diagnostics Report\n================================\n\n";
+            currentReportText = "ORBIS RUNTIME EXECUTION TRACE\n================================\n\n";
 
-            issues.forEach((issue, index) => {
-                currentReportText += `[${issue.severity}] File: ${issue.file}\nReason: ${issue.reason}\nSuggested Fix: ${issue.fix}\n----------------------------------\n`;
+            issues.forEach((issue) => {
+                currentReportText += `Stage: ${issue.stage}\nStatus: ${issue.status}\nFile: ${issue.file}\nFunction: ${issue.func}\nReason: ${issue.reason}\nDependency: ${issue.dependency}\nFix: ${issue.fix}\nConfidence: ${issue.confidence}\n----------------------------------\n`;
 
-                const severityClass = issue.severity === 'CRITICAL' ? 'badge high' : (issue.severity === 'WARNING' ? 'badge' : 'badge');
-                const severityStyle = issue.severity !== 'CRITICAL' ? 'background: rgba(245, 158, 11, 0.2); color: var(--accent-warning);' : '';
+                let badgeClass = 'bg-unknown';
+                if (issue.status === 'PASS') badgeClass = 'bg-pass';
+                if (issue.status === 'FAIL') badgeClass = 'bg-fail';
+                if (issue.status === 'WARNING') badgeClass = 'bg-warn';
 
                 const row = `
                     <tr>
-                        <td><span class="${severityClass}" style="${severityStyle}">${issue.severity}</span></td>
-                        <td>${issue.file}</td>
-                        <td>${issue.line}</td>
+                        <td><strong>${issue.stage}</strong></td>
+                        <td><span class="badge ${badgeClass}">${issue.status}</span></td>
+                        <td><span style="color: #93c5fd;">${issue.file}</span></td>
+                        <td>${issue.func}</td>
                         <td>${issue.reason}</td>
                         <td>${issue.dependency}</td>
-                        <td>${issue.risk}</td>
                         <td>${issue.fix}</td>
-                        <td><button onclick="previewFix(${index})" style="background: var(--accent-blue); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">Preview Fix</button></td>
+                        <td><strong>${issue.confidence}</strong></td>
                     </tr>
                 `;
                 tableBody.innerHTML += row;
             });
         }
 
-        // 🟢 Copy Report Logic
         function copyReport() {
             if (!currentReportText || currentReportText.length < 70) {
-                alert("No active scan report to copy.");
+                alert("No execution trace to copy.");
                 return;
             }
             navigator.clipboard.writeText(currentReportText).then(() => {
@@ -303,15 +305,14 @@
                 btn.innerHTML = '✅ Copied!';
                 btn.style.background = '#10b981';
                 setTimeout(() => {
-                    btn.innerHTML = '📋 Copy Text Report';
+                    btn.innerHTML = '📋 Copy Execution Trace';
                     btn.style.background = 'var(--accent-green)';
                 }, 2000);
             }).catch(err => {
-                alert("Failed to copy. Your browser might block clipboard access.");
+                alert("Failed to copy.");
             });
         }
 
-        // 🟢 Copy Logs Logic (NEW)
         function copyLogs() {
             const consoleText = document.getElementById('console-output').innerText;
             if (!consoleText || consoleText.includes("Connecting to ORBIS Logger")) {
@@ -329,10 +330,6 @@
             }).catch(err => {
                 alert("Failed to copy logs.");
             });
-        }
-
-        function previewFix(id) {
-            alert('Safe Fix Policy Triggered:\n\nOpening Preview for issue ID: ' + id + '\n\nNo code will be modified without explicit Developer approval.');
         }
     </script>
 </body>
