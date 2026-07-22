@@ -94,7 +94,36 @@ app.use('/admin.html', (req, res, next) => {
     }
 });
 
+
+// ==============================================================
+// 🚀 [NEW] GOD-MODE DIAGNOSTICS UI ROUTE (EXTREME ANTI-CACHE)
+// ==============================================================
+const renderDiagnosticsUI = (req, res) => {
+    // Render Server-কে কড়া নির্দেশ: "ভুল করেও ক্যাশ করবে না!"
+    res.set({
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+        'Surrogate-Control': 'no-store'
+    });
+    
+    const diagPath = path.join(ROOT_DIR, 'frontend', 'diagnostics.html');
+    if (fs.existsSync(diagPath)) {
+        res.sendFile(diagPath);
+    } else {
+        res.status(404).send('<h2 style="color:red; text-align:center; margin-top:50px;">Diagnostics Dashboard Not Found! Ensure diagnostics.html is in the frontend folder.</h2>');
+    }
+};
+
+// এই তিনটি URL-এর যে কোনোটিতে গেলেই ফ্রেশ নতুন পেজ আসবে
+app.get('/dashboard', renderDiagnosticsUI);
+app.get('/diagnostics', renderDiagnosticsUI);
+app.get('/diagnostics.html', renderDiagnosticsUI);
+// ==============================================================
+
+
 // 🟢 BULLETPROOF STATIC ROUTING (Intact)
+// Note: Static routing is placed AFTER our custom diagnostic routes so our Anti-Cache logic triggers first!
 app.use(express.static(path.join(ROOT_DIR, 'frontend'), { index: false }));
 app.use('/assets/lottery', express.static(path.join(ROOT_DIR, 'src/modules/digiledger/lottery/ui')));
 app.use('/assets/lottery/ui', express.static(path.join(ROOT_DIR, 'src/modules/digiledger/lottery/ui')));
