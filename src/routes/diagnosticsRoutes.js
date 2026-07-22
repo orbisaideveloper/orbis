@@ -5,20 +5,20 @@ import { scanProjectInventory, getRealHealthData, getRealFileContext } from '../
 const router = express.Router();
 const ROOT_DIR = process.cwd();
 
-// --- SCHEMA ENFORCER (RULE 2) ---
+// --- SCHEMA ENFORCER (CRITICAL BUG FIX: camelCase Keys & N/A Enforcement) ---
 const createAnalyzerResult = (stage, status, file, line, func, reason, impact, dependency, suggestedFix, confidence, evidenceSource) => ({
-    Stage: stage || 'N/A',
-    Status: status || 'N/A',
-    File: file || 'N/A',
-    Line: line || 'N/A',
-    Function: func || 'N/A',
-    Reason: reason || 'N/A',
-    Impact: impact || 'N/A',
-    Dependency: dependency || 'N/A',
-    SuggestedFix: suggestedFix || 'N/A',
-    Confidence: confidence || 'N/A',
-    EvidenceSource: evidenceSource || 'N/A',
-    Timestamp: new Date().toISOString()
+    stage: stage || 'N/A',
+    status: status || 'N/A',
+    file: file || 'N/A',
+    line: line || 'N/A',
+    function: func || 'N/A',
+    reason: reason || 'N/A',
+    impact: impact || 'N/A',
+    dependency: dependency || 'N/A',
+    suggestedFix: suggestedFix || 'N/A',
+    confidence: confidence || 'N/A',
+    evidenceSource: evidenceSource || 'N/A',
+    timestamp: new Date().toISOString()
 });
 
 // --- INTENT ENGINE ---
