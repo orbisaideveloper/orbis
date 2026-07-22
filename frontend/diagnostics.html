@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ORBIS Developer Diagnostics v2 - Runtime Engine</title>
+    <title>ORBIS Developer Diagnostics v3 - Intelligence Platform</title>
     <style>
         :root {
             --bg-dark: #0f111a;
@@ -13,6 +13,7 @@
             --accent-green: #10b981;
             --accent-red: #ef4444;
             --accent-warning: #f59e0b;
+            --accent-purple: #8b5cf6;
             --accent-unknown: #6b7280;
         }
         body { margin: 0; padding: 20px; font-family: 'Segoe UI', sans-serif; background-color: var(--bg-dark); color: var(--text-main); }
@@ -20,129 +21,171 @@
         .header h1 { margin: 0; font-size: 24px; color: var(--accent-blue); }
         .auth-badge { background: rgba(239, 68, 68, 0.1); color: var(--accent-red); padding: 5px 12px; border-radius: 4px; font-size: 12px; font-weight: bold; border: 1px solid var(--accent-red); }
         
-        /* ACTIVE CARDS */
-        .health-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        /* ACTIVE CARDS - SMART DASHBOARD */
+        .health-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 30px; }
         .health-card { background-color: var(--bg-card); padding: 15px; border-radius: 6px; border-left: 4px solid var(--accent-green); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
         .health-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
-        .health-card h3 { margin: 0 0 10px 0; font-size: 14px; color: #8b949e; pointer-events: none; }
-        .health-card .value { font-size: 20px; font-weight: bold; pointer-events: none; }
-        .score-card { border-left-color: var(--accent-blue); }
+        .health-card h3 { margin: 0 0 10px 0; font-size: 13px; color: #8b949e; pointer-events: none; }
+        .health-card .value { font-size: 18px; font-weight: bold; pointer-events: none; }
+        .score-card { border-left-color: var(--accent-purple); }
+        .fail-card { border-left-color: var(--accent-red); }
+        .warn-card { border-left-color: var(--accent-warning); }
 
-        /* SEARCH BAR & MIC */
+        /* SEARCH BAR & MIC - QUERY INTENT ENGINE */
         .search-section { background-color: var(--bg-card); padding: 20px; border-radius: 6px; margin-bottom: 30px; }
         .search-wrapper { display: flex; gap: 10px; margin-top: 10px; }
         .search-box { flex-grow: 1; padding: 12px; background: #0f111a; border: 1px solid #333; color: white; border-radius: 4px; font-size: 16px; }
         .search-box:focus { outline: none; border-color: var(--accent-blue); }
         .mic-btn { background: var(--accent-blue); color: white; border: none; border-radius: 4px; padding: 0 20px; font-size: 20px; cursor: pointer; transition: 0.3s; }
         .mic-btn.recording { background: var(--accent-red); animation: pulse 1s infinite; }
+        .audit-btn { background: var(--accent-purple); color: white; border: none; border-radius: 4px; padding: 0 20px; font-size: 14px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .audit-btn:hover { background: #7c3aed; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
-        /* VISUAL TREE BOX (V2 NEW) - OVERFLOW FIXED */
+        /* AUDIT DASHBOARD (V3) */
+        .audit-box { display: none; background: rgba(139, 92, 246, 0.1); border: 1px solid var(--accent-purple); padding: 20px; border-radius: 6px; margin-bottom: 20px; }
+        .audit-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(139, 92, 246, 0.3); padding-bottom: 10px; margin-bottom: 15px; }
+        .safe-commit-badge { font-size: 18px; font-weight: bold; padding: 8px 15px; border-radius: 4px; }
+        .commit-yes { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); border: 1px solid var(--accent-green); }
+        .commit-no { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); border: 1px solid var(--accent-red); }
+
+        /* VISUAL TREE BOX */
         .tree-container { background: #16192b; border: 1px dashed var(--accent-blue); padding: 15px; border-radius: 6px; margin-bottom: 20px; display: none; }
         .tree-container h4 { margin: 0 0 8px 0; color: var(--accent-blue); font-size: 14px; }
-        #tree-output { 
-            font-family: monospace; 
-            color: #34d399; 
-            font-size: 13px; 
-            margin: 0;
-            white-space: pre-wrap; /* Keeps formatting but wraps text */
-            word-wrap: break-word; /* Forces long unbroken words to break */
-        }
+        #tree-output { font-family: monospace; color: #34d399; font-size: 13px; margin: 0; white-space: pre-wrap; word-wrap: break-word; }
 
-        /* MODAL */
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); }
-        .modal-content { background-color: var(--bg-card); margin: 15% auto; padding: 20px; border: 1px solid #333; width: 80%; max-width: 500px; border-radius: 8px; border-left: 5px solid var(--accent-blue); }
+        /* MODAL V3 */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); }
+        .modal-content { background-color: var(--bg-card); margin: 10% auto; padding: 25px; border: 1px solid #333; width: 85%; max-width: 650px; border-radius: 8px; border-top: 5px solid var(--accent-blue); }
         .close-btn { color: #8b949e; float: right; font-size: 24px; font-weight: bold; cursor: pointer; }
         .close-btn:hover { color: white; }
+        .modal-actions { margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
+        .btn { padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; color: white; }
+        .btn-blue { background: var(--accent-blue); }
+        .btn-green { background: var(--accent-green); }
+        .btn-purple { background: var(--accent-purple); }
 
-        /* TABLE */
+        /* TABLE - ROOT CAUSE ENGINE */
         .report-section { background-color: var(--bg-card); padding: 20px; border-radius: 6px; margin-bottom: 30px; }
         .table-container { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; min-width: 900px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; min-width: 1000px; }
         th, td { text-align: left; padding: 12px; border-bottom: 1px solid #333; font-size: 13px; }
-        th { color: #8b949e; font-size: 14px; }
+        th { color: #8b949e; font-size: 13px; }
         .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
         .bg-pass { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); }
         .bg-fail { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); }
         .bg-warn { background: rgba(245, 158, 11, 0.2); color: var(--accent-warning); }
         .bg-unknown { background: rgba(107, 114, 128, 0.2); color: var(--accent-unknown); }
         
-        /* CONSOLE */
-        .console-container { background: #000; padding: 15px; border-radius: 6px; border: 1px solid #333; max-height: 250px; overflow-y: auto; overflow-x: auto; }
+        /* CONSOLE CENTER */
+        .console-tabs { display: flex; gap: 5px; margin-bottom: 10px; }
+        .tab-btn { background: #333; color: #ccc; border: none; padding: 5px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; }
+        .tab-btn.active { background: var(--accent-blue); color: white; }
+        .console-container { background: #000; padding: 15px; border-radius: 6px; border: 1px solid #333; max-height: 300px; overflow-y: auto; overflow-x: auto; }
         pre#console-output { color: #10b981; font-family: 'Courier New', Courier, monospace; font-size: 13px; margin: 0; line-height: 1.5; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1>ORBIS // Developer Diagnostics v2 (Runtime Engine)</h1>
+        <h1>ORBIS // Developer Diagnostics v3 (Intelligence Platform)</h1>
         <div class="auth-badge">ADMIN + DEVELOPER ONLY</div>
     </div>
 
-    <!-- ACTIVE HEALTH CARDS -->
+    <!-- SMART DASHBOARD (Auto Generated) -->
     <div class="health-grid" id="health-grid"></div>
 
-    <!-- SEARCH BOX & VOICE -->
+    <!-- QUERY INTENT ENGINE -->
     <div class="search-section">
-        <h3 style="margin-top: 0;">Execution Flow & Dependency Analyzer</h3>
+        <h3 style="margin-top: 0; color: var(--accent-blue);">Query Intent Engine & Root Cause Analyzer</h3>
+        <p style="font-size: 13px; color: #8b949e; margin-top: -5px;">Ask about any system (e.g., 'Why Lottery is not working?', 'Check HTML', 'Run Complete Audit')</p>
         <div class="search-wrapper">
-            <input type="text" class="search-box" id="search-input" placeholder="Ask anything (e.g., 'Why Lottery is not loading?', 'Show Module Dependencies')">
-            <button class="mic-btn" id="mic-btn" title="Speak in Bengali or English">🎤</button>
+            <input type="text" class="search-box" id="search-input" placeholder="Enter developer intent...">
+            <button class="mic-btn" id="mic-btn" title="Speak Intent">🎤</button>
+            <button class="audit-btn" onclick="handleSearch('Run Complete Audit')">🚀 RUN AUDIT</button>
         </div>
     </div>
 
-    <!-- VISUAL PIPELINE / EXECUTION TREE BOX -->
+    <!-- COMPLETE AUDIT DASHBOARD -->
+    <div class="audit-box" id="audit-box">
+        <div class="audit-header">
+            <h3 style="margin: 0; color: var(--accent-purple);">Final Review & Project Health</h3>
+            <div id="safe-commit-status" class="safe-commit-badge commit-yes">SAFE TO COMMIT : YES</div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 14px;">
+            <div id="audit-scores"></div>
+            <div id="audit-risks" style="color: var(--accent-red);"></div>
+        </div>
+    </div>
+
+    <!-- VISUAL PIPELINE -->
     <div class="tree-container" id="tree-box">
         <h4>🌲 Pipeline & Execution Tree</h4>
         <pre id="tree-output">Awaiting trace...</pre>
     </div>
 
-    <!-- REPORT TABLE -->
+    <!-- REPORT TABLE (ROOT CAUSE ENGINE) -->
     <div class="report-section">
         <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h3 style="margin: 0;">Runtime Execution Tree</h3>
-            <button id="copy-btn" onclick="copyReport()" style="background: var(--accent-green); color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">📋 Copy Full Trace</button>
+            <h3 style="margin: 0;">Root Cause Trace & Execution Flow</h3>
+            <div>
+                <button class="btn btn-blue" onclick="exportReport('json')">📥 JSON</button>
+                <button class="btn btn-purple" onclick="exportReport('md')">📝 Markdown</button>
+                <button class="btn btn-green" id="copy-btn" onclick="copyReport()">📋 Copy Trace</button>
+            </div>
         </div>
         <div class="table-container">
             <table>
                 <thead>
                     <tr>
-                        <th>Stage</th><th>Status</th><th>File</th><th>Function</th><th>Reason</th><th>Dependency</th><th>Fix</th><th>Confidence</th>
+                        <th>Stage</th><th>Status</th><th>File</th><th>Line</th><th>Function</th><th>Reason</th><th>Impact</th><th>Dependency</th><th>Suggested Fix</th><th>Confidence</th>
                     </tr>
                 </thead>
                 <tbody id="report-body">
-                    <tr><td colspan="8" style="text-align: center; color: #8b949e;">Awaiting runtime execution query...</td></tr>
+                    <tr><td colspan="10" style="text-align: center; color: #8b949e;">Awaiting query...</td></tr>
                 </tbody>
             </table>
         </div>
     </div>
 
-    <!-- CONSOLE LOG TERMINAL -->
+    <!-- CONSOLE CENTER -->
     <div class="report-section">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <h3 style="margin: 0;">System Logs & Trace</h3>
-            <div>
-                <button id="copy-log-btn" onclick="copyLogs()" style="background: var(--accent-green); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; margin-right: 10px;">📋 Copy Logs</button>
-                <button onclick="fetchLogs()" style="background: var(--accent-blue); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">🔄 Refresh Logs</button>
-            </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h3 style="margin: 0;">Console Center (Multi-Log Analyzer)</h3>
+            <button onclick="fetchLogs()" class="btn btn-blue">🔄 Refresh</button>
+        </div>
+        <div class="console-tabs" id="console-tabs">
+            <button class="tab-btn active" onclick="switchLog('all')">All Logs</button>
+            <button class="tab-btn" onclick="switchLog('server')">Server</button>
+            <button class="tab-btn" onclick="switchLog('build')">Build / npm</button>
+            <button class="tab-btn" onclick="switchLog('git')">Git Actions</button>
+            <button class="tab-btn" onclick="switchLog('security')">Security</button>
         </div>
         <div class="console-container">
-            <pre id="console-output">Connecting to ORBIS Logger...</pre>
+            <pre id="console-output">Initializing Console Center...</pre>
         </div>
     </div>
 
-    <!-- MODAL POPUP -->
+    <!-- MODAL POPUP FOR CARDS & AI EXPORT -->
     <div id="infoModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal()">&times;</span>
             <h2 id="modal-title" style="margin-top: 0; color: var(--accent-blue);">Title</h2>
-            <p id="modal-desc" style="color: var(--text-main); line-height: 1.6;"></p>
+            <p id="modal-desc" style="color: var(--text-main); line-height: 1.6; padding: 10px; background: #0f111a; border-radius: 4px; font-family: monospace;"></p>
+            
+            <div class="modal-actions">
+                <button class="btn btn-purple" onclick="generateAIPrompt()">🤖 Generate AI Prompt</button>
+                <button class="btn btn-green" onclick="copyModalData()">📋 Copy Details</button>
+            </div>
         </div>
     </div>
 
     <!-- SCRIPTS -->
     <script>
         let currentReportText = ""; 
+        let currentTraceData = [];
+        let currentLogs = {};
+        let activeLogType = 'all';
 
         document.addEventListener('DOMContentLoaded', () => {
             runInitialScan();
@@ -163,20 +206,29 @@
                 const grid = document.getElementById('health-grid');
                 grid.innerHTML = ''; 
 
-                const createCard = (title, dataObj, isScore = false) => {
+                const createCard = (title, dataObj, customClass = '') => {
+                    let cardClass = 'health-card ' + customClass;
+                    if(dataObj.status === 'FAIL') cardClass += ' fail-card';
+                    if(dataObj.status === 'WARN') cardClass += ' warn-card';
+
                     const card = document.createElement('div');
-                    card.className = `health-card ${isScore ? 'score-card' : ''}`;
+                    card.className = cardClass;
                     card.onclick = () => openModal(title, dataObj.detail);
-                    card.innerHTML = `<h3>${title}</h3><div class="value"><span style="color: var(--accent-green);">${dataObj.value}</span></div>`;
+                    card.innerHTML = `<h3>${title}</h3><div class="value"><span style="color: ${dataObj.status === 'FAIL' ? 'var(--accent-red)' : dataObj.status === 'WARN' ? 'var(--accent-warning)' : 'var(--accent-green)'};">${dataObj.value}</span></div>`;
                     return card;
                 };
 
-                grid.appendChild(createCard('Overall Runtime Score', data.score, true));
-                grid.appendChild(createCard('Project Health', data.project));
-                grid.appendChild(createCard('Runtime Health', data.runtime));
-                grid.appendChild(createCard('Pipeline Health', data.pipeline));
-                grid.appendChild(createCard('Dependency Graph', data.dependency));
-                grid.appendChild(createCard('Server RAM Load', data.systemLoad));
+                // Smart Dashboard Cards
+                grid.appendChild(createCard('Project Health', data.project, 'score-card'));
+                grid.appendChild(createCard('Runtime Engine', data.runtime));
+                grid.appendChild(createCard('Pipeline & Build', data.pipeline));
+                grid.appendChild(createCard('Dependencies', data.dependency));
+                grid.appendChild(createCard('Modules', data.modules));
+                grid.appendChild(createCard('Code Quality', data.quality));
+                grid.appendChild(createCard('Security Check', data.security));
+                grid.appendChild(createCard('Git / Changes', data.git));
+                grid.appendChild(createCard('AI & Brain', data.brain));
+                grid.appendChild(createCard('System Load', data.systemLoad));
                 
             } catch (error) { console.error("Health scan failed"); }
         }
@@ -195,21 +247,15 @@
         function setupVoiceRecognition() {
             const micBtn = document.getElementById('mic-btn');
             const searchInput = document.getElementById('search-input');
-
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            
             if (SpeechRecognition) {
                 const recognition = new SpeechRecognition();
-                recognition.lang = 'bn-IN'; 
+                recognition.lang = 'en-US'; 
                 recognition.interimResults = false;
                 
-                recognition.onstart = function() {
-                    micBtn.classList.add('recording');
-                    searchInput.placeholder = "Listening...";
-                };
-                recognition.onspeechend = function() {
-                    micBtn.classList.remove('recording');
-                    recognition.stop();
-                };
+                recognition.onstart = function() { micBtn.classList.add('recording'); searchInput.placeholder = "Listening intent..."; };
+                recognition.onspeechend = function() { micBtn.classList.remove('recording'); recognition.stop(); };
                 recognition.onresult = function(event) {
                     const transcript = event.results[0][0].transcript;
                     searchInput.value = transcript;
@@ -223,100 +269,78 @@
         }
 
         async function fetchLogs() {
-            const consoleEl = document.getElementById('console-output');
             try {
                 const response = await fetch('/api/diagnostics/logs');
-                const data = await response.json();
-                consoleEl.textContent = data.logs;
-                consoleEl.parentElement.scrollTop = consoleEl.parentElement.scrollHeight;
+                currentLogs = await response.json();
+                renderLogs();
             } catch (error) {
-                consoleEl.textContent = "Failed to connect to log server.";
+                document.getElementById('console-output').textContent = "Failed to connect to Multi-Log Server.";
             }
+        }
+
+        function switchLog(type) {
+            activeLogType = type;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            renderLogs();
+        }
+
+        function renderLogs() {
+            const consoleEl = document.getElementById('console-output');
+            if(currentLogs[activeLogType]) {
+                consoleEl.textContent = currentLogs[activeLogType];
+            } else {
+                consoleEl.textContent = "No logs found for this category.";
+            }
+            consoleEl.parentElement.scrollTop = consoleEl.parentElement.scrollHeight;
         }
 
         async function handleSearch(query) {
             const tableBody = document.getElementById('report-body');
             const treeBox = document.getElementById('tree-box');
             const treeOutput = document.getElementById('tree-output');
+            const auditBox = document.getElementById('audit-box');
 
-            tableBody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--accent-warning);">Analyzing Execution Flow for: "${query}"...</td></tr>`;
+            auditBox.style.display = 'none';
+            tableBody.innerHTML = `<tr><td colspan="10" style="text-align: center; color: var(--accent-warning);">Engine Analyzing Intent: "${query}"...</td></tr>`;
             
             try {
                 const response = await fetch('/api/diagnostics/scan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query }) });
                 const data = await response.json();
                 
-                // Display Visual Tree
-                if (data.tree) {
-                    treeBox.style.display = 'block';
-                    treeOutput.textContent = data.tree;
-                } else {
-                    treeBox.style.display = 'none';
+                // Complete Audit UI
+                if (data.isAudit) {
+                    auditBox.style.display = 'block';
+                    document.getElementById('safe-commit-status').className = `safe-commit-badge ${data.auditData.safeToCommit ? 'commit-yes' : 'commit-no'}`;
+                    document.getElementById('safe-commit-status').innerText = `SAFE TO COMMIT : ${data.auditData.safeToCommit ? 'YES' : 'NO'}`;
+                    
+                    document.getElementById('audit-scores').innerHTML = `
+                        <strong>Scores:</strong><br>
+                        Architecture: ${data.auditData.scores.architecture}<br>
+                        Runtime: ${data.auditData.scores.runtime}<br>
+                        Code Quality: ${data.auditData.scores.quality}<br>
+                        Security: ${data.auditData.scores.security}
+                    `;
+                    document.getElementById('audit-risks').innerHTML = `<strong>Top Risks:</strong><br>` + data.auditData.topRisks.map(r => `• ${r}`).join('<br>');
                 }
+
+                if (data.tree) { treeBox.style.display = 'block'; treeOutput.textContent = data.tree; } 
+                else { treeBox.style.display = 'none'; }
 
                 generateReport(data.issues || [], data.tree || "");
             } catch (error) {
-                tableBody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--accent-red);">Scan failed. Engine unreachable.</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="10" style="text-align: center; color: var(--accent-red);">Root Cause Engine unreachable.</td></tr>`;
             }
         }
 
         function generateReport(issues, treeData) {
             const tableBody = document.getElementById('report-body');
             tableBody.innerHTML = ''; 
+            currentTraceData = issues;
             
-            currentReportText = "ORBIS RUNTIME DIAGNOSTICS EXPORT\n================================\n\n";
-            
-            // SMART COPY: Adds the Tree data to the copied text
-            if(treeData) {
-                currentReportText += "[PIPELINE & EXECUTION TREE]\n" + treeData + "\n\n";
-            }
-            
-            currentReportText += "[EXECUTION TRACE DETAILS]\n";
+            currentReportText = "ORBIS V3 ROOT CAUSE EXPORT\n================================\n\n";
+            if(treeData) currentReportText += "[EXECUTION TREE]\n" + treeData + "\n\n";
+            currentReportText += "[ROOT CAUSE TRACE]\n";
 
             issues.forEach((issue) => {
-                currentReportText += `Stage: ${issue.stage}\nStatus: ${issue.status}\nFile: ${issue.file}\nFunction: ${issue.func}\nReason: ${issue.reason}\nDependency: ${issue.dependency}\nFix: ${issue.fix}\nConfidence: ${issue.confidence}\n----------------------------------\n`;
-
-                let badgeClass = 'bg-unknown';
-                if (issue.status === 'PASS') badgeClass = 'bg-pass';
-                if (issue.status === 'FAIL') badgeClass = 'bg-fail';
-                if (issue.status === 'WARNING') badgeClass = 'bg-warn';
-                
-                const row = `<tr><td><strong>${issue.stage}</strong></td><td><span class="badge ${badgeClass}">${issue.status}</span></td><td><span style="color: #93c5fd;">${issue.file}</span></td><td>${issue.func}</td><td>${issue.reason}</td><td>${issue.dependency}</td><td>${issue.fix}</td><td><strong>${issue.confidence}</strong></td></tr>`;
-                tableBody.innerHTML += row;
-            });
-        }
-
-        function copyReport() {
-            if (!currentReportText || currentReportText.length < 50) {
-                alert("No execution trace to copy.");
-                return;
-            }
-            navigator.clipboard.writeText(currentReportText).then(() => {
-                const btn = document.getElementById('copy-btn');
-                btn.innerHTML = '✅ Copied!';
-                btn.style.background = '#10b981';
-                setTimeout(() => {
-                    btn.innerHTML = '📋 Copy Full Trace';
-                    btn.style.background = 'var(--accent-green)';
-                }, 2000);
-            }).catch(err => alert("Failed to copy."));
-        }
-
-        function copyLogs() {
-            const consoleText = document.getElementById('console-output').innerText;
-            if (!consoleText || consoleText.includes("Connecting to ORBIS Logger")) {
-                alert("No logs available to copy.");
-                return;
-            }
-            navigator.clipboard.writeText(consoleText).then(() => {
-                const btn = document.getElementById('copy-log-btn');
-                btn.innerHTML = '✅ Copied!';
-                btn.style.background = '#10b981';
-                setTimeout(() => {
-                    btn.innerHTML = '📋 Copy Logs';
-                    btn.style.background = 'var(--accent-green)';
-                }, 2000);
-            }).catch(err => alert("Failed to copy logs."));
-        }
-    </script>
-</body>
-</html>
+                currentReportText += `Stage: ${issue.stage}\nStatus: ${issue.status}\nFile: ${issue.file}:${issue.line}\nFunction: ${issue.func}\nReason: ${issue.reason}\nImpact: ${issue.impact}\nDependency: ${issue.dependency}\nFix: ${issue.fix}\nConfidence: ${issue.confidence}\n--------------------------------
