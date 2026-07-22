@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ORBIS Diagnostics V3.6 - God Mode</title>
+    <title>ORBIS Diagnostics - God Mode</title>
     <style>
         :root {
             --bg-dark: #0f111a; --bg-card: #1e2130; --text-main: #e0e6ed;
             --accent-blue: #3b82f6; --accent-green: #10b981; --accent-red: #ef4444; --accent-warn: #f59e0b;
         }
-        body { background: var(--bg-dark); color: var(--text-main); font-family: 'Segoe UI', sans-serif; padding: 20px; margin: 0; }
-        .header { display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding-bottom: 15px; margin-bottom: 20px; }
+        body { background: var(--bg-dark); color: var(--text-main); font-family: 'Segoe UI', sans-serif; padding: 20px; margin: 0; overflow-x: hidden; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 15px; margin-bottom: 20px; }
         .header h1 { margin: 0; color: var(--accent-blue); font-size: 24px; }
         
         .health-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
@@ -26,25 +26,34 @@
         .btn-blue { background: var(--accent-blue); color: white; }
         .btn-red { background: var(--accent-red); color: white; }
 
-        .tree-container { background: #16192b; border: 1px dashed var(--accent-blue); padding: 15px; border-radius: 6px; margin-bottom: 20px; display: none; }
+        .tree-container { background: #16192b; border: 1px dashed var(--accent-blue); padding: 15px; border-radius: 6px; margin-bottom: 20px; display: none; overflow-x: hidden; }
         .tree-container h4 { margin: 0 0 10px 0; color: var(--accent-blue); }
-        pre.tree-text { color: #34d399; margin: 0; font-family: monospace; white-space: pre-wrap; }
+        pre.tree-text { color: #34d399; margin: 0; font-family: monospace; white-space: pre-wrap; word-wrap: break-word; }
 
-        table { width: 100%; border-collapse: collapse; background: var(--bg-card); border-radius: 6px; overflow: hidden; }
-        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #333; }
+        /* 🟢 UI Fix: Table overflow fixed */
+        table { width: 100%; border-collapse: collapse; background: var(--bg-card); border-radius: 6px; overflow: hidden; table-layout: fixed; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #333; word-wrap: break-word; overflow-wrap: break-word; }
         th { color: #8b949e; background: #16192b; }
+        
+        /* Column Width Adjustments to prevent UI breaking */
+        th:nth-child(1) { width: 15%; }
+        th:nth-child(2) { width: 10%; }
+        th:nth-child(3) { width: 25%; }
+        th:nth-child(4) { width: 50%; }
+
         .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
         .bg-FAIL { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); }
         .bg-WARN { background: rgba(245, 158, 11, 0.2); color: var(--accent-warn); }
         .bg-PASS { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); }
 
-        .console-box { background: #000; padding: 15px; border-radius: 6px; border: 1px solid #333; color: var(--accent-green); font-family: monospace; max-height: 250px; overflow-y: auto; }
+        .console-box { background: #000; padding: 15px; border-radius: 6px; border: 1px solid #333; color: var(--accent-green); font-family: monospace; max-height: 250px; overflow-y: auto; word-wrap: break-word; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1>ORBIS // Diagnostics Engine V3.6</h1>
+        <!-- 🟢 Auto Version Badge -->
+        <h1>ORBIS // Diagnostics Engine <span id="auto-version" style="color: var(--accent-green); font-size: 20px;"></span></h1>
         <div style="background: rgba(239,68,68,0.2); color: #ef4444; padding: 5px 15px; border-radius: 4px; font-weight: bold; border: 1px solid #ef4444;">GOD MODE</div>
     </div>
 
@@ -66,8 +75,13 @@
         <pre class="tree-text" id="tree-output"></pre>
     </div>
 
-    <!-- Trace Table -->
-    <h3 style="margin-bottom: 10px;">Execution Trace</h3>
+    <!-- Trace Table Header & Copy Button -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <h3 style="margin: 0;">Execution Trace</h3>
+        <!-- 🟢 New Copy Button -->
+        <button id="copy-btn" class="btn-blue" style="padding: 8px 12px; font-size: 13px; display: none;">📋 Copy Full Report</button>
+    </div>
+    
     <table>
         <thead>
             <tr><th>Stage</th><th>Status</th><th>File (Line)</th><th>Reason & Analysis</th></tr>
@@ -83,13 +97,17 @@
 
     <script>
         // ==========================================
-        // ORBIS DIAGNOSTICS LOGIC (NO SEPARATE JS REQUIRED)
+        // ORBIS DIAGNOSTICS LOGIC
         // ==========================================
 
+        let lastScanData = null; // Global variable to store scan results for copy feature
+
         document.addEventListener('DOMContentLoaded', () => {
+            setAutoVersion();
             fetchHealthData();
             fetchLogs();
             setupVoice();
+            setupCopyButton();
 
             // Setup Click and Enter Events
             document.getElementById('run-btn').addEventListener('click', executeAudit);
@@ -98,7 +116,18 @@
             });
         });
 
-        // 1. Fetch Health
+        // 🟢 1. Auto Versioning (Based on Last Modified Date)
+        function setAutoVersion() {
+            const modDate = new Date(document.lastModified);
+            const month = (modDate.getMonth() + 1).toString().padStart(2, '0');
+            const day = modDate.getDate().toString().padStart(2, '0');
+            const dynamicVersion = `V3.${month}${day}`;
+            
+            document.getElementById('auto-version').textContent = dynamicVersion;
+            document.title = `ORBIS Diagnostics ${dynamicVersion} - God Mode`;
+        }
+
+        // 2. Fetch Health
         async function fetchHealthData() {
             const grid = document.getElementById('health-grid');
             try {
@@ -127,7 +156,7 @@
             }
         }
 
-        // 2. Fetch Logs
+        // 3. Fetch Logs
         async function fetchLogs() {
             const consoleBox = document.getElementById('console-output');
             try {
@@ -139,7 +168,7 @@
             }
         }
 
-        // 3. Execute Audit (The Main Engine)
+        // 4. Execute Audit (The Main Engine)
         async function executeAudit() {
             const query = document.getElementById('search-input').value.trim();
             if(!query) return;
@@ -147,9 +176,12 @@
             const tbody = document.getElementById('report-body');
             const treeContainer = document.getElementById('tree-container');
             const treeOutput = document.getElementById('tree-output');
+            const copyBtn = document.getElementById('copy-btn');
             
             tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--accent-warn);">⚙️ Analyzing: "${query}"...</td></tr>`;
             treeContainer.style.display = 'none';
+            copyBtn.style.display = 'none';
+            lastScanData = null;
 
             try {
                 const res = await fetch('/api/diagnostics/scan', {
@@ -160,8 +192,9 @@
                 
                 if(!res.ok) throw new Error("API Error");
                 const data = await res.json();
+                lastScanData = data; // Save data for copy button
 
-                // Show Tree if available (V2 Feature restored)
+                // Show Tree if available
                 if(data.tree) {
                     treeContainer.style.display = 'block';
                     treeOutput.textContent = data.tree;
@@ -172,9 +205,11 @@
                 const issues = data.issues || [];
                 
                 if(issues.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--accent-green);">✅ System Clean. No anomalies found.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--accent-green);">✅ System Clean. No anomalies found for "${query}".</td></tr>`;
                     return;
                 }
+
+                copyBtn.style.display = 'block'; // Show copy button when there are results
 
                 issues.forEach(issue => {
                     tbody.innerHTML += `
@@ -195,7 +230,33 @@
             }
         }
 
-        // 4. Voice Support
+        // 🟢 5. Setup Copy Button Logic
+        function setupCopyButton() {
+            const copyBtn = document.getElementById('copy-btn');
+            copyBtn.addEventListener('click', () => {
+                if (!lastScanData || !lastScanData.issues) return;
+                
+                const query = document.getElementById('search-input').value;
+                let report = `[ORBIS SYSTEM AUDIT REPORT]\nQuery: "${query}"\n\n`;
+                
+                lastScanData.issues.forEach(i => {
+                    report += `[${i.status}] File: ${i.file} (Line: ${i.line})\nDetail: ${i.reason}\nAction Required: ${i.suggestedFix || 'Check Code'}\n-----------------------------------\n`;
+                });
+
+                navigator.clipboard.writeText(report).then(() => {
+                    copyBtn.textContent = '✅ Copied to Clipboard!';
+                    copyBtn.style.background = 'var(--accent-green)';
+                    setTimeout(() => {
+                        copyBtn.textContent = '📋 Copy Full Report';
+                        copyBtn.style.background = 'var(--accent-blue)';
+                    }, 2500);
+                }).catch(err => {
+                    alert("Failed to copy report. Please copy manually.");
+                });
+            });
+        }
+
+        // 6. Voice Support
         function setupVoice() {
             const micBtn = document.getElementById('mic-btn');
             const searchInput = document.getElementById('search-input');
@@ -203,7 +264,7 @@
 
             if(SpeechRec) {
                 const rec = new SpeechRec();
-                rec.lang = 'bn-BD'; // 🟢 Bangla Support Added
+                rec.lang = 'bn-BD'; // Bangla Support Added
                 
                 rec.onstart = () => { micBtn.classList.replace('btn-blue', 'btn-red'); searchInput.placeholder = "Listening..."; };
                 rec.onspeechend = () => { micBtn.classList.replace('btn-red', 'btn-blue'); rec.stop(); };
@@ -220,3 +281,4 @@
     </script>
 </body>
 </html>
+
