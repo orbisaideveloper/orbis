@@ -6,13 +6,10 @@ import path from 'node:path';
 const router = express.Router();
 const ROOT_DIR = process.cwd();
 
-// SELF DISCOVERY ENGINE (Mock function to scan project mapping safely)
 const getProjectMap = () => {
-    // In a real scenario, this would recursively read fs.readdirSync(ROOT_DIR)
     return `Root:\n - src/\n   - routes/\n   - brain/\n - frontend/\n   - js/\n   - css/\n - modules/\n   - lottery/`;
 };
 
-// 1. Health Check API (V3 Smart Dashboard Cards)
 router.get('/health', (req, res) => {
     const freeMemory = Math.round(os.freemem() / 1024 / 1024);
     const totalMemory = Math.round(os.totalmem() / 1024 / 1024);
@@ -32,7 +29,6 @@ router.get('/health', (req, res) => {
     });
 });
 
-// 2. V3 QUERY INTENT ENGINE & ROOT CAUSE ANALYZER
 router.post('/scan', express.json(), (req, res) => {
     const { query } = req.body;
     if (!query) return res.json({ success: true, issues: [], tree: "" });
@@ -43,7 +39,6 @@ router.post('/scan', express.json(), (req, res) => {
     let isAudit = false;
     let auditData = null;
 
-    // INTENT: Complete Audit
     if (q.includes('audit') || q.includes('অডিট') || q.includes('full project')) {
         isAudit = true;
         auditData = {
@@ -57,7 +52,6 @@ router.post('/scan', express.json(), (req, res) => {
             { stage: 'Lottery Module', status: 'FAIL', file: 'frontend/js/module-loader.js', line: '42', func: 'loadModule()', reason: 'Path mapping fails for dynamic module', impact: 'Lottery UI Blank', dependency: 'Registry', fix: 'Update import path to relative root', confidence: '99%' }
         ];
     }
-    // INTENT: Lottery Root Cause
     else if (q.includes('lottery') || q.includes('লটারি')) {
         treeVisual = "Login ➔ Auth ➔ Dashboard ➔ Platform Core ➔ Module Loader [CRASH] ➔ ❌ Root Cause Found";
         flow = [
@@ -67,7 +61,6 @@ router.post('/scan', express.json(), (req, res) => {
             { stage: 'DOM Mount', status: 'UNKNOWN', file: 'modules/digiledger/lottery/ui/lottery-app.js', line: '15', func: 'mountUI()', reason: 'Unreachable code due to upstream loader error.', impact: 'UI Empty', dependency: 'Loader', fix: 'Fix Loader line 112 first.', confidence: 'N/A' }
         ];
     } 
-    // INTENT: HTML/CSS/JS Quality Analyzer
     else if (q.includes('html') || q.includes('css') || q.includes('javascript') || q.includes('js')) {
         treeVisual = "Code Analyzer ➔ AST Parser ➔ Linter Hooks ➔ Results";
         flow = [
@@ -75,7 +68,6 @@ router.post('/scan', express.json(), (req, res) => {
             { stage: 'Dead Code', status: 'WARNING', file: 'frontend/js/utils.js', line: '45-60', func: 'formatOldDate()', reason: 'Function defined but never used.', impact: 'Slight bundle bloat', dependency: 'None', fix: 'Remove unused function.', confidence: '95%' }
         ];
     }
-    // INTENT: Generic / Fallback Flow
     else {
         treeVisual = `Intent Engine ➔ NLP Parser ➔ Mapping Query ➔ Executing Generic Trace`;
         flow = [
@@ -87,9 +79,7 @@ router.post('/scan', express.json(), (req, res) => {
     res.json({ success: true, issues: flow, tree: treeVisual, isAudit, auditData });
 });
 
-// 3. CONSOLE CENTER (Multi-Log Analyzer)
 router.get('/logs', (req, res) => {
-    // Simulating various log endpoints reading from file system
     const dummyServerLog = "[SERVER] 10:00 - Server started on port 10000\n[SERVER] 10:05 - Supabase connected\n[SERVER] 10:12 - API Request /health [200 OK]";
     const dummyBuildLog = "[NPM] npm audit: 0 vulnerabilities found\n[BUILD] Webpack compiled successfully in 1200ms";
     const dummyGitLog = "commit 9f8a7c6\nAuthor: Dev\nDate: Today\nMessage: Update diagnostic routes";
