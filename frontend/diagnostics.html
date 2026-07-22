@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ORBIS Developer Diagnostics v2.5</title>
+    <title>ORBIS Developer Diagnostics v2 - Runtime Engine</title>
     <style>
         :root {
             --bg-dark: #0f111a;
@@ -20,7 +20,7 @@
         .header h1 { margin: 0; font-size: 24px; color: var(--accent-blue); }
         .auth-badge { background: rgba(239, 68, 68, 0.1); color: var(--accent-red); padding: 5px 12px; border-radius: 4px; font-size: 12px; font-weight: bold; border: 1px solid var(--accent-red); }
         
-        /* 🟢 ACTIVE CARDS CSS */
+        /* ACTIVE CARDS */
         .health-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
         .health-card { background-color: var(--bg-card); padding: 15px; border-radius: 6px; border-left: 4px solid var(--accent-green); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
         .health-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
@@ -28,7 +28,7 @@
         .health-card .value { font-size: 20px; font-weight: bold; pointer-events: none; }
         .score-card { border-left-color: var(--accent-blue); }
 
-        /* 🟢 SEARCH BAR & MIC CSS */
+        /* SEARCH BAR & MIC */
         .search-section { background-color: var(--bg-card); padding: 20px; border-radius: 6px; margin-bottom: 30px; }
         .search-wrapper { display: flex; gap: 10px; margin-top: 10px; }
         .search-box { flex-grow: 1; padding: 12px; background: #0f111a; border: 1px solid #333; color: white; border-radius: 4px; font-size: 16px; }
@@ -37,13 +37,18 @@
         .mic-btn.recording { background: var(--accent-red); animation: pulse 1s infinite; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
-        /* MODAL CSS */
+        /* VISUAL TREE BOX (V2 NEW) */
+        .tree-container { background: #16192b; border: 1px dashed var(--accent-blue); padding: 15px; border-radius: 6px; margin-bottom: 20px; display: none; }
+        .tree-container h4 { margin: 0 0 8px 0; color: var(--accent-blue); font-size: 14px; }
+        #tree-output { font-family: monospace; color: #34d399; font-size: 13px; word-break: break-all; margin: 0; }
+
+        /* MODAL */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); }
         .modal-content { background-color: var(--bg-card); margin: 15% auto; padding: 20px; border: 1px solid #333; width: 80%; max-width: 500px; border-radius: 8px; border-left: 5px solid var(--accent-blue); }
         .close-btn { color: #8b949e; float: right; font-size: 24px; font-weight: bold; cursor: pointer; }
         .close-btn:hover { color: white; }
 
-        /* TABLE CSS */
+        /* TABLE */
         .report-section { background-color: var(--bg-card); padding: 20px; border-radius: 6px; margin-bottom: 30px; }
         .table-container { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; min-width: 900px; }
@@ -55,6 +60,7 @@
         .bg-warn { background: rgba(245, 158, 11, 0.2); color: var(--accent-warning); }
         .bg-unknown { background: rgba(107, 114, 128, 0.2); color: var(--accent-unknown); }
         
+        /* CONSOLE */
         .console-container { background: #000; padding: 15px; border-radius: 6px; border: 1px solid #333; max-height: 250px; overflow-y: auto; overflow-x: auto; }
         pre#console-output { color: #10b981; font-family: 'Courier New', Courier, monospace; font-size: 13px; margin: 0; line-height: 1.5; }
     </style>
@@ -62,22 +68,26 @@
 <body>
 
     <div class="header">
-        <h1>ORBIS // Developer Diagnostics v2.5 (Smart UI & Voice)</h1>
+        <h1>ORBIS // Developer Diagnostics v2 (Runtime Engine)</h1>
         <div class="auth-badge">ADMIN + DEVELOPER ONLY</div>
     </div>
 
-    <!-- 🟢 ACTIVE HEALTH CARDS -->
-    <div class="health-grid" id="health-grid">
-        <!-- Cards will be injected by JS dynamically -->
+    <!-- ACTIVE HEALTH CARDS -->
+    <div class="health-grid" id="health-grid"></div>
+
+    <!-- SEARCH BOX & VOICE -->
+    <div class="search-section">
+        <h3 style="margin-top: 0;">Execution Flow & Dependency Analyzer</h3>
+        <div class="search-wrapper">
+            <input type="text" class="search-box" id="search-input" placeholder="Ask anything (e.g., 'Why Lottery is not loading?', 'Show Module Dependencies')">
+            <button class="mic-btn" id="mic-btn" title="Speak in Bengali or English">🎤</button>
+        </div>
     </div>
 
-    <!-- 🟢 SEARCH BOX WITH VOICE INPUT -->
-    <div class="search-section">
-        <h3 style="margin-top: 0;">Execution Flow Analyzer</h3>
-        <div class="search-wrapper">
-            <input type="text" class="search-box" id="search-input" placeholder="Type or use Voice (e.g., 'আমি ডেটাবেসের কাজ করব')">
-            <button class="mic-btn" id="mic-btn" title="Speak in Bengali">🎤</button>
-        </div>
+    <!-- VISUAL PIPELINE / EXECUTION TREE BOX -->
+    <div class="tree-container" id="tree-box">
+        <h4>🌲 Pipeline & Execution Tree</h4>
+        <pre id="tree-output">Awaiting trace...</pre>
     </div>
 
     <!-- REPORT TABLE -->
@@ -123,7 +133,7 @@
         </div>
     </div>
 
-    <!-- 🟢 SCRIPTS -->
+    <!-- SCRIPTS -->
     <script>
         let currentReportText = ""; 
 
@@ -138,7 +148,6 @@
             });
         });
 
-        // 🟢 LOAD ACTIVE CARDS
         async function runInitialScan() {
             try {
                 const response = await fetch('/api/diagnostics/health');
@@ -165,7 +174,6 @@
             } catch (error) { console.error("Health scan failed"); }
         }
 
-        // 🟢 MODAL LOGIC
         function openModal(title, detail) {
             document.getElementById('modal-title').innerText = title + ' Details';
             document.getElementById('modal-desc').innerText = detail;
@@ -177,7 +185,6 @@
             if (event.target == modal) closeModal();
         }
 
-        // 🟢 BENGALI VOICE RECOGNITION (Web Speech API)
         function setupVoiceRecognition() {
             const micBtn = document.getElementById('mic-btn');
             const searchInput = document.getElementById('search-input');
@@ -190,34 +197,24 @@
                 
                 recognition.onstart = function() {
                     micBtn.classList.add('recording');
-                    searchInput.placeholder = "Listening in Bengali...";
+                    searchInput.placeholder = "Listening...";
                 };
-                
                 recognition.onspeechend = function() {
                     micBtn.classList.remove('recording');
                     recognition.stop();
                 };
-
                 recognition.onresult = function(event) {
                     const transcript = event.results[0][0].transcript;
                     searchInput.value = transcript;
-                    searchInput.placeholder = "Type or use Voice...";
                     handleSearch(transcript); 
                 };
-
-                recognition.onerror = function(event) {
-                    micBtn.classList.remove('recording');
-                    searchInput.placeholder = "Voice error. Try typing.";
-                };
-
+                recognition.onerror = function() { micBtn.classList.remove('recording'); };
                 micBtn.addEventListener('click', () => recognition.start());
             } else {
                 micBtn.style.display = 'none'; 
-                searchInput.placeholder = "Voice not supported in this browser. Please type.";
             }
         }
 
-        // 🟢 FETCH LOGS
         async function fetchLogs() {
             const consoleEl = document.getElementById('console-output');
             try {
@@ -230,18 +227,31 @@
             }
         }
 
-        // 🟢 SCANNER REPORT 
         async function handleSearch(query) {
             const tableBody = document.getElementById('report-body');
+            const treeBox = document.getElementById('tree-box');
+            const treeOutput = document.getElementById('tree-output');
+
             tableBody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--accent-warning);">Analyzing Execution Flow for: "${query}"...</td></tr>`;
+            
             try {
                 const response = await fetch('/api/diagnostics/scan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query }) });
                 const data = await response.json();
+                
+                // Display Visual Tree
+                if (data.tree) {
+                    treeBox.style.display = 'block';
+                    treeOutput.textContent = data.tree;
+                } else {
+                    treeBox.style.display = 'none';
+                }
+
                 generateReport(data.issues || []);
-            } catch (error) {}
+            } catch (error) {
+                tableBody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--accent-red);">Scan failed. Engine unreachable.</td></tr>`;
+            }
         }
 
-        // 🟢 GENERATE REPORT HTML & PREPARE TEXT FOR COPY
         function generateReport(issues) {
             const tableBody = document.getElementById('report-body');
             tableBody.innerHTML = ''; 
@@ -261,7 +271,6 @@
             });
         }
 
-        // 🟢 COPY REPORT
         function copyReport() {
             if (!currentReportText || currentReportText.length < 70) {
                 alert("No execution trace to copy.");
@@ -278,7 +287,6 @@
             }).catch(err => alert("Failed to copy."));
         }
 
-        // 🟢 COPY LOGS
         function copyLogs() {
             const consoleText = document.getElementById('console-output').innerText;
             if (!consoleText || consoleText.includes("Connecting to ORBIS Logger")) {
