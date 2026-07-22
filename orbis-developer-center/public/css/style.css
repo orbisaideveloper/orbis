@@ -1,0 +1,31 @@
+:root {
+    --bg-dark: #09090b;
+    --bg-panel: #18181b;
+    --text-main: #e4e4e7;
+    --text-muted: #a1a1aa;
+    --accent: #00ff66;
+    --border: #3f3f46;
+    --font-ui: 'Inter', sans-serif;
+    --font-code: 'Fira Code', monospace;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background-color: var(--bg-dark); color: var(--text-main); font-family: var(--font-ui); height: 100vh; overflow: hidden; }
+.app-container { display: flex; height: 100vh; }
+.sidebar { width: 260px; background-color: var(--bg-panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+.brand { padding: 20px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--border); }
+.logo-icon { font-size: 24px; color: var(--accent); }
+.brand-text h1 { font-size: 18px; color: var(--accent); }
+.nav-menu { flex: 1; padding: 20px 10px; display: flex; flex-direction: column; gap: 5px; }
+.nav-item { display: flex; padding: 12px 15px; color: var(--text-muted); text-decoration: none; font-size: 14px; border-radius: 6px; }
+.nav-item.active { background-color: rgba(0, 255, 102, 0.1); color: var(--accent); border-left: 3px solid var(--accent); }
+.badge { background: #ef4444; color: white; font-size: 10px; padding: 2px 6px; border-radius: 12px; margin-left: auto; }
+.system-status { padding: 15px; border-top: 1px solid var(--border); font-family: var(--font-code); font-size: 12px; color: var(--accent); }
+.main-content { flex: 1; display: flex; flex-direction: column; }
+.top-bar { height: 65px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; background-color: var(--bg-panel); }
+.highlight { color: var(--accent); }
+.btn { padding: 8px 16px; border-radius: 4px; font-family: var(--font-code); cursor: pointer; font-weight: 600; }
+.btn-primary { background-color: var(--accent); color: #000; border: none; }
+.workspace { flex: 1; padding: 30px; overflow-y: auto; }
+.terminal-box { background-color: #000; border: 1px solid var(--border); border-radius: 6px; margin-top: 30px; font-family: var(--font-code); }
+.term-header { background-color: var(--bg-panel); padding: 8px 15px; font-size: 12px; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+.term-body { padding: 20px; font-size: 14px; color: var(--accent); }

@@ -1,17 +1,19 @@
 import express from 'express';
-import path from 'node:path'; // SonarCloud Fix: Added 'node:' prefix
-import { fileURLToPath } from 'node:url'; // SonarCloud Fix: Added 'node:' prefix
-import fs from 'node:fs'; // SonarCloud Fix: Added 'node:' prefix
-import crypto from 'node:crypto'; // SonarCloud Fix: For secure random numbers
+import path from 'node:path'; 
+import { fileURLToPath } from 'node:url'; 
+import fs from 'node:fs'; 
+import crypto from 'node:crypto'; 
 
 import { createClient } from '@supabase/supabase-js';
 import { getTelemetryData, logRequest, addLog } from './brain/telemetry.js';
 import { BrainController } from './brain/BrainController.js'; 
 import adminRoutes from './routes/adminRoutes.js';
 import lotteryRoutes from './modules/digiledger/lottery/routes/lotteryRoutes.js';
-import diagnosticsRoutes from './routes/diagnosticsRoutes.js'; // 🟢 NEW DIAGNOSTICS ROUTE
+import diagnosticsRoutes from './routes/diagnosticsRoutes.js'; 
 
-// 🟢 NEW TRACKING & SECURITY PACKAGES IMPORT
+// 🟢 NEW: ORBIS DEVELOPER CENTER ROUTE IMPORT
+import developerCenterRoutes from '../orbis-developer-center/routes/index.routes.js'; 
+
 import statusMonitor from 'express-status-monitor';
 import morgan from 'morgan';
 import winston from 'winston';
@@ -23,7 +25,6 @@ const ROOT_DIR = process.cwd();
 
 const app = express();
 
-// SonarCloud Fix: Hide Express version for security
 app.disable('x-powered-by'); 
 
 const PORT = process.env.PORT || 10000; 
@@ -40,7 +41,6 @@ const logger = winston.createLogger({
     level: 'info',
     format: winston.format.combine(
         winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-        // SonarCloud Fix: Prevent '[object Object]' logging issue
         winston.format.printf(info => `[${info.timestamp}] [${info.level.toUpperCase()}]: ${typeof info.message === 'object' ? JSON.stringify(info.message) : info.message}`)
     ),
     transports: [
@@ -50,7 +50,6 @@ const logger = winston.createLogger({
     ]
 });
 
-// Old logic intact: Bridging old log function to new Winston logger
 const logSystemEvent = (level, source, message) => {
     const logMsg = `[${source}]: ${message}`;
     if (level === 'ERR') logger.error(logMsg);
@@ -72,7 +71,6 @@ app.use(statusMonitor({
 
 app.use(morgan('dev'));
 
-// Old caching logic intact
 app.use((req, res, next) => {
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     next();
@@ -80,7 +78,6 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
-// Old Admin Security logic intact
 app.use('/admin.html', (req, res, next) => {
     logSystemEvent('INFO', 'Security', `Admin page access attempt from ${req.ip}`);
     const cookieHeader = req.headers.cookie || '';
@@ -96,10 +93,9 @@ app.use('/admin.html', (req, res, next) => {
 
 
 // ==============================================================
-// 🚀 [NEW] GOD-MODE DIAGNOSTICS UI ROUTE (EXTREME ANTI-CACHE)
+// 🚀 GOD-MODE DIAGNOSTICS UI ROUTE
 // ==============================================================
 const renderDiagnosticsUI = (req, res) => {
-    // Render Server-কে কড়া নির্দেশ: "ভুল করেও ক্যাশ করবে না!"
     res.set({
         'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
         'Pragma': 'no-cache',
@@ -115,28 +111,24 @@ const renderDiagnosticsUI = (req, res) => {
     }
 };
 
-// এই তিনটি URL-এর যে কোনোটিতে গেলেই ফ্রেশ নতুন পেজ আসবে
 app.get('/dashboard', renderDiagnosticsUI);
 app.get('/diagnostics', renderDiagnosticsUI);
 app.get('/diagnostics.html', renderDiagnosticsUI);
+
 // ==============================================================
-
-
-// 🟢 BULLETPROOF STATIC ROUTING (Intact)
-// Note: Static routing is placed AFTER our custom diagnostic routes so our Anti-Cache logic triggers first!
+// 🟢 BULLETPROOF STATIC ROUTING 
+// ==============================================================
 app.use(express.static(path.join(ROOT_DIR, 'frontend'), { index: false }));
 app.use('/assets/lottery', express.static(path.join(ROOT_DIR, 'src/modules/digiledger/lottery/ui')));
 app.use('/assets/lottery/ui', express.static(path.join(ROOT_DIR, 'src/modules/digiledger/lottery/ui')));
 app.use('/src/modules/digiledger/lottery/ui', express.static(path.join(ROOT_DIR, 'src/modules/digiledger/lottery/ui')));
 
-// SonarCloud Fix: Secure pseudorandom number generator using crypto
 const getAppVersion = () => {
     if (process.env.SYSTEM_MODE === 'PRODUCTION') return process.env.FINAL_VERSION || '10.0-STABLE';
     const randomNum = crypto.randomInt(1000, 9999);
     return `9.01-DEV-${randomNum}`;
 };
 
-// Old Home route logic intact
 app.get('/', (req, res) => {
     const indexPath = path.join(ROOT_DIR, 'frontend/index.html');
     fs.readFile(indexPath, 'utf8', (err, data) => {
@@ -144,13 +136,12 @@ app.get('/', (req, res) => {
             logSystemEvent('ERR', 'Server', 'Failed to load index.html');
             return res.status(500).send('System Core Error');
         }
-        // SonarCloud Fix: Prefer replaceAll over replace with regex for exact string match
         res.send(data.replaceAll('{{APP_VERSION}}', getAppVersion()));
     });
 });
 
 // ==============================================================
-// 🟢 JOI FILTER APPLIED TO LOGIN (Intact)
+// 🟢 JOI FILTER APPLIED TO LOGIN 
 // ==============================================================
 const loginSchema = Joi.object({
     mobile: Joi.string().min(4).required(),
@@ -189,11 +180,19 @@ app.get('/admin/login', (req, res) => {
     else res.send('<h2 style="text-align:center; margin-top:20%;">Admin Workspace (Coming Soon)</h2>');
 });
 
-// Old Routes Intact
+// ==============================================================
+// 🟢 ROUTES (API & DEV CENTER)
+// ==============================================================
 app.use('/api/admin', adminRoutes);
 app.use('/api/lottery', lotteryRoutes);
-app.use('/api/diagnostics', diagnosticsRoutes); // 🟢 NEW DIAGNOSTICS ROUTE
+app.use('/api/diagnostics', diagnosticsRoutes); 
 
+// 🚀 NEW: ORBIS DEVELOPER HELP CENTER MOUNT
+app.use('/developer-center', developerCenterRoutes); 
+
+// ==============================================================
+// 🟢 TELEMETRY & MEMORY LOGIC
+// ==============================================================
 app.get('/api/telemetry', (req, res) => {
     try {
         res.status(200).json({ success: true, telemetry: { ...getTelemetryData(), memoryNodes: brain.memory?.nodes?.length || 36, timestamp: new Date().toISOString() } });
@@ -298,4 +297,5 @@ process.on('uncaughtException', (error) => logSystemEvent('ERR', 'GlobalTracker'
 app.listen(PORT, () => {
     logSystemEvent('OK', 'Server', `ORBIS Live on Port: ${PORT}`);
     console.log(`🚀 COCKPIT READY AT: http://localhost:${PORT}/status`);
+    console.log(`⚡ DEVELOPER CENTER AT: http://localhost:${PORT}/developer-center`);
 });
