@@ -4,18 +4,16 @@ import os from 'node:os';
 
 const ROOT_DIR = process.cwd();
 
+// --- PHASE 6: REAL PROJECT INVENTORY ---
 export const scanProjectInventory = () => {
-    let inventory = {
-        totalJS: 0, totalHTML: 0, totalCSS: 0,
-        totalRoutes: 0, totalModules: 0, totalComponents: 0,
-        totalConfigs: 0, totalTests: 0,
-        duplicateFiles: 0, unusedFiles: 'N/A (Requires AST)', missingFiles: 0,
-        scannedDirectories: 0
+    let inv = {
+        JS: 0, HTML: 0, CSS: 0, JSON: 0,
+        Routes: 0, Components: 0, Modules: 0, Utils: 0, Tests: 0,
+        TotalScanned: 0, Missing: 'N/A', Duplicate: 0
     };
-
     const fileMap = new Set();
 
-    const scanDir = (dir) => {
+    const scan = (dir) => {
         try {
             const files = fs.readdirSync(dir);
             for (const file of files) {
@@ -23,70 +21,62 @@ export const scanProjectInventory = () => {
                 const stat = fs.statSync(fullPath);
 
                 if (stat.isDirectory()) {
-                    if (!['node_modules', '.git', 'dist', 'build'].includes(file)) {
-                        inventory.scannedDirectories++;
-                        if (file.toLowerCase().includes('module')) inventory.totalModules++;
-                        if (file.toLowerCase().includes('component')) inventory.totalComponents++;
-                        scanDir(fullPath);
+                    if (!['node_modules', '.git', 'dist'].includes(file)) {
+                        if (file.toLowerCase().includes('route')) inv.Routes++;
+                        if (file.toLowerCase().includes('component')) inv.Components++;
+                        if (file.toLowerCase().includes('module')) inv.Modules++;
+                        if (file.toLowerCase().includes('util')) inv.Utils++;
+                        scan(fullPath);
                     }
                 } else {
-                    if (fileMap.has(file)) inventory.duplicateFiles++;
+                    inv.TotalScanned++;
+                    if (fileMap.has(file)) inv.Duplicate++;
                     fileMap.add(file);
 
-                    if (file.endsWith('.js')) inventory.totalJS++;
-                    if (file.endsWith('.html')) inventory.totalHTML++;
-                    if (file.endsWith('.css')) inventory.totalCSS++;
-                    if (file.includes('route')) inventory.totalRoutes++;
-                    if (file.includes('config')) inventory.totalConfigs++;
-                    if (file.endsWith('.test.js') || file.endsWith('.spec.js')) inventory.totalTests++;
+                    if (file.endsWith('.js')) inv.JS++;
+                    if (file.endsWith('.html')) inv.HTML++;
+                    if (file.endsWith('.css')) inv.CSS++;
+                    if (file.endsWith('.json')) inv.JSON++;
+                    if (file.includes('.test.js') || file.includes('.spec.js')) inv.Tests++;
                 }
             }
-        } catch (e) {
-            // Ignore unreadable dirs
-        }
+        } catch (e) {}
     };
 
-    scanDir(ROOT_DIR);
-    return inventory;
+    scan(ROOT_DIR);
+    return inv;
 };
 
+// --- PHASE 3 & 7: REAL SYSTEM & DEPENDENCY DATA ---
 export const getRealHealthData = () => {
-    const memoryFree = Math.round(os.freemem() / 1024 / 1024);
-    const memoryTotal = Math.round(os.totalmem() / 1024 / 1024);
-    let pkgData = { dependencies: 'N/A', devDependencies: 'N/A' };
+    const memFree = Math.round(os.freemem() / 1024 / 1024);
+    const memTotal = Math.round(os.totalmem() / 1024 / 1024);
+    let deps = 0, devDeps = 0;
     
     try {
-        const pkgPath = path.join(ROOT_DIR, 'package.json');
-        if (fs.existsSync(pkgPath)) {
-            const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
-            pkgData.dependencies = pkg.dependencies ? Object.keys(pkg.dependencies).length : 0;
-            pkgData.devDependencies = pkg.devDependencies ? Object.keys(pkg.devDependencies).length : 0;
-        }
+        const pkg = JSON.parse(fs.readFileSync(path.join(ROOT_DIR, 'package.json'), 'utf8'));
+        deps = pkg.dependencies ? Object.keys(pkg.dependencies).length : 'N/A';
+        devDeps = pkg.devDependencies ? Object.keys(pkg.devDependencies).length : 'N/A';
     } catch (e) {}
 
-    return {
-        memory: `${memoryFree}MB Free / ${memoryTotal}MB Total`,
-        uptime: `${Math.round(os.uptime() / 60)} minutes`,
-        os: os.type(),
-        dependencies: pkgData.dependencies,
-        devDependencies: pkgData.devDependencies
-    };
+    return { memory: `${memFree}MB / ${memTotal}MB`, uptime: `${Math.round(os.uptime() / 60)}m`, deps, devDeps };
 };
 
+// --- PHASE 8 & 9: EVIDENCE PACK & SMART FIX PREVIEW ---
 export const getRealFileContext = (targetFile) => {
     try {
         const filePath = path.join(ROOT_DIR, targetFile);
         if (fs.existsSync(filePath)) {
             const content = fs.readFileSync(filePath, 'utf8');
             const lines = content.split('\n');
+            const imports = lines.filter(l => l.includes('import ')).join('\n') || 'N/A';
             return {
                 exists: true,
-                totalLines: lines.length,
-                snippet: lines.slice(0, 3).join('\n') + (lines.length > 3 ? '\n...' : ''),
-                source: 'Filesystem'
+                snippet: lines.slice(0, 5).join('\n'),
+                dependencies: imports,
+                lineCount: lines.length
             };
         }
     } catch (e) {}
-    
-    return { exists: false, totalLines: 'N/A', snippet: 'N/A (File not found)', source: 'Filesystem' };
+    return { exists: false, snippet: 'N/A', dependencies: 'N/A', lineCount: 'N/A' };
 };
