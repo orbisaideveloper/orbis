@@ -39,7 +39,6 @@
             font-weight: bold;
             border: 1px solid var(--accent-red);
         }
-        /* Health Grid */
         .health-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -56,7 +55,6 @@
         .health-card .value { font-size: 20px; font-weight: bold; }
         .score-card { border-left-color: var(--accent-blue); }
         
-        /* Search Box */
         .search-section {
             background-color: var(--bg-card);
             padding: 20px;
@@ -74,21 +72,36 @@
         }
         .search-box:focus { outline: none; border-color: var(--accent-blue); }
 
-        /* Report Area */
         .report-section {
             background-color: var(--bg-card);
             padding: 20px;
             border-radius: 6px;
+            margin-bottom: 30px;
         }
-        /* Table overflow fix for mobile display */
-        .table-container {
-            overflow-x: auto; 
-        }
+        .table-container { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; min-width: 800px; }
         th, td { text-align: left; padding: 12px; border-bottom: 1px solid #333; }
         th { color: #8b949e; font-size: 14px; }
         .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; }
         .badge.high { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); }
+
+        /* Console styling */
+        .console-container {
+            background: #000;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #333;
+            max-height: 250px;
+            overflow-y: auto;
+            overflow-x: auto;
+        }
+        pre#console-output {
+            color: #10b981;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            margin: 0;
+            line-height: 1.5;
+        }
     </style>
 </head>
 <body>
@@ -102,7 +115,7 @@
     <div class="health-grid">
         <div class="health-card score-card">
             <h3>Overall Health Score</h3>
-            <div class="value">Loading Data...</div>
+            <div class="value">Loading...</div>
         </div>
         <div class="health-card">
             <h3>Project Health</h3>
@@ -136,13 +149,16 @@
 
     <!-- SEARCH BOX -->
     <div class="search-section">
-        <h3 style="margin-top: 0;">Diagnostic Query</h3>
-        <input type="text" class="search-box" placeholder="Ask e.g., 'Why Lottery is not loading?' or 'Check Dashboard'">
+        <h3 style="margin-top: 0;">Diagnostic Query (Real File Scanner)</h3>
+        <input type="text" class="search-box" placeholder="Try searching a module name (e.g., 'dashboard', 'lottery', 'brain')">
     </div>
 
     <!-- REPORT FORMAT -->
     <div class="report-section">
-        <h3 style="margin-top: 0;">Live Scan Report</h3>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0;">Live Scan Report</h3>
+            <button id="copy-btn" onclick="copyReport()" style="background: var(--accent-green); color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">📋 Copy Text Report</button>
+        </div>
         <div class="table-container">
             <table>
                 <thead>
@@ -159,34 +175,45 @@
                 </thead>
                 <tbody id="report-body">
                     <tr>
-                        <td colspan="8" style="text-align: center; color: #8b949e;">No active scans. Enter a query or run a module scan.</td>
+                        <td colspan="8" style="text-align: center; color: #8b949e;">No active scans. Enter a query to scan the file system.</td>
                     </tr>
                 </tbody>
             </table>
         </div>
     </div>
 
+    <!-- CONSOLE LOG TERMINAL -->
+    <div class="report-section">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3 style="margin: 0;">Server Console Logs (system.log)</h3>
+            <button onclick="fetchLogs()" style="background: var(--accent-blue); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">🔄 Refresh Logs</button>
+        </div>
+        <div class="console-container">
+            <pre id="console-output">Connecting to ORBIS Logger...</pre>
+        </div>
+    </div>
+
     <!-- DIAGNOSTICS LOGIC -->
     <script>
+        let currentReportText = ""; // To store text for copying
+
         document.addEventListener('DOMContentLoaded', () => {
-            runInitialScan(); // Fetching REAL data on load
+            runInitialScan();
+            fetchLogs(); // Load logs on startup
 
             const searchBox = document.querySelector('.search-box');
             searchBox.addEventListener('keypress', function (e) {
                 if (e.key === 'Enter') {
                     const query = e.target.value.trim();
-                    if (query) {
-                        handleSearch(query);
-                    }
+                    if (query) handleSearch(query);
                 }
             });
         });
 
-        // 🟢 Fetching Real Data from Backend API
+        // 🟢 Fetch System Health
         async function runInitialScan() {
             try {
                 const response = await fetch('/api/diagnostics/health');
-                if (!response.ok) throw new Error('API Error');
                 const data = await response.json();
                 
                 document.querySelector('.score-card .value').innerHTML = `<span style="color: var(--accent-green);">${data.score}</span>`;
@@ -198,15 +225,28 @@
                 document.getElementById('console-health').innerHTML = `<span style="color: var(--accent-green);">${data.console}</span>`;
                 document.getElementById('git-status').innerHTML = `<span style="color: var(--accent-warning);">${data.systemLoad}</span>`;
             } catch (error) {
-                console.error("Health scan failed", error);
-                document.querySelector('.score-card .value').innerHTML = `<span style="color: var(--accent-red);">Connection Failed</span>`;
+                console.error("Health scan failed");
             }
         }
 
-        // 🟢 Fetching Scan Results from Backend API
+        // 🟢 Fetch Console Logs
+        async function fetchLogs() {
+            const consoleEl = document.getElementById('console-output');
+            try {
+                const response = await fetch('/api/diagnostics/logs');
+                const data = await response.json();
+                consoleEl.textContent = data.logs;
+                // Auto scroll to bottom
+                consoleEl.parentElement.scrollTop = consoleEl.parentElement.scrollHeight;
+            } catch (error) {
+                consoleEl.textContent = "Failed to connect to log server.";
+            }
+        }
+
+        // 🟢 Run File Scanner
         async function handleSearch(query) {
             const tableBody = document.getElementById('report-body');
-            tableBody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--accent-warning);">Scanning modules for: "${query}"...</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--accent-warning);">Scanning file system for: "${query}"...</td></tr>`;
 
             try {
                 const response = await fetch('/api/diagnostics/scan', {
@@ -217,16 +257,24 @@
                 const data = await response.json();
                 generateReport(data.issues || []);
             } catch (error) {
-                tableBody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--accent-red);">Scan failed. Could not connect to Diagnostics API.</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--accent-red);">Scan failed. Engine unreachable.</td></tr>`;
             }
         }
 
+        // 🟢 Generate HTML Table & Prepare Text for Copying
         function generateReport(issues) {
             const tableBody = document.getElementById('report-body');
             tableBody.innerHTML = ''; 
+            
+            // Format for clipboard
+            currentReportText = "ORBIS Developer Diagnostics Report\n================================\n\n";
 
             issues.forEach((issue, index) => {
-                const severityClass = issue.severity === 'CRITICAL' ? 'badge high' : 'badge';
+                // Formatting for Copy
+                currentReportText += `[${issue.severity}] File: ${issue.file}\nReason: ${issue.reason}\nSuggested Fix: ${issue.fix}\n----------------------------------\n`;
+
+                // Formatting for HTML Table
+                const severityClass = issue.severity === 'CRITICAL' ? 'badge high' : (issue.severity === 'WARNING' ? 'badge' : 'badge');
                 const severityStyle = issue.severity !== 'CRITICAL' ? 'background: rgba(245, 158, 11, 0.2); color: var(--accent-warning);' : '';
 
                 const row = `
@@ -242,6 +290,25 @@
                     </tr>
                 `;
                 tableBody.innerHTML += row;
+            });
+        }
+
+        // 🟢 Copy to Clipboard Logic
+        function copyReport() {
+            if (!currentReportText || currentReportText.length < 70) {
+                alert("No active scan report to copy.");
+                return;
+            }
+            navigator.clipboard.writeText(currentReportText).then(() => {
+                const btn = document.getElementById('copy-btn');
+                btn.innerHTML = '✅ Copied!';
+                btn.style.background = '#10b981';
+                setTimeout(() => {
+                    btn.innerHTML = '📋 Copy Text Report';
+                    btn.style.background = 'var(--accent-green)';
+                }, 2000);
+            }).catch(err => {
+                alert("Failed to copy. Your browser might block clipboard access.");
             });
         }
 
