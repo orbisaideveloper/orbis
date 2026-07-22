@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-// ES Module-এর জন্য __dirname তৈরি করা (যেহেতু import-এ বাই ডিফল্ট এটি থাকে না)
+// ES Module-এর জন্য __dirname তৈরি করা
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -58,6 +58,7 @@ router.post('/scan', (req, res) => {
         // যদি ফোল্ডার স্ট্রাকচার আলাদা হয়, তবে নরমাল ডিরেক্টরি চেক:
         if (!fs.existsSync(filePath)) filePath = path.join(__dirname, fileName); 
         if (!fs.existsSync(filePath)) filePath = path.join(__dirname, '../', fileName);
+        if (!fs.existsSync(filePath)) filePath = path.join(__dirname, '../../', fileName); // Backup Check
 
         if (fs.existsSync(filePath)) {
             const fileContent = fs.readFileSync(filePath, 'utf-8');
@@ -130,5 +131,5 @@ router.get('/logs', (req, res) => {
     res.json({ logs: `[SERVER] Diagnostic Engine V3.6 Online.\n[TIMESTAMP] ${new Date().toISOString()}\n[STATUS] Awaiting developer commands...` });
 });
 
-// 🟢 NEW: Export default router (ES Module Support)
+// 🟢 Export default router (ES Module Support)
 export default router;
