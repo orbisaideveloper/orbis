@@ -3,15 +3,16 @@
  * Features: Real Hardware Monitoring, Smart Intent Routing, Actionable Bug Tracing
  */
 
-const express = require('express');
+import express from 'express';
+import os from 'os';
+
 const router = express.Router();
-const os = require('os');
 
 // ==========================================
 // 1. ADVANCED HEALTH ENGINE (Real-time OS Data)
 // ==========================================
 router.get('/health', (req, res) => {
-    // RAM Calculation
+    // RAM Calculation (তোমার লজিক ১০০% অক্ষত আছে)
     const totalMem = os.totalmem();
     const freeMem = os.freemem();
     const usedMem = totalMem - freeMem;
@@ -62,7 +63,7 @@ router.post('/scan', (req, res) => {
     
     let issues = [];
 
-    // Smart Intent Recognition Engine
+    // Smart Intent Recognition Engine (তোমার লজিক ১০০% অক্ষত আছে)
     if (intent.includes('error') || intent.includes('crash') || intent.includes('fail')) {
         issues = [
             { stage: "DB Connection", status: "FAIL", file: "server.js", line: 45, impact: "Critical", reason: "Unhandled Promise Rejection during MongoDB connect.", suggestedFix: "Wrap mongoose.connect inside an async try-catch block." },
@@ -100,4 +101,5 @@ router.get('/logs', (req, res) => {
     });
 });
 
-module.exports = router;
+// 🟢 THIS EXPORT FIXES THE RENDER CRASH!
+export default router;
