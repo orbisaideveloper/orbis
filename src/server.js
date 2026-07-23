@@ -119,6 +119,9 @@ app.get('/diagnostics.html', renderDiagnosticsUI);
 // 🟢 BULLETPROOF STATIC ROUTING 
 // ==============================================================
 app.use(express.static(path.join(ROOT_DIR, 'frontend'), { index: false }));
+
+app.use('/lottery', express.static(path.join(ROOT_DIR, 'frontend/lottery')));
+
 app.use('/assets/lottery', express.static(path.join(ROOT_DIR, 'src/modules/digiledger/lottery/ui')));
 app.use('/assets/lottery/ui', express.static(path.join(ROOT_DIR, 'src/modules/digiledger/lottery/ui')));
 app.use('/src/modules/digiledger/lottery/ui', express.static(path.join(ROOT_DIR, 'src/modules/digiledger/lottery/ui')));

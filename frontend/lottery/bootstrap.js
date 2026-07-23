@@ -1,12 +1,12 @@
 /**
  * Lottery Micro-App
  * File: bootstrap.js
- * Status: Standalone Mount Ready
+ * Status: Standalone Mount Ready & PWA Enabled
  */
 
 // ১. কনসোল দেখার টুল ইনজেকশন (Eruda)
 (function () {
-    if (typeof eruda === 'undefined') {
+    if (typeof eruda !== 'undefined') {
         eruda.init();
     }
 })();
@@ -30,3 +30,16 @@ document.addEventListener("DOMContentLoaded", function() {
         console.error("❌ Error: LotterySalesApp logic not found.");
     }
 });
+
+// ৩. PWA Service Worker রেজিস্ট্রেশন (Offline ও Install App ফিচারের জন্য)
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+            .then(registration => {
+                console.log('✅ ServiceWorker registered successfully with scope: ', registration.scope);
+            })
+            .catch(err => {
+                console.error('❌ ServiceWorker registration failed: ', err);
+            });
+    });
+}
