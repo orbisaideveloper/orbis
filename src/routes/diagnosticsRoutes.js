@@ -9,8 +9,34 @@ const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
+// 🟢 অ্যাডভান্সড ফাংশন: পুরো প্রজেক্ট ডাইনামিক স্ক্যান করার জন্য (যেকোনো নতুন ফাইল অটো অ্যাড হবে)
+function getAllFiles(dirPath, arrayOfFiles) {
+    try {
+        const files = fs.readdirSync(dirPath);
+        arrayOfFiles = arrayOfFiles || [];
+
+        files.forEach(function(file) {
+            const fullPath = path.join(dirPath, file);
+            if (fs.statSync(fullPath).isDirectory()) {
+                // node_modules এবং অন্যান্য অপ্রয়োজনীয় ফোল্ডার বাদ দেওয়া হলো স্ক্যান ফাস্ট করার জন্য
+                if (file !== 'node_modules' && file !== '.git' && file !== 'dist') {
+                    arrayOfFiles = getAllFiles(fullPath, arrayOfFiles);
+                }
+            } else {
+                // শুধুমাত্র কোড ফাইলগুলো স্ক্যান করবে
+                if (file.endsWith('.js') || file.endsWith('.html') || file.endsWith('.json')) {
+                    arrayOfFiles.push(fullPath);
+                }
+            }
+        });
+    } catch (err) {
+        console.error("Directory scan error:", err.message);
+    }
+    return arrayOfFiles;
+}
+
 // ==========================================
-// 1. HEALTH ENGINE (Real Server Stats)
+// 1. HEALTH ENGINE (আপনার অরিজিনাল রিয়েল-টাইম RAM লজিক)
 // ==========================================
 router.get('/health', (req, res) => {
     try {
@@ -28,108 +54,129 @@ router.get('/health', (req, res) => {
 });
 
 // ==========================================
-// 2. THE GOD MODE SCANNER (Line-by-Line File Reader)
+// 2. THE GOD MODE SCANNER (Deep Project Scan + 6 RCA Rules)
 // ==========================================
 router.post('/scan', (req, res) => {
     const { query } = req.body;
     if (!query) return res.status(400).json({ error: "Query is required" });
 
     const issues = [];
+    const projectRoot = path.join(__dirname, '../../'); // প্রজেক্টের মেইন ফোল্ডার
     
-    // ⚠️ প্রজেক্টের মেইন ফোল্ডারের প্যাথ
-    const projectRoot = path.join(__dirname, '../../'); 
-    
-    // যে ফাইলগুলো আমরা রিভার্স স্ক্যান করব:
-    const filesToScan = [
-        'server.js', 
-        'src/routes/diagnosticsRoutes.js', 
-        'frontend/diagnostics.html' // আপনার HTML ফাইল যেখানে আছে (frontend ফোল্ডার)
-    ];
+    // 🟢 এখন পুরো প্রজেক্ট স্ক্যান হবে
+    const allProjectFiles = getAllFiles(projectRoot);
 
-    // ইউজারের সার্চ কোয়েরি থেকে মূল শব্দগুলো আলাদা করা
+    // আপনার অরিজিনাল কি-ওয়ার্ড ফিল্টার
     const searchKeywords = query.toLowerCase().split(' ').filter(word => word.length > 3);
     
     let scannedLinesCount = 0;
+    const summary = { references: 0, routes: 0, static: 0, ui: 0, errorHandlers: 0, warnings: 0, critical: 0 };
 
-    filesToScan.forEach(fileName => {
-        // ফাইলের আসল লোকেশন বের করা
-        let filePath = path.join(projectRoot, fileName);
-        
-        // যদি ফোল্ডার স্ট্রাকচার আলাদা হয়, তবে নরমাল ডিরেক্টরি চেক:
-        if (!fs.existsSync(filePath)) filePath = path.join(__dirname, fileName); 
-        if (!fs.existsSync(filePath)) filePath = path.join(__dirname, '../', fileName);
-        if (!fs.existsSync(filePath)) filePath = path.join(__dirname, '../../', fileName); // Backup Check
+    allProjectFiles.forEach(filePath => {
+        const fileName = path.relative(projectRoot, filePath); // ফাইলের ক্লিন নাম
+        const fileContent = fs.readFileSync(filePath, 'utf-8');
+        const lines = fileContent.split('\n');
+        scannedLinesCount += lines.length;
 
-        if (fs.existsSync(filePath)) {
-            const fileContent = fs.readFileSync(filePath, 'utf-8');
-            const lines = fileContent.split('\n');
-            scannedLinesCount += lines.length;
+        lines.forEach((line, index) => {
+            const lineLower = line.toLowerCase();
+            const lineNumber = index + 1;
+            const cleanLine = line.trim();
 
-            lines.forEach((line, index) => {
-                const lineLower = line.toLowerCase();
-                const lineNumber = index + 1;
+            if (!cleanLine || cleanLine.startsWith('//')) return;
 
-                // ১. ডেডলক বা এরর পয়েন্ট খোঁজা
-                if (lineLower.includes('throw new error') || (lineLower.includes('console.error') && !lineLower.trim().startsWith('//'))) {
-                    issues.push({
-                        stage: 'Code Analysis',
-                        status: 'WARN',
-                        file: fileName,
-                        line: lineNumber,
-                        impact: 'Potential execution break',
-                        reason: `System found an error handling block: "${line.trim()}"`,
-                        suggestedFix: 'Ensure inputs are validated before this line executes.'
-                    });
+            let classification = null;
+            let status = 'PASS';
+            let impactText = 'Low';
+            let analysisReason = '';
+            let isCritical = false;
+
+            // 🟢 অ্যাডভান্সড রুল ৬: Root Cause (CRITICAL Dependency Check)
+            if (lineLower.includes('import ') || lineLower.includes('require(')) {
+                const match = line.match(/(?:from|require\s*\()\s*['"]([^'"]+)['"]/);
+                if (match && match[1]) {
+                    const depPath = path.resolve(path.dirname(filePath), match[1]);
+                    // মডিউল বা ফাইল মিসিং থাকলে CRITICAL
+                    if (!fs.existsSync(depPath) && !fs.existsSync(depPath + '.js') && !fs.existsSync(depPath + '/index.js')) {
+                        classification = 'CRITICAL';
+                        status = 'FAIL';
+                        isCritical = true;
+                        impactText = 'Critical Server Error';
+                        summary.critical++;
+                        analysisReason = "BROKEN DEPENDENCY: Module or File is missing!";
+                    }
                 }
+            }
 
-                // ২. ইউজার যা খুঁজছে তার সাথে লাইন ম্যাচ করা
-                let isMatch = searchKeywords.some(keyword => lineLower.includes(keyword));
-                if (isMatch && searchKeywords.length > 0) {
-                    issues.push({
-                        stage: 'Target Matched',
-                        status: 'FAIL',
-                        file: fileName,
-                        line: lineNumber,
-                        impact: 'High (User Queried)',
-                        reason: `Logic related to "${query}" found here:\nCode: ${line.trim()}`,
-                        suggestedFix: 'Review this exact line. Check for spelling mistakes, wrong variables, or broken logic.'
-                    });
+            // আপনার অরিজিনাল লজিক: ইউজার যা খুঁজছে তার সাথে লাইন ম্যাচ করা
+            let isMatch = searchKeywords.length > 0 ? searchKeywords.some(keyword => lineLower.includes(keyword)) : lineLower.includes(query.toLowerCase());
+
+            // 🟢 রুল ১-৫: ডাইনামিক ক্লাসিফিকেশন
+            if (lineLower.includes('throw new error') || (lineLower.includes('console.error'))) {
+                classification = 'ERROR HANDLER'; summary.errorHandlers++;
+                status = 'WARN';
+                impactText = 'Potential execution break';
+                analysisReason = "System error handling block detected.";
+            } else if (isMatch && !isCritical) {
+                if (lineLower.includes('<') && lineLower.includes('>')) {
+                    classification = 'UI'; summary.ui++;
+                    analysisReason = "Frontend UI logic matching query.";
+                } else if (lineLower.includes('express.static')) {
+                    classification = 'STATIC ASSET'; summary.static++;
+                    analysisReason = "Static Asset Route matching query.";
+                } else if (lineLower.includes('app.use') || lineLower.includes('router.')) {
+                    classification = 'ROUTE'; summary.routes++;
+                    analysisReason = "Backend Route/Middleware matching query.";
+                } else if (lineLower.includes('import ') || lineLower.includes('require(')) {
+                    classification = 'REFERENCE'; summary.references++;
+                    analysisReason = "Valid dependency reference matching query.";
+                } else {
+                    classification = 'WARNING'; summary.warnings++;
+                    status = 'FAIL';
+                    impactText = 'High (User Queried)';
+                    analysisReason = `General logic related to "${query}" found.`;
                 }
-            });
-        } else {
-            // যদি ফাইল খুঁজে না পায়
-            issues.push({
-                stage: 'File System',
-                status: 'FAIL',
-                file: fileName,
-                line: 'N/A',
-                impact: 'Critical Server Error',
-                reason: `The scanner could not locate the file at: ${filePath}`,
-                suggestedFix: 'Fix the folder path (path.join) so the scanner can read it.'
-            });
-        }
+            }
+
+            // 🟢 ফ্রন্টএন্ডের জন্য Reason, Evidence এবং Confidence ফরম্যাটিং
+            if (classification) {
+                const formattedReason = `<strong>Reason:</strong> ${analysisReason}<br><strong>Evidence:</strong> <code>${cleanLine.substring(0, 65)}...</code><br><strong>Confidence:</strong> ${isCritical ? '100% (Verified)' : 'High (Keyword Match)'}`;
+
+                issues.push({
+                    stage: classification,
+                    status: status,
+                    file: fileName,
+                    line: lineNumber,
+                    impact: impactText,
+                    reason: formattedReason, 
+                    suggestedFix: isCritical ? 'Critical: Install dependency or fix exact path.' : 'Review this exact line for logic errors.'
+                });
+            }
+        });
     });
 
-    // ৩. এক্সিকিউশন ট্রি বানানো
-    const treeData = `[START RUNTIME AUDIT]
- ├── Query Received: "${query}"
- ├── Files Scanned: ${filesToScan.join(', ')}
- ├── Total Lines Read: ${scannedLinesCount}
- └── Anomalies Detected: ${issues.length}`;
+    // 🟢 রুল ৬: Critical Root Cause সবসময় টেবিলের উপরে থাকবে
+    issues.sort((a, b) => (a.stage === 'CRITICAL' ? -1 : 1));
 
-    // রেজাল্ট ফ্রন্টএন্ডে পাঠানো
+    // আপনার ডিপ স্ক্যান সামারি + অরিজিনাল ট্রি ডেটা
+    const treeData = `[DEEP SYSTEM SCAN RESULTS]
+ ├── Query Received : "${query}"
+ ├── Files Scanned  : ${allProjectFiles.length} files
+ ├── Lines Read     : ${scannedLinesCount}
+ ├── RCA Status     : UI(${summary.ui}) | Routes(${summary.routes}) | References(${summary.references}) | Broken(${summary.critical})
+ └── Anomalies Found: ${issues.length}`;
+
     res.json({
         tree: treeData,
-        issues: issues.slice(0, 15) // সর্বোচ্চ ১৫টা রেজাল্ট দেখাবে
+        issues: issues // লিমিট তুলে দেওয়া হলো যাতে পুরো প্রজেক্টের সব ইস্যু দেখতে পান
     });
 });
 
 // ==========================================
-// 3. LIVE LOGS 
+// 3. LIVE LOGS (আপনার অরিজিনাল টাইমস্ট্যাম্প লজিক)
 // ==========================================
 router.get('/logs', (req, res) => {
-    res.json({ logs: `[SERVER] Diagnostic Engine V3.6 Online.\n[TIMESTAMP] ${new Date().toISOString()}\n[STATUS] Awaiting developer commands...` });
+    res.json({ logs: `[SERVER] Diagnostic Engine Deep Scan Online.\n[TIMESTAMP] ${new Date().toISOString()}\n[STATUS] Awaiting developer commands...` });
 });
 
-// 🟢 Export default router (ES Module Support)
 export default router;
