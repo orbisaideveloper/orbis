@@ -36,7 +36,7 @@ function getAllFiles(dirPath, arrayOfFiles) {
 }
 
 // ==========================================
-// 1. HEALTH ENGINE (আপনার অরিজিনাল রিয়েল-টাইম RAM লজিক)
+// 1. HEALTH ENGINE 
 // ==========================================
 router.get('/health', (req, res) => {
     try {
@@ -54,40 +54,44 @@ router.get('/health', (req, res) => {
 });
 
 // ==========================================
-// 2. THE GOD MODE SCANNER (Deep Project Scan + 5-Step Engine)
+// 2. THE GOD MODE SCANNER (Semantic RCA Engine)
 // ==========================================
 router.post('/scan', (req, res) => {
     const { query } = req.body;
     if (!query) return res.status(400).json({ error: "Query is required" });
 
     const issues = [];
-    const projectRoot = path.join(__dirname, '../../'); // প্রজেক্টের মেইন ফোল্ডার
+    const projectRoot = path.join(__dirname, '../../'); 
     
-    // 🟢 Step 2 Verification-এর জন্য package.json রিড করা
+    // 🟢 package.json ও devDependencies রিড করা
     let packageDeps = {};
+    let devDeps = {};
     let packageJsonPath = path.join(projectRoot, 'package.json');
-    if (!fs.existsSync(packageJsonPath)) packageJsonPath = path.join(__dirname, '../../', 'package.json'); // Fallback path
+    if (!fs.existsSync(packageJsonPath)) packageJsonPath = path.join(__dirname, '../../', 'package.json');
     
     if (fs.existsSync(packageJsonPath)) {
         try {
             const pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
-            packageDeps = { ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) };
+            packageDeps = pkg.dependencies || {};
+            devDeps = pkg.devDependencies || {};
         } catch (err) {
-            console.error("Package.json parsing error:", err.message);
+            // Error silently ignored to maintain RCA scan flow
         }
     }
     
-    // 🟢 এখন পুরো প্রজেক্ট স্ক্যান হবে
     const allProjectFiles = getAllFiles(projectRoot);
 
-    // আপনার অরিজিনাল কি-ওয়ার্ড ফিল্টার
-    const searchKeywords = query.toLowerCase().split(' ').filter(word => word.length > 3);
+    // 🟢 Semantic Intent Logic (No blind keyword matching)
+    const exactQuery = query.toLowerCase().trim();
+    const rawKeywords = exactQuery.split(' ').filter(word => word.length > 3);
+    const stopWords = ['complete', 'source', 'code', 'file', 'the', 'this', 'that'];
+    const semanticKeywords = rawKeywords.filter(word => !stopWords.includes(word));
     
     let scannedLinesCount = 0;
-    const summary = { references: 0, routes: 0, static: 0, ui: 0, errorHandlers: 0, warnings: 0, critical: 0 };
+    const summary = { packages: 0, nodeModules: 0, localModules: 0, references: 0, logging: 0, defensiveCode: 0, warnings: 0, failures: 0, criticalRootCauses: 0 };
 
     allProjectFiles.forEach(filePath => {
-        const fileName = path.relative(projectRoot, filePath); // ফাইলের ক্লিন নাম
+        const fileName = path.relative(projectRoot, filePath);
         const fileContent = fs.readFileSync(filePath, 'utf-8');
         const lines = fileContent.split('\n');
         scannedLinesCount += lines.length;
@@ -106,45 +110,36 @@ router.post('/scan', (req, res) => {
             let isCritical = false;
             let isImportBlock = false;
 
-            // 🟢 অ্যাডভান্সড রুল ৬: 5-Step Dependency Verification Engine (SonarCloud Logic)
+            // 🟢 Dependency Resolution Engine
             if (lineLower.includes('import ') || lineLower.includes('require(')) {
                 const match = line.match(/(?:from|require\s*\()\s*['"]([^'"]+)['"]/);
                 if (match && match[1]) {
                     isImportBlock = true;
                     const importPath = match[1];
                     
-                    // STEP 1: Node Built-in Check
                     const nodeBuiltIns = ['fs', 'path', 'url', 'crypto', 'os', 'stream', 'events', 'http', 'https', 'util'];
                     const isBuiltIn = nodeBuiltIns.some(mod => importPath === mod || importPath.startsWith('node:'));
-                    
-                    // STEP 3: Local Module Check
                     const isLocal = importPath.startsWith('./') || importPath.startsWith('../');
-                    
-                    // STEP 4: Test Dependency Check
                     const isTestFile = fileName.endsWith('.test.js') || fileName.endsWith('.spec.js');
 
                     if (isBuiltIn) {
-                        classification = 'NODE BUILT-IN'; summary.references++;
-                        analysisReason = `System Verified: Core Node.js built-in module (${importPath}). Never missing.`;
-                    } else if (isTestFile && (importPath === 'jest' || importPath === 'vitest')) {
-                        classification = 'TEST DEPENDENCY'; summary.references++;
-                        analysisReason = `System Verified: Environment specific test dependency (${importPath}).`;
+                        classification = 'NODE BUILT-IN'; summary.nodeModules++;
+                        analysisReason = `System Verified: Core Node.js built-in module (${importPath}).`;
                     } else if (isLocal) {
                         const absoluteDepPath = path.resolve(path.dirname(filePath), importPath);
-                        // STEP 3 Check: ফিজিক্যালি চেক করা হচ্ছে লোকাল ফাইলটি আছে কিনা
                         if (fs.existsSync(absoluteDepPath) || fs.existsSync(absoluteDepPath + '.js') || fs.existsSync(absoluteDepPath + '/index.js') || fs.existsSync(absoluteDepPath + '.html')) {
-                            classification = 'LOCAL MODULE'; summary.references++;
-                            analysisReason = `System Verified: Local relative module '${importPath}' resolved successfully.`;
+                            classification = 'LOCAL MODULE'; summary.localModules++;
+                            analysisReason = `System Verified: Local relative module '${importPath}' resolved.`;
                         } else {
-                            classification = 'BROKEN LOCAL IMPORT';
+                            classification = 'ROOT CAUSE';
                             status = 'FAIL';
                             isCritical = true;
-                            impactText = 'Critical Server Error';
-                            summary.critical++;
-                            analysisReason = `BROKEN LOCAL IMPORT: The relative path '${importPath}' points to a non-existent file!`;
+                            impactText = 'CRITICAL';
+                            summary.criticalRootCauses++;
+                            analysisReason = `BROKEN PATH / LOCAL IMPORT: The relative path '${importPath}' points to a non-existent file!`;
                         }
                     } else {
-                        // STEP 2: NPM Package Check against package.json
+                        // Package Resolution
                         let basePackage = importPath;
                         if (importPath.startsWith('@')) {
                             const parts = importPath.split('/');
@@ -154,53 +149,73 @@ router.post('/scan', (req, res) => {
                         }
 
                         if (packageDeps[basePackage]) {
-                            classification = 'PACKAGE'; summary.references++;
-                            analysisReason = `System Verified: NPM Package '${basePackage}' is installed and present in package.json.`;
+                            classification = 'PACKAGE'; summary.packages++;
+                            analysisReason = `System Verified: NPM Package '${basePackage}' installed.`;
+                        } else if (devDeps[basePackage] || (isTestFile && (basePackage === 'jest' || basePackage === 'vitest'))) {
+                            if (devDeps[basePackage] || fs.existsSync(path.join(projectRoot, 'node_modules', basePackage))) {
+                                classification = 'DEV DEPENDENCY'; summary.packages++;
+                                analysisReason = `System Verified: Development/Test Dependency '${basePackage}' verified.`;
+                            } else {
+                                classification = 'ROOT CAUSE';
+                                status = 'FAIL';
+                                isCritical = true;
+                                impactText = 'CRITICAL';
+                                summary.criticalRootCauses++;
+                                analysisReason = `BROKEN PACKAGE: Missing Test/Dev Dependency '${basePackage}'.`;
+                            }
                         } else {
-                            classification = 'BROKEN PACKAGE';
+                            classification = 'ROOT CAUSE';
                             status = 'FAIL';
                             isCritical = true;
-                            impactText = 'Critical Server Error';
-                            summary.critical++;
-                            analysisReason = `BROKEN PACKAGE DEPENDENCY: '${basePackage}' is imported but missing in package.json!`;
+                            impactText = 'CRITICAL';
+                            summary.criticalRootCauses++;
+                            analysisReason = `BROKEN PACKAGE: '${basePackage}' is missing from package.json dependencies!`;
                         }
                     }
                 }
             }
 
-            // আপনার অরিজিনাল লজিক: ইউজার যা খুঁজছে তার সাথে লাইন ম্যাচ করা
-            let isMatch = searchKeywords.length > 0 ? searchKeywords.some(keyword => lineLower.includes(keyword)) : lineLower.includes(query.toLowerCase());
+            // 🟢 Semantic Intent Matching
+            let isMatch = false;
+            if (lineLower.includes(exactQuery)) {
+                isMatch = true; 
+            } else if (semanticKeywords.length > 0) {
+                isMatch = semanticKeywords.some(keyword => lineLower.includes(keyword));
+            }
 
-            // 🟢 রুল ১-৫: সাধারণ লজিক (যদি ইমপোর্ট লাইন না হয়, তবেই কাজ করবে)
+            // 🟢 Logic Classification (Non-Imports)
             if (!isImportBlock) {
-                if (lineLower.includes('throw new error') || (lineLower.includes('console.error'))) {
-                    classification = 'ERROR HANDLER'; summary.errorHandlers++;
-                    status = 'WARN';
-                    impactText = 'Potential execution break';
-                    analysisReason = "System error handling block detected.";
+                if (lineLower.includes('throw new error')) {
+                    classification = 'DEFENSIVE CODE'; summary.defensiveCode++;
+                    status = 'PASS';
+                    impactText = 'None';
+                    analysisReason = "Expected exception handling / Normal validation.";
+                } else if (lineLower.includes('console.error')) {
+                    classification = 'LOGGING'; summary.logging++;
+                    status = 'PASS';
+                    impactText = 'None';
+                    analysisReason = "Standard error logging operation.";
                 } else if (isMatch) {
                     if (lineLower.includes('<') && lineLower.includes('>')) {
-                        classification = 'UI'; summary.ui++;
-                        analysisReason = "Frontend UI logic matching query.";
+                        classification = 'UI'; summary.references++;
+                        analysisReason = "Frontend UI logic matching semantic intent.";
                     } else if (lineLower.includes('express.static')) {
-                        classification = 'STATIC ASSET'; summary.static++;
-                        analysisReason = "Static Asset Route matching query.";
+                        classification = 'STATIC ASSET'; summary.references++;
+                        analysisReason = "Static Asset Route matching semantic intent.";
                     } else if (lineLower.includes('app.use') || lineLower.includes('router.')) {
-                        classification = 'ROUTE'; summary.routes++;
-                        analysisReason = "Backend Route/Middleware matching query.";
+                        classification = 'ROUTE'; summary.references++;
+                        analysisReason = "Backend Route/Middleware matching semantic intent.";
                     } else {
-                        classification = 'WARNING'; summary.warnings++;
-                        status = 'FAIL';
-                        impactText = 'High (User Queried)';
-                        analysisReason = `General logic related to "${query}" found.`;
+                        classification = 'REFERENCE'; summary.references++;
+                        status = 'PASS';
+                        impactText = 'Low';
+                        analysisReason = `Semantic logic reference related to query found.`;
                     }
                 }
             }
 
-            // 🟢 ফ্রন্টএন্ডের জন্য Reason, Evidence এবং Confidence ফরম্যাটিং
-            // শুধুমাত্র ক্রিটিক্যাল ইস্যু, ইউজারের সার্চ করা টার্গেট, বা এরর হ্যান্ডলারগুলোই টেবিলে পুশ হবে
-            if (classification && (isCritical || isMatch || classification === 'ERROR HANDLER')) {
-                const formattedReason = `<strong>Reason:</strong> ${analysisReason}<br><strong>Evidence:</strong> <code>${cleanLine.substring(0, 75)}...</code><br><strong>Confidence:</strong> ${isCritical ? '100% (Engine Verified)' : 'High (Pattern Match)'}`;
+            if (classification && (isCritical || isMatch || classification === 'DEFENSIVE CODE' || classification === 'LOGGING')) {
+                const formattedReason = `<strong>Reason:</strong> ${analysisReason}<br><strong>Evidence:</strong> <code>${cleanLine.substring(0, 75)}...</code><br><strong>Confidence:</strong> ${isCritical ? '100% (Engine Verified)' : 'High (Semantic Match)'}`;
 
                 issues.push({
                     stage: classification,
@@ -209,31 +224,29 @@ router.post('/scan', (req, res) => {
                     line: lineNumber,
                     impact: impactText,
                     reason: formattedReason, 
-                    suggestedFix: isCritical ? 'Critical: Install the exact package via npm or fix the file path immediately.' : 'Review this specific block for potential logical errors.'
+                    suggestedFix: isCritical ? 'Critical Action: Resolve the ROOT CAUSE immediately to prevent application crash.' : 'Expected behavior. No action required.'
                 });
             }
         });
     });
 
-    // 🟢 রুল ৬: যেকোনো "BROKEN" ইস্যু সবসময় টেবিলের উপরে (Top Priority) থাকবে
-    issues.sort((a, b) => (a.status === 'FAIL' && a.stage.includes('BROKEN') ? -1 : 1));
+    issues.sort((a, b) => (a.stage === 'ROOT CAUSE' ? -1 : 1));
 
-    // আপনার ডিপ স্ক্যান সামারি + অরিজিনাল ট্রি ডেটা (অক্ষত)
-    const treeData = `[DEEP SYSTEM SCAN RESULTS]
- ├── Query Received : "${query}"
- ├── Files Scanned  : ${allProjectFiles.length} files
- ├── Lines Read     : ${scannedLinesCount}
- ├── RCA Status     : UI(${summary.ui}) | Routes(${summary.routes}) | References(${summary.references}) | Broken(${summary.critical})
- └── Anomalies Found: ${issues.length}`;
+    const treeData = `[RCA ENGINE ACCURACY REPORT]
+ ├── Intent Parsed  : "${query}"
+ ├── Scan Target    : ${allProjectFiles.length} files (${scannedLinesCount} lines)
+ ├── System State   : Packages(${summary.packages}) | Node Modules(${summary.nodeModules}) | Local Modules(${summary.localModules}) | References(${summary.references})
+ ├── Code Quality   : Defensive Code(${summary.defensiveCode}) | Logging(${summary.logging})
+ └── Root Causes    : ${summary.criticalRootCauses} (CRITICAL)`;
 
     res.json({
         tree: treeData,
-        issues: issues // লিমিট তুলে দেওয়া হলো যাতে পুরো প্রজেক্টের সব ইস্যু দেখতে পান
+        issues: issues 
     });
 });
 
 // ==========================================
-// 3. LIVE LOGS (আপনার অরিজিনাল টাইমস্ট্যাম্প লজিক)
+// 3. LIVE LOGS
 // ==========================================
 router.get('/logs', (req, res) => {
     res.json({ logs: `[SERVER] Diagnostic Engine Deep Scan Online.\n[TIMESTAMP] ${new Date().toISOString()}\n[STATUS] Awaiting developer commands...` });
