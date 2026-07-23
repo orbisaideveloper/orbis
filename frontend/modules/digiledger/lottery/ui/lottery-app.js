@@ -36,7 +36,7 @@ window.LotterySalesApp = {
                         <input type="text" id="party-mobile-input" placeholder="🔍 Enter Party Mobile or ID" style="flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 0.95rem; outline: none; transition: border 0.3s;" onfocus="this.style.borderColor='#138808'" onblur="this.style.borderColor='#ccc'">
                         <button id="btn-fetch-party" style="background: #138808; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background 0.2s;">Search</button>
                         
-                        <!-- 🟢 NEW: Premium Add Party Shortcut Button -->
+                        <!-- 🟢 Premium Add Party Shortcut Button -->
                         <button id="btn-open-party-master" style="background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); color: white; border: none; padding: 11px 18px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.95rem; box-shadow: 0 4px 10px rgba(37,117,252,0.3); transition: transform 0.2s, box-shadow 0.2s; white-space: nowrap; display: flex; align-items: center; gap: 6px;">
                             <span style="font-size: 1.2rem;">👥</span> Add New Party
                         </button>
@@ -145,16 +145,15 @@ window.LotterySalesApp = {
             });
         }
 
-        // 🟢 NEW: Add Party Master Connection Logic
+        // 🟢 UPDATED: Add Party Master Connection Logic (Router Connected)
         const openPartyMasterBtn = document.getElementById('btn-open-party-master');
         if (openPartyMasterBtn) {
             openPartyMasterBtn.addEventListener('click', () => {
-                // Party Master UI লোড করার কল
-                if (window.PartyMaster && typeof window.PartyMaster.mount === 'function') {
-                    const container = document.getElementById('lottery-standalone-root');
-                    window.PartyMaster.mount(container);
+                // গ্লোবাল রাউটার ব্যবহার করে Party Master ওপেন করা হচ্ছে
+                if (window.LotteryUserUI && typeof window.LotteryUserUI.navigate === 'function') {
+                    window.LotteryUserUI.navigate('partymaster');
                 } else {
-                    alert("⚠️ Party Master module is still loading or not found!");
+                    alert("⚠️ Navigation router is not ready yet!");
                 }
             });
         }
