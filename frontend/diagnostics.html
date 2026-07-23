@@ -32,7 +32,7 @@
 
         /* 🟢 UI Fix: Table overflow fixed */
         table { width: 100%; border-collapse: collapse; background: var(--bg-card); border-radius: 6px; overflow: hidden; table-layout: fixed; }
-        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #333; word-wrap: break-word; overflow-wrap: break-word; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #333; word-wrap: break-word; overflow-wrap: break-word; vertical-align: top; }
         th { color: #8b949e; background: #16192b; }
         
         /* Column Width Adjustments to prevent UI breaking */
@@ -42,9 +42,9 @@
         th:nth-child(4) { width: 50%; }
 
         .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
-        .bg-FAIL { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); }
-        .bg-WARN { background: rgba(245, 158, 11, 0.2); color: var(--accent-warn); }
-        .bg-PASS { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); }
+        .bg-FAIL { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); border: 1px solid var(--accent-red); }
+        .bg-WARN { background: rgba(245, 158, 11, 0.2); color: var(--accent-warn); border: 1px solid var(--accent-warn); }
+        .bg-PASS { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); border: 1px solid var(--accent-green); }
 
         .console-box { background: #000; padding: 15px; border-radius: 6px; border: 1px solid #333; color: var(--accent-green); font-family: monospace; max-height: 250px; overflow-y: auto; word-wrap: break-word; }
     </style>
@@ -54,7 +54,7 @@
     <div class="header">
         <!-- 🟢 Auto Version Badge -->
         <h1>ORBIS // Diagnostics Engine <span id="auto-version" style="color: var(--accent-green); font-size: 20px;"></span></h1>
-        <div style="background: rgba(239,68,68,0.2); color: #ef4444; padding: 5px 15px; border-radius: 4px; font-weight: bold; border: 1px solid #ef4444;">GOD MODE</div>
+        <div style="background: rgba(239,68,68,0.2); color: #ef4444; padding: 5px 15px; border-radius: 4px; font-weight: bold; border: 1px solid #ef4444;">GOD MODE // RCA ACTIVE</div>
     </div>
 
     <!-- Health Grid -->
@@ -69,22 +69,28 @@
         <button class="btn-blue" id="mic-btn" title="Voice Input">🎤</button>
     </div>
 
-    <!-- Visual Tree (From V2) -->
+    <!-- Visual Tree & Summary (Supports Rule 5) -->
     <div class="tree-container" id="tree-container">
-        <h4>🌲 Pipeline & Execution Tree</h4>
+        <h4>🌲 RCA Execution Summary</h4>
         <pre class="tree-text" id="tree-output"></pre>
     </div>
 
     <!-- Trace Table Header & Copy Button -->
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-        <h3 style="margin: 0;">Execution Trace</h3>
+        <h3 style="margin: 0;">Root Cause Analysis Trace</h3>
         <!-- 🟢 New Copy Button -->
         <button id="copy-btn" class="btn-blue" style="padding: 8px 12px; font-size: 13px; display: none;">📋 Copy Full Report</button>
     </div>
     
     <table>
         <thead>
-            <tr><th>Stage</th><th>Status</th><th>File (Line)</th><th>Reason & Analysis</th></tr>
+            <!-- 🟢 Changed Header to match 6 Rules Requirement -->
+            <tr>
+                <th>Classification</th>
+                <th>Status</th>
+                <th>File (Line)</th>
+                <th>Analysis (Reason, Evidence, Confidence)</th>
+            </tr>
         </thead>
         <tbody id="report-body">
             <tr><td colspan="4" style="text-align: center; color: #8b949e;">Awaiting system audit...</td></tr>
@@ -97,7 +103,7 @@
 
     <script>
         // ==========================================
-        // ORBIS DIAGNOSTICS LOGIC
+        // ORBIS DIAGNOSTICS LOGIC (RCA ADVANCED)
         // ==========================================
 
         let lastScanData = null; // Global variable to store scan results for copy feature
@@ -116,7 +122,7 @@
             });
         });
 
-        // 🟢 1. Auto Versioning (Based on Last Modified Date)
+        // 🟢 1. Auto Versioning
         function setAutoVersion() {
             const modDate = new Date(document.lastModified);
             const month = (modDate.getMonth() + 1).toString().padStart(2, '0');
@@ -124,7 +130,7 @@
             const dynamicVersion = `V3.${month}${day}`;
             
             document.getElementById('auto-version').textContent = dynamicVersion;
-            document.title = `ORBIS Diagnostics ${dynamicVersion} - God Mode`;
+            document.title = `ORBIS Diagnostics ${dynamicVersion} - RCA Mode`;
         }
 
         // 2. Fetch Health
@@ -168,7 +174,7 @@
             }
         }
 
-        // 4. Execute Audit (The Main Engine)
+        // 4. Execute Audit (The Main RCA Engine Display)
         async function executeAudit() {
             const query = document.getElementById('search-input').value.trim();
             if(!query) return;
@@ -178,7 +184,7 @@
             const treeOutput = document.getElementById('tree-output');
             const copyBtn = document.getElementById('copy-btn');
             
-            tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--accent-warn);">⚙️ Analyzing: "${query}"...</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--accent-warn);">⚙️ Running Deep RCA: "${query}"...</td></tr>`;
             treeContainer.style.display = 'none';
             copyBtn.style.display = 'none';
             lastScanData = null;
@@ -194,7 +200,7 @@
                 const data = await res.json();
                 lastScanData = data; // Save data for copy button
 
-                // Show Tree if available
+                // Show RCA Summary Tree if available (Rule 5)
                 if(data.tree) {
                     treeContainer.style.display = 'block';
                     treeOutput.textContent = data.tree;
@@ -205,21 +211,22 @@
                 const issues = data.issues || [];
                 
                 if(issues.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--accent-green);">✅ System Clean. No anomalies found for "${query}".</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--accent-green);">✅ System Clean. No Root Cause found for "${query}".</td></tr>`;
                     return;
                 }
 
-                copyBtn.style.display = 'block'; // Show copy button when there are results
+                copyBtn.style.display = 'block';
 
                 issues.forEach(issue => {
+                    // 🟢 Dynamically renders HTML from backend containing Reason, Evidence, and Confidence
                     tbody.innerHTML += `
                         <tr>
-                            <td><strong>${issue.stage}</strong></td>
+                            <td><strong style="color: #e0e6ed;">${issue.stage}</strong></td>
                             <td><span class="badge bg-${issue.status}">${issue.status}</span></td>
-                            <td style="color: #93c5fd; font-family: monospace;">${issue.file} <br><small>Line: ${issue.line || 'N/A'}</small></td>
+                            <td style="color: #93c5fd; font-family: monospace;">${issue.file} <br><small style="color: #8b949e;">Line: ${issue.line || 'N/A'}</small></td>
                             <td>
-                                <div style="margin-bottom: 5px; color: #d1d5db;">${issue.reason}</div>
-                                <span style="background: rgba(16,185,129,0.1); color: var(--accent-green); padding: 3px 6px; border-radius: 4px; font-size: 12px;">🛠️ Fix: ${issue.suggestedFix || issue.fix || 'Review Logic'}</span>
+                                <div style="margin-bottom: 8px; color: #d1d5db; line-height: 1.6;">${issue.reason}</div>
+                                <span style="background: rgba(16,185,129,0.1); color: var(--accent-green); padding: 3px 6px; border-radius: 4px; font-size: 12px; border: 1px solid rgba(16,185,129,0.3);">🛠️ Fix: ${issue.suggestedFix || issue.fix || 'Review Logic'}</span>
                             </td>
                         </tr>
                     `;
@@ -230,17 +237,26 @@
             }
         }
 
-        // 🟢 5. Setup Copy Button Logic
+        // 🟢 5. Advanced Copy Button Logic (Strips HTML to give pure text report)
         function setupCopyButton() {
             const copyBtn = document.getElementById('copy-btn');
             copyBtn.addEventListener('click', () => {
                 if (!lastScanData || !lastScanData.issues) return;
                 
                 const query = document.getElementById('search-input').value;
-                let report = `[ORBIS SYSTEM AUDIT REPORT]\nQuery: "${query}"\n\n`;
+                let report = `[ORBIS RCA SYSTEM REPORT]\nQuery: "${query}"\n\n`;
                 
+                if(lastScanData.tree) {
+                    report += lastScanData.tree + "\n\n[DETAILED FINDINGS]\n";
+                }
+
                 lastScanData.issues.forEach(i => {
-                    report += `[${i.status}] File: ${i.file} (Line: ${i.line})\nDetail: ${i.reason}\nAction Required: ${i.suggestedFix || 'Check Code'}\n-----------------------------------\n`;
+                    // Remove HTML tags coming from backend (<strong>, <code>, <br>) for plain text copying
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = i.reason.replace(/<br\s*[\/]?>/gi, '\n');
+                    const cleanReason = tempDiv.innerText || tempDiv.textContent || i.reason;
+
+                    report += `[${i.status}] CLASSIFICATION: ${i.stage}\nFile: ${i.file} (Line: ${i.line})\n${cleanReason}\nAction Required: ${i.suggestedFix || 'Check Code'}\n-----------------------------------\n`;
                 });
 
                 navigator.clipboard.writeText(report).then(() => {
@@ -264,7 +280,7 @@
 
             if(SpeechRec) {
                 const rec = new SpeechRec();
-                rec.lang = 'bn-BD'; // Bangla Support Added
+                rec.lang = 'bn-BD'; // Bangla Support
                 
                 rec.onstart = () => { micBtn.classList.replace('btn-blue', 'btn-red'); searchInput.placeholder = "Listening..."; };
                 rec.onspeechend = () => { micBtn.classList.replace('btn-red', 'btn-blue'); rec.stop(); };
@@ -281,4 +297,3 @@
     </script>
 </body>
 </html>
-
