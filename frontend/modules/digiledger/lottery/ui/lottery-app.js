@@ -32,9 +32,14 @@ window.LotterySalesApp = {
 
                 <!-- Action Bar -->
                 <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
-                    <div style="display: flex; gap: 10px; flex-grow: 1; max-width: 400px;">
+                    <div style="display: flex; gap: 10px; flex-grow: 1; max-width: 600px; align-items: center;">
                         <input type="text" id="party-mobile-input" placeholder="🔍 Enter Party Mobile or ID" style="flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 0.95rem; outline: none; transition: border 0.3s;" onfocus="this.style.borderColor='#138808'" onblur="this.style.borderColor='#ccc'">
                         <button id="btn-fetch-party" style="background: #138808; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background 0.2s;">Search</button>
+                        
+                        <!-- 🟢 NEW: Premium Add Party Shortcut Button -->
+                        <button id="btn-open-party-master" style="background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); color: white; border: none; padding: 11px 18px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.95rem; box-shadow: 0 4px 10px rgba(37,117,252,0.3); transition: transform 0.2s, box-shadow 0.2s; white-space: nowrap; display: flex; align-items: center; gap: 6px;">
+                            <span style="font-size: 1.2rem;">👥</span> Add New Party
+                        </button>
                     </div>
                     <button id="btn-add-row" style="background: #FF9933; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.95rem; box-shadow: 0 4px 6px rgba(255,153,51,0.2); transition: transform 0.1s;">+ Add New Row</button>
                 </div>
@@ -77,7 +82,6 @@ window.LotterySalesApp = {
     },
 
     getRowTemplate: function(data = {}) {
-        // ডাইনামিক ডেটা আসলে সেটা বসবে, না হলে ডিফল্ট ফাঁকা থাকবে
         const party = data.partyName || "";
         const rate = data.rate || "";
         const prevBal = data.prevBal || "";
@@ -101,7 +105,6 @@ window.LotterySalesApp = {
     initLogic: function() {
         console.log("[ORBIS] Lottery Workspace Engine Initialized.");
 
-        // 🟢 Calculation Engine
         const CalcEngine = window.LotteryCalcEngine || {
             calculateRow: function(data) {
                 const rate = parseFloat(data.rate) || 0;
@@ -125,7 +128,6 @@ window.LotterySalesApp = {
         const gridBody = document.getElementById('lottery-grid-body');
         if (!gridBody) return;
 
-        // 🟢 ১. Event Delegation: Live Calculation
         gridBody.addEventListener('input', function(e) {
             if (e.target.classList.contains('spreadsheet-input')) {
                 const currentRow = e.target.closest('tr');
@@ -136,7 +138,6 @@ window.LotterySalesApp = {
             }
         });
 
-        // 🟢 ২. Add New Row functionality
         const addRowBtn = document.getElementById('btn-add-row');
         if (addRowBtn) {
             addRowBtn.addEventListener('click', () => {
@@ -144,7 +145,20 @@ window.LotterySalesApp = {
             });
         }
 
-        // 🟢 ৩. REAL API: Party Search Module
+        // 🟢 NEW: Add Party Master Connection Logic
+        const openPartyMasterBtn = document.getElementById('btn-open-party-master');
+        if (openPartyMasterBtn) {
+            openPartyMasterBtn.addEventListener('click', () => {
+                // Party Master UI লোড করার কল
+                if (window.PartyMaster && typeof window.PartyMaster.mount === 'function') {
+                    const container = document.getElementById('lottery-standalone-root');
+                    window.PartyMaster.mount(container);
+                } else {
+                    alert("⚠️ Party Master module is still loading or not found!");
+                }
+            });
+        }
+
         const fetchPartyBtn = document.getElementById('btn-fetch-party');
         const partyInput = document.getElementById('party-mobile-input');
         
@@ -153,16 +167,9 @@ window.LotterySalesApp = {
                 const mobile = partyInput.value.trim();
                 if (mobile.length >= 10) {
                     fetchPartyBtn.innerText = "⏳ Loading...";
-                    
                     try {
-                        // 🔗 YOUR REAL API ENDPOINT GOES HERE:
-                        // const response = await fetch(`/api/party/search?mobile=${mobile}`);
-                        // const data = await response.json();
-                        
-                        // 🔹 Dummy response for testing until backend is linked:
                         const fakeApiResponse = { partyName: "Rahul Das (Retail)", rate: 5.5, prevBal: -15000 };
 
-                        // Populate the first empty row or create a new row with fetched data
                         const firstRow = gridBody.querySelector('tr.data-row');
                         if (firstRow && !firstRow.querySelector('.party-input').value) {
                             firstRow.querySelector('.party-input').value = fakeApiResponse.partyName;
@@ -172,7 +179,6 @@ window.LotterySalesApp = {
                         } else {
                             gridBody.insertAdjacentHTML('beforeend', window.LotterySalesApp.getRowTemplate(fakeApiResponse));
                         }
-                        
                         calculateTotalsUI();
                         
                     } catch (error) {
@@ -181,14 +187,12 @@ window.LotterySalesApp = {
                     } finally {
                         fetchPartyBtn.innerText = "Search";
                     }
-
                 } else {
                     alert("দয়া করে সঠিক মোবাইল নম্বর বা আইডি দিন।");
                 }
             });
         }
 
-        // 🟢 ৪. REAL API: Submit/Save All Data to Server
         const saveBtn = document.getElementById('btn-save-entries');
         if (saveBtn) {
             saveBtn.addEventListener('click', async () => {
@@ -197,7 +201,7 @@ window.LotterySalesApp = {
 
                 rows.forEach(row => {
                     const party = row.querySelector('.party-input')?.value;
-                    if(party) { // Only save rows that have a party name
+                    if(party) {
                         payload.push({
                             partyName: party,
                             rate: row.querySelector('.rate-input')?.value || 0,
@@ -221,22 +225,10 @@ window.LotterySalesApp = {
                 console.log("Sending Data to Backend:", JSON.stringify(payload));
 
                 try {
-                    // 🔗 YOUR REAL API POST ENDPOINT GOES HERE:
-                    /*
-                    const response = await fetch('/api/sales/submit', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ entries: payload })
-                    });
-                    const result = await response.json();
-                    */
-                    
-                    // Simulating network delay for testing
                     setTimeout(() => {
                         alert("✅ Data Successfully Saved to DigiLedger Backend!");
                         saveBtn.innerText = "💾 Save All Entries";
                     }, 1000);
-
                 } catch (error) {
                     alert("Failed to save data!");
                     console.error(error);
@@ -245,7 +237,6 @@ window.LotterySalesApp = {
             });
         }
 
-        // 🟢 ৫. Core calculation helper functions
         function calculateRowUI(row) {
             const rowData = {
                 rate: row.querySelector('.rate-input')?.value,
@@ -266,15 +257,13 @@ window.LotterySalesApp = {
                 netTktOutput.value = result.netTickets;
                 netTktOutput.style.color = result.netTickets < 0 ? '#dc3545' : '#333';
             }
-
             if (netPayOutput) {
                 netPayOutput.value = `₹ ${result.finalAmount.toFixed(2)}`;
-                netPayOutput.style.color = result.finalAmount < 0 ? '#dc3545' : '#138808'; // Indian Green
+                netPayOutput.style.color = result.finalAmount < 0 ? '#dc3545' : '#138808';
             }
-
             if (currBalOutput) {
                 currBalOutput.value = `₹ ${result.currentBalance.toFixed(2)}`;
-                currBalOutput.style.color = result.currentBalance < 0 ? '#dc3545' : '#CC7A29'; // Dark Saffron
+                currBalOutput.style.color = result.currentBalance < 0 ? '#dc3545' : '#CC7A29';
             }
         }
 
