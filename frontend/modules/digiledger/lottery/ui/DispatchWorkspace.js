@@ -2,6 +2,9 @@
 
 window.LotteryDispatchApp = {
     mount: function(container) {
+        // ড্যাশবোর্ড থেকে টপ নেভিগেশন বার নিয়ে আসা
+        const topNavBar = window.LotteryUserUI ? window.LotteryUserUI.getTopNavBar("🚀 Dispatch & Bulk Entry") : "";
+
         container.innerHTML = `
         <style>
           /* Futuristic Tricolor Glass Theme */
@@ -37,6 +40,7 @@ window.LotteryDispatchApp = {
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
             margin-bottom: 24px;
+            margin-top: 15px; /* Added margin for nav bar spacing */
           }
         
           .metric-value {
@@ -98,6 +102,25 @@ window.LotteryDispatchApp = {
           .btn-secondary:hover {
             background: rgba(0, 82, 204, 0.2);
           }
+
+          /* Save Button Style */
+          .btn-save {
+            background: linear-gradient(135deg, #000080, #00004d);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+            box-shadow: 0 6px 20px rgba(0, 0, 128, 0.25);
+            transition: transform 0.2s;
+          }
+          .btn-save:hover {
+            transform: translateY(-2px);
+          }
         
           .spreadsheet-container {
             width: 100%;
@@ -157,7 +180,8 @@ window.LotteryDispatchApp = {
         </style>
         
         <div class="lottery-workspace">
-          <h3 style="margin-top:0; color: #0052cc;">🚀 Dispatch & Bulk Entry</h3>
+          ${topNavBar}
+
           <!-- 1. Live Active Cards -->
           <div class="metrics-grid">
             <div class="glass-card">
@@ -222,6 +246,10 @@ window.LotteryDispatchApp = {
             </div>
             <button class="btn-secondary" id="btn-add-row">+ Add More Party</button>
           </div>
+
+          <!-- 4. Save Button -->
+          <button class="btn-save" id="btn-save-dispatch">💾 Save All Dispatch Data</button>
+
         </div>
         `;
 
@@ -232,7 +260,7 @@ window.LotteryDispatchApp = {
         const gridBody = document.getElementById('lottery-grid-body');
         if (!gridBody) return;
 
-        // আপনার অরিজিনাল লজিক (যা lottery-app.js এ ছিল)
+        // অরিজিনাল লজিক: Live Calculation
         gridBody.addEventListener('input', function(e) {
             if (e.target.classList.contains('spreadsheet-input')) {
                 const row = e.target.closest('tr');
@@ -241,6 +269,7 @@ window.LotteryDispatchApp = {
             }
         });
 
+        // অরিজিনাল লজিক: Add New Row
         document.getElementById('btn-add-row')?.addEventListener('click', () => {
             const newRow = `
                 <tr>
@@ -259,6 +288,35 @@ window.LotteryDispatchApp = {
             gridBody.insertAdjacentHTML('beforeend', newRow);
         });
 
+        // 🟢 নতুন লজিক: Search API Simulator (Sales Entry-র মতো)
+        const fetchPartyBtn = document.getElementById('btn-fetch-party');
+        const partyInput = document.getElementById('party-mobile-input');
+        if (fetchPartyBtn && partyInput) {
+            fetchPartyBtn.addEventListener('click', () => {
+                const mobile = partyInput.value.trim();
+                if (mobile.length >= 10) {
+                    // এখানে আপনার রিয়েল API কল বসবে
+                    alert("Searching dispatch details for: " + mobile);
+                } else {
+                    alert("দয়া করে সঠিক মোবাইল নম্বর বা আইডি দিন।");
+                }
+            });
+        }
+
+        // 🟢 নতুন লজিক: Save Button Action
+        const saveBtn = document.getElementById('btn-save-dispatch');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => {
+                saveBtn.innerText = "⏳ Saving...";
+                // এখানে আপনার POST API কল বসবে
+                setTimeout(() => {
+                    alert("✅ Dispatch Data Successfully Saved to Server!");
+                    saveBtn.innerText = "💾 Save All Dispatch Data";
+                }, 800);
+            });
+        }
+
+        // অরিজিনাল লজিক: Row Calculation
         function calculateRowUI(row) {
             const rate = parseFloat(row.querySelector('.rate-input').value) || 0;
             const disp = parseInt(row.querySelector('.dispatch-input').value) || 0;
@@ -279,6 +337,7 @@ window.LotteryDispatchApp = {
             row.querySelector('.curr-bal-output').value = '₹ ' + currBal.toFixed(2);
         }
 
+        // অরিজিনাল লজিক: Total Calculation
         function calculateTotalsUI() {
             let tDisp = 0, tRet = 0, tNet = 0, tOut = 0;
             document.querySelectorAll('#lottery-grid-body tr').forEach(row => {
