@@ -9,7 +9,7 @@ const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
-// 🟢 অ্যাডভান্সড ফাংশন: পুরো প্রজেক্ট ডাইনামিক স্ক্যান করার জন্য (যেকোনো নতুন ফাইল অটো অ্যাড হবে)
+// 🟢 অ্যাডভান্সড ফাংশন: পুরো প্রজেক্টের ডিরেক্টরি ম্যাপ করার জন্য
 function getAllFiles(dirPath, arrayOfFiles) {
     try {
         const files = fs.readdirSync(dirPath);
@@ -18,12 +18,10 @@ function getAllFiles(dirPath, arrayOfFiles) {
         files.forEach(function(file) {
             const fullPath = path.join(dirPath, file);
             if (fs.statSync(fullPath).isDirectory()) {
-                // node_modules এবং অন্যান্য অপ্রয়োজনীয় ফোল্ডার বাদ দেওয়া হলো স্ক্যান ফাস্ট করার জন্য
                 if (file !== 'node_modules' && file !== '.git' && file !== 'dist') {
                     arrayOfFiles = getAllFiles(fullPath, arrayOfFiles);
                 }
             } else {
-                // শুধুমাত্র কোড ফাইলগুলো স্ক্যান করবে
                 if (file.endsWith('.js') || file.endsWith('.html') || file.endsWith('.json')) {
                     arrayOfFiles.push(fullPath);
                 }
@@ -36,7 +34,7 @@ function getAllFiles(dirPath, arrayOfFiles) {
 }
 
 // ==========================================
-// 1. HEALTH ENGINE 
+// 1. HEALTH ENGINE (Unchanged)
 // ==========================================
 router.get('/health', (req, res) => {
     try {
@@ -54,7 +52,7 @@ router.get('/health', (req, res) => {
 });
 
 // ==========================================
-// 2. THE GOD MODE SCANNER (Semantic RCA Engine)
+// 2. THE GOD MODE SCANNER (V4 - Dynamic Context Scope Engine)
 // ==========================================
 router.post('/scan', (req, res) => {
     const { query } = req.body;
@@ -74,23 +72,110 @@ router.post('/scan', (req, res) => {
             const pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
             packageDeps = pkg.dependencies || {};
             devDeps = pkg.devDependencies || {};
-        } catch (err) {
-            // Error silently ignored to maintain RCA scan flow
-        }
+        } catch (err) {}
     }
     
-    const allProjectFiles = getAllFiles(projectRoot);
+    // =======================================================
+    // 🟢 V4: NLP & CONTEXT EXTRACTION (Step 1 & 2)
+    // =======================================================
+    const rawQuery = query.toLowerCase().trim();
 
-    // 🟢 Semantic Intent Logic (No blind keyword matching)
-    const exactQuery = query.toLowerCase().trim();
-    const rawKeywords = exactQuery.split(' ').filter(word => word.length > 3);
-    const stopWords = ['complete', 'source', 'code', 'file', 'the', 'this', 'that'];
-    const semanticKeywords = rawKeywords.filter(word => !stopWords.includes(word));
-    
+    // Cross-language / Typo normalization dictionary (Internal Only)
+    const intentDictionary = {
+        'লগিন': 'login', 'লগইন': 'login', 'auth': 'authentication', 'অথ': 'authentication',
+        'ড্যাশবোর্ড': 'dashboard', 'dash': 'dashboard', 'home': 'dashboard',
+        'লটারি': 'lottery', 'খেলা': 'lottery', 'game': 'lottery',
+        'চ্যাট': 'chat', 'বার্তা': 'chat', 'message': 'chat', 'ai': 'ai',
+        'পেমেন্ট': 'payment', 'টাকা': 'payment', 'money': 'payment',
+        'ইউজার': 'user', 'প্রোফাইল': 'user', 'profile': 'user'
+    };
+
+    let normalizedIntent = rawQuery;
+    Object.keys(intentDictionary).forEach(key => {
+        if (normalizedIntent.includes(key)) {
+            normalizedIntent = normalizedIntent.replace(new RegExp(key, 'g'), intentDictionary[key]);
+        }
+    });
+
+    const stopWords = ['how', 'to', 'fix', 'error', 'in', 'the', 'my', 'is', 'not', 'working', 'complete', 'source', 'code', 'file', 'this', 'that', 'find', 'search', 'about', 'where', 'what', 'why', 'show', 'me'];
+    const semanticKeywords = normalizedIntent.split(/[\s,]+/).filter(w => w.length > 2 && !stopWords.includes(w));
+    const detectedModule = semanticKeywords.length > 0 ? semanticKeywords[0] : 'core_system';
+
+    // =======================================================
+    // 🟢 V4: DYNAMIC SCOPE & DEPENDENCY EXPANSION (Step 3, 4, 5)
+    // =======================================================
+    const allAvailableFiles = getAllFiles(projectRoot);
+    const scopeFiles = new Set();
+
+    // Step 3: Find Entry Points based on Detected Module
+    allAvailableFiles.forEach(file => {
+        const relativeName = path.relative(projectRoot, file).toLowerCase();
+        if (semanticKeywords.some(mod => relativeName.includes(mod))) {
+            scopeFiles.add(file);
+        }
+    });
+
+    // Fallback: If no filename matches, fast-scan top contents for the entry point
+    if (scopeFiles.size === 0) {
+         allAvailableFiles.forEach(file => {
+            try {
+                const contentSnippet = fs.readFileSync(file, 'utf-8').substring(0, 3000).toLowerCase();
+                if (semanticKeywords.some(mod => contentSnippet.includes(mod))) {
+                     scopeFiles.add(file);
+                }
+            } catch(e) {}
+         });
+    }
+
+    // Step 4: Dependency Expansion (AST Import Tracing)
+    const MAX_DEPTH = 2; // Expand 2 levels deep to maintain strict context
+    let currentLevelFiles = Array.from(scopeFiles);
+
+    for (let depth = 0; depth < MAX_DEPTH; depth++) {
+        let nextLevelFiles = [];
+        currentLevelFiles.forEach(file => {
+            try {
+                const content = fs.readFileSync(file, 'utf-8');
+                const lines = content.split('\n');
+                lines.forEach(line => {
+                    const match = line.match(/(?:from|require\s*\()\s*['"]([^'"]+)['"]/);
+                    if (match && match[1]) {
+                        const importPath = match[1];
+                        // Expand ONLY through local dependencies (./ or ../)
+                        if (importPath.startsWith('./') || importPath.startsWith('../')) {
+                            const absoluteDepPath = path.resolve(path.dirname(file), importPath);
+                            const extensions = ['', '.js', '/index.js', '.html', '.json'];
+                            for (let ext of extensions) {
+                                const testPath = absoluteDepPath + ext;
+                                if (fs.existsSync(testPath) && fs.statSync(testPath).isFile()) {
+                                    if (!scopeFiles.has(testPath)) {
+                                        scopeFiles.add(testPath);
+                                        nextLevelFiles.push(testPath); // Queue for next expansion
+                                    }
+                                    break; // Match found, stop checking extensions
+                                }
+                            }
+                        }
+                    }
+                });
+            } catch(e) { /* Ignore non-readable files */ }
+        });
+
+        currentLevelFiles = nextLevelFiles;
+        // Step 5: SMART STOP - Stop scanning if no more dependencies are linked
+        if (currentLevelFiles.length === 0) break;
+    }
+
+    // The focused list of files to scan
+    const filesToActuallyScan = scopeFiles.size > 0 ? Array.from(scopeFiles) : allAvailableFiles;
+
+    // =======================================================
+    // 🟢 ROOT CAUSE ANALYSIS ENGINE (Unchanged V3 Logic)
+    // =======================================================
     let scannedLinesCount = 0;
     const summary = { packages: 0, nodeModules: 0, localModules: 0, references: 0, logging: 0, defensiveCode: 0, warnings: 0, failures: 0, criticalRootCauses: 0 };
 
-    allProjectFiles.forEach(filePath => {
+    filesToActuallyScan.forEach(filePath => {
         const fileName = path.relative(projectRoot, filePath);
         const fileContent = fs.readFileSync(filePath, 'utf-8');
         const lines = fileContent.split('\n');
@@ -110,7 +195,6 @@ router.post('/scan', (req, res) => {
             let isCritical = false;
             let isImportBlock = false;
 
-            // 🟢 Dependency Resolution Engine
             if (lineLower.includes('import ') || lineLower.includes('require(')) {
                 const match = line.match(/(?:from|require\s*\()\s*['"]([^'"]+)['"]/);
                 if (match && match[1]) {
@@ -139,7 +223,6 @@ router.post('/scan', (req, res) => {
                             analysisReason = `BROKEN PATH / LOCAL IMPORT: The relative path '${importPath}' points to a non-existent file!`;
                         }
                     } else {
-                        // Package Resolution
                         let basePackage = importPath;
                         if (importPath.startsWith('@')) {
                             const parts = importPath.split('/');
@@ -175,15 +258,13 @@ router.post('/scan', (req, res) => {
                 }
             }
 
-            // 🟢 Semantic Intent Matching
             let isMatch = false;
-            if (lineLower.includes(exactQuery)) {
+            if (lineLower.includes(rawQuery)) {
                 isMatch = true; 
             } else if (semanticKeywords.length > 0) {
                 isMatch = semanticKeywords.some(keyword => lineLower.includes(keyword));
             }
 
-            // 🟢 Logic Classification (Non-Imports)
             if (!isImportBlock) {
                 if (lineLower.includes('throw new error')) {
                     classification = 'DEFENSIVE CODE'; summary.defensiveCode++;
@@ -232,9 +313,12 @@ router.post('/scan', (req, res) => {
 
     issues.sort((a, b) => (a.stage === 'ROOT CAUSE' ? -1 : 1));
 
-    const treeData = `[RCA ENGINE ACCURACY REPORT]
- ├── Intent Parsed  : "${query}"
- ├── Scan Target    : ${allProjectFiles.length} files (${scannedLinesCount} lines)
+    // 🟢 V4 Output Array Format (Step 6)
+    const treeData = `[RCA ENGINE V4 - DYNAMIC SCOPE REPORT]
+ ├── Query          : "${query}"
+ ├── Detected Intent: ${semanticKeywords.join(' ') || 'General Scan'}
+ ├── Detected Module: [${detectedModule.toUpperCase()}]
+ ├── Scope Scanned  : ${filesToActuallyScan.length} linked files (${scannedLinesCount} lines)
  ├── System State   : Packages(${summary.packages}) | Node Modules(${summary.nodeModules}) | Local Modules(${summary.localModules}) | References(${summary.references})
  ├── Code Quality   : Defensive Code(${summary.defensiveCode}) | Logging(${summary.logging})
  └── Root Causes    : ${summary.criticalRootCauses} (CRITICAL)`;
@@ -246,10 +330,10 @@ router.post('/scan', (req, res) => {
 });
 
 // ==========================================
-// 3. LIVE LOGS
+// 3. LIVE LOGS (Unchanged)
 // ==========================================
 router.get('/logs', (req, res) => {
-    res.json({ logs: `[SERVER] Diagnostic Engine Deep Scan Online.\n[TIMESTAMP] ${new Date().toISOString()}\n[STATUS] Awaiting developer commands...` });
+    res.json({ logs: `[SERVER] Diagnostic Engine V4 Deep Scan Online.\n[TIMESTAMP] ${new Date().toISOString()}\n[STATUS] Awaiting developer commands...` });
 });
 
 export default router;
