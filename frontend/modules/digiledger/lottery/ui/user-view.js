@@ -2,7 +2,7 @@
 
 window.LotteryUserUI = {
     // 🟢 0. App Version Control (Updated for Party Master integration)
-    APP_VERSION: "v1.1.1 (Premium Build)",
+    APP_VERSION: "v1.1.2 (Premium Build)",
 
     // 🟢 1. Preload Modules with Cache Busting
     preloadModules: function() {
@@ -10,7 +10,9 @@ window.LotteryUserUI = {
         const modules = [
             { name: 'LotterySalesApp', path: '/modules/digiledger/lottery/ui/lottery-app.js' },
             { name: 'LotteryPaymentApp', path: '/modules/digiledger/lottery/ui/payment-app.js' },
-            { name: 'LotteryDispatchApp', path: '/modules/digiledger/lottery/ui/DispatchWorkspace.js' } 
+            { name: 'LotteryDispatchApp', path: '/modules/digiledger/lottery/ui/DispatchWorkspace.js' },
+            // 🟢 NEW: Party Master ফাইলটা এখানে লিঙ্ক করে দেওয়া হলো
+            { name: 'PartyMaster', path: '/modules/digiledger/lottery/party-master.js' } 
         ];
 
         modules.forEach(mod => {
