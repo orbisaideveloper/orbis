@@ -1,16 +1,17 @@
 import express from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import inventoryRoutes from './inventory.routes.js'; // 🟢 NEW INVENTORY ROUTE
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
-// এটি ড্যাশবোর্ডের ফ্রন্টএন্ড লোড করবে
+// Frontend Load
 router.use('/', express.static(path.join(__dirname, '../public')));
 
-// এটি সিস্টেম স্ট্যাটাস চেক করার জন্য
+// Core API Status
 router.get('/api/core-status', (req, res) => {
     res.status(200).json({
         system: 'ORBIS Developer Center',
@@ -19,5 +20,8 @@ router.get('/api/core-status', (req, res) => {
         timestamp: new Date().toISOString()
     });
 });
+
+// 🟢 MOUNTING INVENTORY LEGO BLOCK
+router.use('/api/inventory', inventoryRoutes);
 
 export default router;
