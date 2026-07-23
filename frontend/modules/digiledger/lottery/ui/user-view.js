@@ -1,8 +1,12 @@
 // 📝 user-view.js (DigiLedger Premium Dashboard - Indian Theme)
 
 window.LotteryUserUI = {
-    // 🟢 1. Preload Modules
+    // 🟢 0. App Version Control (Change this number on every new update)
+    APP_VERSION: "v1.1.0 (Premium Build)",
+
+    // 🟢 1. Preload Modules with Cache Busting
     preloadModules: function() {
+        const timestamp = new Date().getTime(); // Forces browser to load fresh files
         const modules = [
             { name: 'LotterySalesApp', path: '/modules/digiledger/lottery/ui/lottery-app.js' },
             { name: 'LotteryPaymentApp', path: '/modules/digiledger/lottery/ui/payment-app.js' },
@@ -12,7 +16,7 @@ window.LotteryUserUI = {
         modules.forEach(mod => {
             if (!window[mod.name]) {
                 const script = document.createElement('script');
-                script.src = mod.path + '?v=' + new Date().getTime();
+                script.src = mod.path + '?v=' + timestamp;
                 document.body.appendChild(script);
             }
         });
@@ -27,7 +31,22 @@ window.LotteryUserUI = {
         return '🌙 শুভ রাত্রি';
     },
 
-    // 🟢 3. Main Mount Function
+    // 🟢 3. Universal Top Navigation for Inner Pages
+    getTopNavBar: function(pageTitle) {
+        return `
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; background: rgba(255,255,255,0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border-bottom: 1px solid rgba(0,0,0,0.05);">
+                <button onclick="window.LotteryUserUI.navigate('dashboard')" style="background: #ffffff; border: 1px solid #eee; width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                    <span style="font-size: 1.2rem; color: #333;">◀</span>
+                </button>
+                <h2 style="margin: 0; font-size: 1.1rem; color: #333; font-weight: 700; letter-spacing: 0.5px;">${pageTitle}</h2>
+                <button onclick="window.LotteryUserUI.navigate('dashboard')" style="background: var(--saffron-light); border: 1px solid rgba(255,153,51,0.2); width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 8px rgba(255,153,51,0.15);">
+                    <span style="font-size: 1.2rem;">🏠</span>
+                </button>
+            </div>
+        `;
+    },
+
+    // 🟢 4. Main Mount Function
     mount: function() {
         this.preloadModules();
         
@@ -44,7 +63,7 @@ window.LotteryUserUI = {
             workspace.style.left = "0";
             workspace.style.width = "100%";
             workspace.style.height = "100vh";
-            workspace.style.backgroundColor = "#FAFAFA"; // Pure clean white-ish bg
+            workspace.style.backgroundColor = "#FAFAFA"; 
             workspace.style.zIndex = "1000";
             workspace.style.overflowY = "auto";
             workspace.style.fontFamily = "'Segoe UI', system-ui, sans-serif";
@@ -52,9 +71,6 @@ window.LotteryUserUI = {
             document.body.appendChild(workspace);
         }
         workspace.style.display = 'block';
-
-        // ইউজারের নাম (ব্যাকএন্ড থেকে রিয়েল নাম আসবে, আপাতত ডেমো)
-        const currentUserName = "Super Admin"; 
 
         workspace.innerHTML = `
             <style>
@@ -77,6 +93,7 @@ window.LotteryUserUI = {
                     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
                     background: rgba(0,0,0,0.4); z-index: 1999; display: none; opacity: 0;
                     transition: opacity 0.3s ease;
+                    backdrop-filter: blur(3px);
                 }
                 .sidebar-overlay.active { display: block; opacity: 1; }
                 
@@ -87,18 +104,33 @@ window.LotteryUserUI = {
                     --white: #FFFFFF; --text-main: #333333; --text-muted: #666666;
                 }
 
-                /* Mobile Friendly Action Grid */
+                /* Unique Glassmorphism App Grid */
                 .app-grid {
-                    display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 25px;
+                    display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 20px;
                 }
                 .app-card {
-                    background: var(--white); border-radius: 16px; padding: 20px 15px;
-                    text-align: center; cursor: pointer; border: 1px solid #eee;
-                    box-shadow: 0 4px 10px rgba(0,0,0,0.03); transition: 0.2s;
+                    background: rgba(255, 255, 255, 0.7);
+                    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+                    border-radius: 20px; padding: 22px 10px;
+                    text-align: center; cursor: pointer; 
+                    border: 1px solid rgba(255,255,255,0.8);
+                    box-shadow: 0 8px 20px rgba(0,0,0,0.04), inset 0 0 0 1px rgba(255,255,255,0.5);
+                    transition: all 0.2s ease-out; position: relative; overflow: hidden;
                 }
-                .app-card:active { transform: scale(0.95); }
-                .app-card .icon { font-size: 2.5rem; margin-bottom: 10px; }
-                .app-card .title { font-size: 14px; font-weight: 700; color: var(--text-main); }
+                .app-card::before {
+                    content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 5px;
+                }
+                .app-card:active { transform: translateY(3px) scale(0.96); box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+                .app-card .icon { font-size: 2.8rem; margin-bottom: 12px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); }
+                .app-card .title { font-size: 13px; font-weight: 700; color: var(--text-main); letter-spacing: 0.2px; }
+                
+                /* Distinct Top Borders for Cards */
+                .card-sales::before { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+                .card-dispatch::before { background: linear-gradient(90deg, var(--saffron), #fbbf24); }
+                .card-payment::before { background: linear-gradient(90deg, var(--green), #34d399); }
+                .card-ledger::before { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
+                .card-stock::before { background: linear-gradient(90deg, #ec4899, #f472b6); }
+                .card-report::before { background: linear-gradient(90deg, #14b8a6, #2dd4bf); }
                 
                 /* Summary Cards */
                 .summary-card {
@@ -115,29 +147,29 @@ window.LotteryUserUI = {
                     <h2 style="margin: 0;">DigiLedger</h2>
                     <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 14px;">Lottery Management System</p>
                 </div>
-                <div style="padding: 20px; display: flex; flex-direction: column; gap: 15px; font-size: 16px; color: var(--text-main);">
+                <div style="padding: 20px; display: flex; flex-direction: column; gap: 15px; font-size: 16px; color: var(--text-main); flex-grow: 1;">
                     <div style="cursor:pointer; padding:10px; border-radius:8px;" onclick="window.LotteryUserUI.navigate('dashboard'); window.LotteryUserUI.toggleSidebar();">🏠 Home / Dashboard</div>
                     <div style="cursor:pointer; padding:10px; border-radius:8px;">⚙️ Settings</div>
                     <div style="cursor:pointer; padding:10px; border-radius:8px;">👤 My Profile</div>
                     <div style="border-top: 1px solid #eee; margin-top: 10px; padding-top: 20px;"></div>
                     <div style="cursor:pointer; padding:10px; border-radius:8px; color: #dc3545;" onclick="window.LotteryUserUI.unmount()">🚪 Exit Module</div>
                 </div>
+                <div style="padding: 15px; text-align: center; color: #aaa; font-size: 12px; border-top: 1px solid #eee;">
+                    ${this.APP_VERSION}
+                </div>
             </div>
 
             <!-- Main App Content -->
             <div id="dl-dynamic-view" style="padding-bottom: 50px;">
-                <!-- Dashboard content will be injected here via navigate('dashboard') -->
+                <!-- Content injected via navigate() -->
             </div>
         `;
 
-        // Event listener for overlay click to close sidebar
-        document.getElementById('dl-overlay').addEventListener('click', this.toggleSidebar);
-        
-        // Load initial view
+        document.getElementById('dl-overlay').addEventListener('click', () => this.toggleSidebar());
         this.navigate('dashboard');
     },
 
-    // 🟢 4. Sidebar Toggle Logic
+    // 🟢 5. Sidebar Toggle Logic
     toggleSidebar: function() {
         const sidebar = document.getElementById('dl-sidebar');
         const overlay = document.getElementById('dl-overlay');
@@ -147,42 +179,71 @@ window.LotteryUserUI = {
         }
     },
 
-    // 🟢 5. Navigation Router
+    // 🟢 6. Navigation Router
     navigate: function(view) {
         const contentBox = document.getElementById('dl-dynamic-view');
         if (!contentBox) return; 
+        
+        // Scroll to top on navigation
+        window.scrollTo(0, 0);
 
         if (view === 'sales') {
-            window.LotterySalesApp ? window.LotterySalesApp.mount(contentBox) : contentBox.innerHTML = "<h3 style='padding:20px;'>⏳ Loading Sales...</h3>";
+            window.LotterySalesApp ? window.LotterySalesApp.mount(contentBox) : contentBox.innerHTML = "<h3 style='padding:20px; text-align:center;'>⏳ Loading Sales...</h3>";
         } 
         else if (view === 'payment') {
-            window.LotteryPaymentApp ? window.LotteryPaymentApp.mount(contentBox) : contentBox.innerHTML = "<h3 style='padding:20px;'>⏳ Loading Payment...</h3>";
+            window.LotteryPaymentApp ? window.LotteryPaymentApp.mount(contentBox) : contentBox.innerHTML = "<h3 style='padding:20px; text-align:center;'>⏳ Loading Payment...</h3>";
         }
         else if (view === 'dispatch') {
-            window.LotteryDispatchApp ? window.LotteryDispatchApp.mount(contentBox) : contentBox.innerHTML = "<h3 style='padding:20px;'>⏳ Loading Dispatch...</h3>";
+            window.LotteryDispatchApp ? window.LotteryDispatchApp.mount(contentBox) : contentBox.innerHTML = "<h3 style='padding:20px; text-align:center;'>⏳ Loading Dispatch...</h3>";
         }
         else if (view === 'ledger') {
+            // Using the Universal Header here
             contentBox.innerHTML = `
-                <div style="padding: 20px;">
-                    <div onclick="window.LotteryUserUI.navigate('dashboard')" style="cursor: pointer; font-size: 1.2rem; color: #333; margin-bottom:20px;">← Back to Home</div>
-                    <div style="text-align: center; padding: 50px; background: white; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-                        <h2 style="color: #6f42c1;">📊 Party Ledger</h2>
-                        <p style="color: #666;">Data binding is in progress...</p>
+                ${this.getTopNavBar("Party Ledger")}
+                <div style="padding: 20px;" class="animate-up">
+                    <div style="text-align: center; padding: 50px 20px; background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); border: 1px solid #eee;">
+                        <div style="font-size: 3rem; margin-bottom: 15px;">📊</div>
+                        <h2 style="color: #333; margin-bottom: 10px;">Ledger Records</h2>
+                        <p style="color: #888; font-size: 0.95rem;">Database connection is being established...</p>
+                    </div>
+                </div>
+            `;
+        }
+        else if (view === 'stock') {
+            contentBox.innerHTML = `
+                ${this.getTopNavBar("Live Stock")}
+                <div style="padding: 20px;" class="animate-up">
+                    <div style="text-align: center; padding: 50px 20px; background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); border: 1px solid #eee;">
+                        <div style="font-size: 3rem; margin-bottom: 15px;">📦</div>
+                        <h2 style="color: #333; margin-bottom: 10px;">Stock Inventory</h2>
+                        <p style="color: #888; font-size: 0.95rem;">Inventory tracking system loading...</p>
+                    </div>
+                </div>
+            `;
+        }
+        else if (view === 'report') {
+            contentBox.innerHTML = `
+                ${this.getTopNavBar("Day Reports")}
+                <div style="padding: 20px;" class="animate-up">
+                    <div style="text-align: center; padding: 50px 20px; background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); border: 1px solid #eee;">
+                        <div style="font-size: 3rem; margin-bottom: 15px;">📑</div>
+                        <h2 style="color: #333; margin-bottom: 10px;">Daily Reports</h2>
+                        <p style="color: #888; font-size: 0.95rem;">Compiling today's business data...</p>
                     </div>
                 </div>
             `;
         }
         else if (view === 'dashboard') {
-            const userName = "Rahul Das"; // ডাইনামিক নাম এখানে আসবে
+            const userName = "Rahul Das"; 
             const greeting = this.getGreeting();
 
             contentBox.innerHTML = `
-                <!-- Top Header -->
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px; background: var(--white); position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.02);">
+                <!-- Dashboard Top Header -->
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: rgba(255,255,255,0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
                     <div style="display: flex; align-items: center; gap: 15px;">
-                        <button onclick="window.LotteryUserUI.toggleSidebar()" style="background: none; border: none; font-size: 1.5rem; color: var(--text-main); cursor: pointer; padding: 0;">☰</button>
+                        <button onclick="window.LotteryUserUI.toggleSidebar()" style="background: none; border: none; font-size: 1.6rem; color: var(--text-main); cursor: pointer; padding: 0;">☰</button>
                     </div>
-                    <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--green), #22c55e); color: white; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 1.2rem; box-shadow: 0 4px 8px rgba(19, 136, 8, 0.2);">
+                    <div style="width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg, var(--green), #22c55e); color: white; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 1.2rem; box-shadow: 0 4px 10px rgba(19, 136, 8, 0.25);">
                         ${userName.charAt(0)}
                     </div>
                 </div>
@@ -192,59 +253,74 @@ window.LotteryUserUI = {
                     <!-- Grand Welcome Section -->
                     <div style="margin-bottom: 25px;">
                         <span style="font-size: 1rem; color: var(--text-muted); font-weight: 600; letter-spacing: 0.5px;">${greeting},</span>
-                        <h1 style="margin: 5px 0 0 0; font-size: 2rem; color: var(--text-main); background: linear-gradient(90deg, var(--saffron) 0%, var(--green) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                        <h1 style="margin: 5px 0 0 0; font-size: 2.2rem; color: var(--text-main); background: linear-gradient(90deg, var(--saffron) 0%, var(--green) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
                             ${userName}!
                         </h1>
-                        <p style="margin: 5px 0 0 0; color: #888; font-size: 0.9rem;">Here is your business overview today.</p>
+                        <p style="margin: 5px 0 0 0; color: #888; font-size: 0.95rem;">Here is your business overview today.</p>
                     </div>
 
                     <!-- Live Accounting Summary (Saffron & Green) -->
                     <div style="display: flex; gap: 15px; margin-bottom: 30px;">
-                        <!-- Saffron Card: Market Due -->
                         <div class="summary-card sc-saffron">
-                            <div style="font-size: 0.8rem; color: var(--saffron-dark); font-weight: 700; text-transform: uppercase;">মার্কেটে বাকি</div>
+                            <div style="font-size: 0.75rem; color: var(--saffron-dark); font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">মার্কেটে বাকি</div>
                             <div style="font-size: 1.6rem; font-weight: 800; color: var(--saffron); margin-top: 5px;">₹ 1,25,400</div>
                             <div style="position: absolute; right: -10px; bottom: -15px; opacity: 0.1; font-size: 4rem;">📉</div>
                         </div>
                         
-                        <!-- Green Card: Net Payable -->
                         <div class="summary-card sc-green">
-                            <div style="font-size: 0.8rem; color: var(--green-dark); font-weight: 700; text-transform: uppercase;">পেমেন্ট দিতে হবে</div>
+                            <div style="font-size: 0.75rem; color: var(--green-dark); font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">পেমেন্ট দিতে হবে</div>
                             <div style="font-size: 1.6rem; font-weight: 800; color: var(--green); margin-top: 5px;">₹ 45,000</div>
                             <div style="position: absolute; right: -10px; bottom: -15px; opacity: 0.1; font-size: 4rem;">📈</div>
                         </div>
                     </div>
 
                     <!-- Action Modules Grid -->
-                    <h3 style="margin: 0; color: var(--text-main); font-size: 1.1rem; border-bottom: 2px solid #eee; padding-bottom: 10px;">Quick Actions</h3>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #eee; padding-bottom: 10px;">
+                        <h3 style="margin: 0; color: var(--text-main); font-size: 1.2rem; font-weight: 700;">Quick Actions</h3>
+                    </div>
                     
                     <div class="app-grid">
-                        <div class="app-card" onclick="window.LotteryUserUI.navigate('sales')" style="border-top: 3px solid #3b82f6;">
+                        <div class="app-card card-sales" onclick="window.LotteryUserUI.navigate('sales')">
                             <div class="icon">🎟️</div>
-                            <div class="title">Single Sales Entry</div>
+                            <div class="title">Sales Entry</div>
                         </div>
                         
-                        <div class="app-card" onclick="window.LotteryUserUI.navigate('dispatch')" style="border-top: 3px solid var(--saffron);">
+                        <div class="app-card card-dispatch" onclick="window.LotteryUserUI.navigate('dispatch')">
                             <div class="icon">🚀</div>
                             <div class="title">Bulk Dispatch</div>
                         </div>
 
-                        <div class="app-card" onclick="window.LotteryUserUI.navigate('payment')" style="border-top: 3px solid var(--green);">
+                        <div class="app-card card-payment" onclick="window.LotteryUserUI.navigate('payment')">
                             <div class="icon">💰</div>
                             <div class="title">Settle Payment</div>
                         </div>
 
-                        <div class="app-card" onclick="window.LotteryUserUI.navigate('ledger')" style="border-top: 3px solid #8b5cf6;">
+                        <div class="app-card card-ledger" onclick="window.LotteryUserUI.navigate('ledger')">
                             <div class="icon">📊</div>
                             <div class="title">Party Ledger</div>
                         </div>
+
+                        <div class="app-card card-stock" onclick="window.LotteryUserUI.navigate('stock')">
+                            <div class="icon">📦</div>
+                            <div class="title">Live Stock</div>
+                        </div>
+
+                        <div class="app-card card-report" onclick="window.LotteryUserUI.navigate('report')">
+                            <div class="icon">📑</div>
+                            <div class="title">Day Reports</div>
+                        </div>
+                    </div>
+
+                    <!-- App Version at Bottom -->
+                    <div style="text-align: center; margin-top: 35px; color: #bbb; font-size: 12px; font-weight: 500;">
+                        DigiLedger ${this.APP_VERSION}
                     </div>
                 </div>
             `;
         }
     },
     
-    // 🟢 6. Unmount
+    // 🟢 7. Unmount
     unmount: function() {
         const workspace = document.getElementById('lottery-user-workspace');
         if (workspace) workspace.style.display = 'none';
