@@ -1,86 +1,107 @@
-// DigiLedger: Lottery Workspace Controller (ORBIS Integrated)
+// 📝 lottery-app.js (DigiLedger: Single Sales Entry Workspace)
 
 window.LotterySalesApp = {
     mount: function(container) {
-        // ১. লটারি সেলস মডিউলের HTML ডিজাইন স্ক্রিনে বসানো হচ্ছে (Spreadsheet Style)
-        container.innerHTML = `
-            <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; overflow-x: auto; box-sizing: border-box;">
-                <h3 style="color: #0056b3; margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px;">🎟️ Lottery Sales Entry</h3>
+        // ড্যাশবোর্ড থেকে টপ নেভিগেশন বার নিয়ে আসা (Back & Home button)
+        const topNavBar = window.LotteryUserUI ? window.LotteryUserUI.getTopNavBar("🎟️ Single Sales Entry") : "";
 
+        // ১. লটারি সেলস মডিউলের HTML ডিজাইন স্ক্রিনে বসানো হচ্ছে
+        container.innerHTML = `
+            ${topNavBar}
+            <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); width: 100%; overflow-x: auto; box-sizing: border-box; margin-top: 10px;">
+                
                 <!-- Top Metrics Cards -->
-                <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
-                    <div style="flex: 1; min-width: 120px; background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #ddd;">
-                        <div style="font-size: 0.85rem; color: #666; font-weight: bold;">Total Dispatch</div>
-                        <div id="val-dispatch" style="font-size: 1.5rem; font-weight: bold; color: #333;">0</div>
+                <div style="display: flex; gap: 15px; margin-bottom: 25px; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 120px; background: #f8f9fa; padding: 15px; border-radius: 12px; text-align: center; border: 1px solid #eee;">
+                        <div style="font-size: 0.80rem; color: #666; font-weight: 700; text-transform: uppercase;">Total Dispatch</div>
+                        <div id="val-dispatch" style="font-size: 1.6rem; font-weight: 800; color: #333; margin-top: 5px;">0</div>
                     </div>
-                    <div style="flex: 1; min-width: 120px; background: #fff0f0; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #ffcccc;">
-                        <div style="font-size: 0.85rem; color: #dc3545; font-weight: bold;">Total Return</div>
-                        <div id="val-return" style="font-size: 1.5rem; font-weight: bold; color: #dc3545;">0</div>
+                    <div style="flex: 1; min-width: 120px; background: #fff0f0; padding: 15px; border-radius: 12px; text-align: center; border: 1px solid #ffcccc;">
+                        <div style="font-size: 0.80rem; color: #dc3545; font-weight: 700; text-transform: uppercase;">Total Return</div>
+                        <div id="val-return" style="font-size: 1.6rem; font-weight: 800; color: #dc3545; margin-top: 5px;">0</div>
                     </div>
-                    <div style="flex: 1; min-width: 150px; background: #e6f2ff; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #b3d7ff;">
-                        <div style="font-size: 0.85rem; color: #0056b3; font-weight: bold;">Net Payable</div>
-                        <div id="val-net" style="font-size: 1.5rem; font-weight: bold; color: #0056b3;">₹ 0.00</div>
+                    <div style="flex: 1; min-width: 150px; background: #e6f2ff; padding: 15px; border-radius: 12px; text-align: center; border: 1px solid #b3d7ff;">
+                        <div style="font-size: 0.80rem; color: #0056b3; font-weight: 700; text-transform: uppercase;">Net Payable</div>
+                        <div id="val-net" style="font-size: 1.6rem; font-weight: 800; color: #0056b3; margin-top: 5px;">₹ 0.00</div>
                     </div>
-                    <div style="flex: 1; min-width: 150px; background: #fff3cd; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #ffeeba;">
-                        <div style="font-size: 0.85rem; color: #856404; font-weight: bold;">Total Outstanding</div>
-                        <div id="val-outstanding" style="font-size: 1.5rem; font-weight: bold; color: #856404;">₹ 0.00</div>
+                    <div style="flex: 1; min-width: 150px; background: #fff3cd; padding: 15px; border-radius: 12px; text-align: center; border: 1px solid #ffeeba;">
+                        <div style="font-size: 0.80rem; color: #856404; font-weight: 700; text-transform: uppercase;">Total Outstanding</div>
+                        <div id="val-outstanding" style="font-size: 1.6rem; font-weight: 800; color: #856404; margin-top: 5px;">₹ 0.00</div>
                     </div>
                 </div>
 
                 <!-- Action Bar -->
-                <div style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                    <div style="display: flex; gap: 10px;">
-                        <input type="text" id="party-mobile-input" placeholder="Party Mobile/ID" style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 0.95rem;">
-                        <button id="btn-fetch-party" style="background: #17a2b8; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold;">Search Party</button>
+                <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                    <div style="display: flex; gap: 10px; flex-grow: 1; max-width: 400px;">
+                        <input type="text" id="party-mobile-input" placeholder="🔍 Enter Party Mobile or ID" style="flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 0.95rem; outline: none; transition: border 0.3s;" onfocus="this.style.borderColor='#138808'" onblur="this.style.borderColor='#ccc'">
+                        <button id="btn-fetch-party" style="background: #138808; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background 0.2s;">Search</button>
                     </div>
-                    <button id="btn-add-row" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">+ Add New Row</button>
+                    <button id="btn-add-row" style="background: #FF9933; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.95rem; box-shadow: 0 4px 6px rgba(255,153,51,0.2); transition: transform 0.1s;">+ Add New Row</button>
                 </div>
 
                 <!-- Live Spreadsheet Grid -->
-                <div style="overflow-x: auto; border: 1px solid #ddd; border-radius: 8px;">
-                    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; min-width: 800px;">
-                        <thead style="background: #f1f1f1; color: #333;">
+                <div style="overflow-x: auto; border: 1px solid #ddd; border-radius: 12px; box-shadow: inset 0 0 5px rgba(0,0,0,0.02);">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; min-width: 900px;">
+                        <thead style="background: #f8f9fa; color: #444;">
                             <tr>
-                                <th style="padding: 12px 10px; border-bottom: 2px solid #ccc;">Party/Name</th>
-                                <th style="padding: 12px 10px; border-bottom: 2px solid #ccc;">Rate</th>
-                                <th style="padding: 12px 10px; border-bottom: 2px solid #ccc;">Dispatch</th>
-                                <th style="padding: 12px 10px; border-bottom: 2px solid #ccc;">Return</th>
-                                <th style="padding: 12px 10px; border-bottom: 2px solid #ccc; background:#e9ecef;">Net Tkt</th>
-                                <th style="padding: 12px 10px; border-bottom: 2px solid #ccc;">Comm(%)</th>
-                                <th style="padding: 12px 10px; border-bottom: 2px solid #ccc;">TDS(%)</th>
-                                <th style="padding: 12px 10px; border-bottom: 2px solid #ccc; background:#e9ecef;">Net Pay (₹)</th>
-                                <th style="padding: 12px 10px; border-bottom: 2px solid #ccc;">Prev Bal</th>
-                                <th style="padding: 12px 10px; border-bottom: 2px solid #ccc; background:#e9ecef;">Curr Bal (₹)</th>
+                                <th style="padding: 15px 10px; border-bottom: 2px solid #ddd;">Party/Name</th>
+                                <th style="padding: 15px 10px; border-bottom: 2px solid #ddd;">Rate</th>
+                                <th style="padding: 15px 10px; border-bottom: 2px solid #ddd;">Dispatch</th>
+                                <th style="padding: 15px 10px; border-bottom: 2px solid #ddd;">Return</th>
+                                <th style="padding: 15px 10px; border-bottom: 2px solid #ddd; background:#eef2f5;">Net Tkt</th>
+                                <th style="padding: 15px 10px; border-bottom: 2px solid #ddd;">Comm(%)</th>
+                                <th style="padding: 15px 10px; border-bottom: 2px solid #ddd;">TDS(%)</th>
+                                <th style="padding: 15px 10px; border-bottom: 2px solid #ddd; background:#eef2f5;">Net Pay (₹)</th>
+                                <th style="padding: 15px 10px; border-bottom: 2px solid #ddd;">Prev Bal</th>
+                                <th style="padding: 15px 10px; border-bottom: 2px solid #ddd; background:#eef2f5;">Curr Bal (₹)</th>
                             </tr>
                         </thead>
                         <tbody id="lottery-grid-body">
-                            <!-- Default Row -->
-                            <tr>
-                                <td style="padding: 8px; border-bottom: 1px solid #eee;"><input type="text" class="spreadsheet-input party-input" placeholder="Enter Party" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;"></td>
-                                <td style="padding: 8px; border-bottom: 1px solid #eee;"><input type="number" class="spreadsheet-input rate-input" placeholder="0" style="width: 70px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"></td>
-                                <td style="padding: 8px; border-bottom: 1px solid #eee;"><input type="number" class="spreadsheet-input dispatch-input" placeholder="0" style="width: 80px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"></td>
-                                <td style="padding: 8px; border-bottom: 1px solid #eee;"><input type="number" class="spreadsheet-input return-input" placeholder="0" style="width: 80px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"></td>
-                                <td style="padding: 8px; border-bottom: 1px solid #eee; background:#f8f9fa;"><input type="text" class="spreadsheet-input calc-field net-tkt-output" readonly value="0" style="width: 70px; padding: 8px; border: none; background: transparent; font-weight: bold; text-align: center;"></td>
-                                <td style="padding: 8px; border-bottom: 1px solid #eee;"><input type="number" class="spreadsheet-input comm-input" placeholder="0" style="width: 70px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"></td>
-                                <td style="padding: 8px; border-bottom: 1px solid #eee;"><input type="number" class="spreadsheet-input tds-input" placeholder="0" style="width: 70px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"></td>
-                                <td style="padding: 8px; border-bottom: 1px solid #eee; background:#f8f9fa;"><input type="text" class="spreadsheet-input calc-field net-pay-output" readonly value="₹ 0.00" style="width: 100px; padding: 8px; border: none; background: transparent; font-weight: bold; color: #28a745;"></td>
-                                <td style="padding: 8px; border-bottom: 1px solid #eee;"><input type="number" class="spreadsheet-input prev-bal-input" placeholder="0" style="width: 90px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"></td>
-                                <td style="padding: 8px; border-bottom: 1px solid #eee; background:#f8f9fa;"><input type="text" class="spreadsheet-input calc-field curr-bal-output" readonly value="₹ 0.00" style="width: 110px; padding: 8px; border: none; background: transparent; font-weight: bold; color: #d39e00;"></td>
-                            </tr>
+                            <!-- Default Initial Row -->
+                            ${this.getRowTemplate()}
                         </tbody>
                     </table>
+                </div>
+
+                <!-- Save/Submit Action -->
+                <div style="margin-top: 25px; text-align: right;">
+                    <button id="btn-save-entries" style="background: #000080; color: white; border: none; padding: 15px 30px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1.1rem; box-shadow: 0 4px 10px rgba(0,0,128,0.2); transition: transform 0.2s;">
+                        💾 Save All Entries
+                    </button>
                 </div>
             </div>
         `;
 
-        // ২. ডিজাইন বসানোর পর আপনার অরিজিনাল লজিক ফায়ার করা হচ্ছে
+        // ২. ইভেন্ট এবং লজিক ইনিশিয়ালাইজেশন
         this.initLogic();
+    },
+
+    getRowTemplate: function(data = {}) {
+        // ডাইনামিক ডেটা আসলে সেটা বসবে, না হলে ডিফল্ট ফাঁকা থাকবে
+        const party = data.partyName || "";
+        const rate = data.rate || "";
+        const prevBal = data.prevBal || "";
+        
+        return `
+            <tr class="data-row">
+                <td style="padding: 8px; border-bottom: 1px solid #eee;"><input type="text" class="spreadsheet-input party-input" placeholder="Enter Party" value="${party}" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; outline:none;" onfocus="this.style.borderColor='#FF9933'" onblur="this.style.borderColor='#ddd'"></td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee;"><input type="number" class="spreadsheet-input rate-input" placeholder="0" value="${rate}" style="width: 70px; padding: 10px; border: 1px solid #ddd; border-radius: 6px; outline:none;"></td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee;"><input type="number" class="spreadsheet-input dispatch-input" placeholder="0" style="width: 80px; padding: 10px; border: 1px solid #ddd; border-radius: 6px; outline:none;"></td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee;"><input type="number" class="spreadsheet-input return-input" placeholder="0" style="width: 80px; padding: 10px; border: 1px solid #ddd; border-radius: 6px; outline:none;"></td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee; background:#f8f9fa;"><input type="text" class="spreadsheet-input calc-field net-tkt-output" readonly value="0" style="width: 70px; padding: 10px; border: none; background: transparent; font-weight: bold; text-align: center;"></td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee;"><input type="number" class="spreadsheet-input comm-input" placeholder="0" style="width: 70px; padding: 10px; border: 1px solid #ddd; border-radius: 6px; outline:none;"></td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee;"><input type="number" class="spreadsheet-input tds-input" placeholder="0" style="width: 70px; padding: 10px; border: 1px solid #ddd; border-radius: 6px; outline:none;"></td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee; background:#f8f9fa;"><input type="text" class="spreadsheet-input calc-field net-pay-output" readonly value="₹ 0.00" style="width: 100px; padding: 10px; border: none; background: transparent; font-weight: bold; color: #28a745;"></td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee;"><input type="number" class="spreadsheet-input prev-bal-input" placeholder="0" value="${prevBal}" style="width: 90px; padding: 10px; border: 1px solid #ddd; border-radius: 6px; outline:none;"></td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee; background:#f8f9fa;"><input type="text" class="spreadsheet-input calc-field curr-bal-output" readonly value="₹ 0.00" style="width: 110px; padding: 10px; border: none; background: transparent; font-weight: bold; color: #d39e00;"></td>
+            </tr>
+        `;
     },
 
     initLogic: function() {
         console.log("[ORBIS] Lottery Workspace Engine Initialized.");
 
-        // 🟢 Fallback Engine: যদি কোনো কারণে বাইরের ইঞ্জিন কাজ না করে, এটা লাইভ হিসাব করে দেবে!
+        // 🟢 Calculation Engine
         const CalcEngine = window.LotteryCalcEngine || {
             calculateRow: function(data) {
                 const rate = parseFloat(data.rate) || 0;
@@ -104,7 +125,7 @@ window.LotterySalesApp = {
         const gridBody = document.getElementById('lottery-grid-body');
         if (!gridBody) return;
 
-        // 🟢 ১. Event Delegation: টেবিলে যেকোনো ইনপুট দিলেই লাইভ ক্যালকুলেশন হবে
+        // 🟢 ১. Event Delegation: Live Calculation
         gridBody.addEventListener('input', function(e) {
             if (e.target.classList.contains('spreadsheet-input')) {
                 const currentRow = e.target.closest('tr');
@@ -115,45 +136,116 @@ window.LotterySalesApp = {
             }
         });
 
-        // 🟢 ২. Add New Row: "Add New Row" বাটনে ক্লিক করলে নতুন ফাঁকা লাইন যোগ হবে
+        // 🟢 ২. Add New Row functionality
         const addRowBtn = document.getElementById('btn-add-row');
         if (addRowBtn) {
             addRowBtn.addEventListener('click', () => {
-                const newRowHTML = `
-                    <tr>
-                        <td style="padding: 8px; border-bottom: 1px solid #eee;"><input type="text" class="spreadsheet-input party-input" placeholder="Enter Party" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;"></td>
-                        <td style="padding: 8px; border-bottom: 1px solid #eee;"><input type="number" class="spreadsheet-input rate-input" placeholder="0" style="width: 70px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"></td>
-                        <td style="padding: 8px; border-bottom: 1px solid #eee;"><input type="number" class="spreadsheet-input dispatch-input" placeholder="0" style="width: 80px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"></td>
-                        <td style="padding: 8px; border-bottom: 1px solid #eee;"><input type="number" class="spreadsheet-input return-input" placeholder="0" style="width: 80px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"></td>
-                        <td style="padding: 8px; border-bottom: 1px solid #eee; background:#f8f9fa;"><input type="text" class="spreadsheet-input calc-field net-tkt-output" readonly value="0" style="width: 70px; padding: 8px; border: none; background: transparent; font-weight: bold; text-align: center;"></td>
-                        <td style="padding: 8px; border-bottom: 1px solid #eee;"><input type="number" class="spreadsheet-input comm-input" placeholder="0" style="width: 70px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"></td>
-                        <td style="padding: 8px; border-bottom: 1px solid #eee;"><input type="number" class="spreadsheet-input tds-input" placeholder="0" style="width: 70px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"></td>
-                        <td style="padding: 8px; border-bottom: 1px solid #eee; background:#f8f9fa;"><input type="text" class="spreadsheet-input calc-field net-pay-output" readonly value="₹ 0.00" style="width: 100px; padding: 8px; border: none; background: transparent; font-weight: bold; color: #28a745;"></td>
-                        <td style="padding: 8px; border-bottom: 1px solid #eee;"><input type="number" class="spreadsheet-input prev-bal-input" placeholder="0" style="width: 90px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"></td>
-                        <td style="padding: 8px; border-bottom: 1px solid #eee; background:#f8f9fa;"><input type="text" class="spreadsheet-input calc-field curr-bal-output" readonly value="₹ 0.00" style="width: 110px; padding: 8px; border: none; background: transparent; font-weight: bold; color: #d39e00;"></td>
-                    </tr>
-                `;
-                gridBody.insertAdjacentHTML('beforeend', newRowHTML);
+                gridBody.insertAdjacentHTML('beforeend', window.LotterySalesApp.getRowTemplate());
             });
         }
 
-        // 🟢 ৩. Party Search Module
+        // 🟢 ৩. REAL API: Party Search Module
         const fetchPartyBtn = document.getElementById('btn-fetch-party');
         const partyInput = document.getElementById('party-mobile-input');
         
         if (fetchPartyBtn && partyInput) {
-            fetchPartyBtn.addEventListener('click', () => {
+            fetchPartyBtn.addEventListener('click', async () => {
                 const mobile = partyInput.value.trim();
                 if (mobile.length >= 10) {
-                    console.log("Searching Party: " + mobile);
-                    alert("Searching details for: " + mobile);
+                    fetchPartyBtn.innerText = "⏳ Loading...";
+                    
+                    try {
+                        // 🔗 YOUR REAL API ENDPOINT GOES HERE:
+                        // const response = await fetch(`/api/party/search?mobile=${mobile}`);
+                        // const data = await response.json();
+                        
+                        // 🔹 Dummy response for testing until backend is linked:
+                        const fakeApiResponse = { partyName: "Rahul Das (Retail)", rate: 5.5, prevBal: -15000 };
+
+                        // Populate the first empty row or create a new row with fetched data
+                        const firstRow = gridBody.querySelector('tr.data-row');
+                        if (firstRow && !firstRow.querySelector('.party-input').value) {
+                            firstRow.querySelector('.party-input').value = fakeApiResponse.partyName;
+                            firstRow.querySelector('.rate-input').value = fakeApiResponse.rate;
+                            firstRow.querySelector('.prev-bal-input').value = fakeApiResponse.prevBal;
+                            calculateRowUI(firstRow);
+                        } else {
+                            gridBody.insertAdjacentHTML('beforeend', window.LotterySalesApp.getRowTemplate(fakeApiResponse));
+                        }
+                        
+                        calculateTotalsUI();
+                        
+                    } catch (error) {
+                        alert("Error fetching party data from server!");
+                        console.error(error);
+                    } finally {
+                        fetchPartyBtn.innerText = "Search";
+                    }
+
                 } else {
-                    alert("দয়া করে সঠিক ১০ ডিজিটের মোবাইল নম্বর দিন।");
+                    alert("দয়া করে সঠিক মোবাইল নম্বর বা আইডি দিন।");
                 }
             });
         }
 
-        // 🟢 ৪. Core calculation functions
+        // 🟢 ৪. REAL API: Submit/Save All Data to Server
+        const saveBtn = document.getElementById('btn-save-entries');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', async () => {
+                const rows = document.querySelectorAll('#lottery-grid-body tr.data-row');
+                const payload = [];
+
+                rows.forEach(row => {
+                    const party = row.querySelector('.party-input')?.value;
+                    if(party) { // Only save rows that have a party name
+                        payload.push({
+                            partyName: party,
+                            rate: row.querySelector('.rate-input')?.value || 0,
+                            dispatch: row.querySelector('.dispatch-input')?.value || 0,
+                            return: row.querySelector('.return-input')?.value || 0,
+                            comm: row.querySelector('.comm-input')?.value || 0,
+                            tds: row.querySelector('.tds-input')?.value || 0,
+                            netPayable: parseFloat(row.querySelector('.net-pay-output')?.value.replace(/[^0-9.-]+/g,"")) || 0,
+                            prevBal: row.querySelector('.prev-bal-input')?.value || 0,
+                            currBal: parseFloat(row.querySelector('.curr-bal-output')?.value.replace(/[^0-9.-]+/g,"")) || 0
+                        });
+                    }
+                });
+
+                if(payload.length === 0) {
+                    alert("No valid entries found to save!");
+                    return;
+                }
+
+                saveBtn.innerText = "⏳ Saving to Server...";
+                console.log("Sending Data to Backend:", JSON.stringify(payload));
+
+                try {
+                    // 🔗 YOUR REAL API POST ENDPOINT GOES HERE:
+                    /*
+                    const response = await fetch('/api/sales/submit', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ entries: payload })
+                    });
+                    const result = await response.json();
+                    */
+                    
+                    // Simulating network delay for testing
+                    setTimeout(() => {
+                        alert("✅ Data Successfully Saved to DigiLedger Backend!");
+                        saveBtn.innerText = "💾 Save All Entries";
+                    }, 1000);
+
+                } catch (error) {
+                    alert("Failed to save data!");
+                    console.error(error);
+                    saveBtn.innerText = "💾 Save All Entries";
+                }
+            });
+        }
+
+        // 🟢 ৫. Core calculation helper functions
         function calculateRowUI(row) {
             const rowData = {
                 rate: row.querySelector('.rate-input')?.value,
@@ -177,12 +269,12 @@ window.LotterySalesApp = {
 
             if (netPayOutput) {
                 netPayOutput.value = `₹ ${result.finalAmount.toFixed(2)}`;
-                netPayOutput.style.color = result.finalAmount < 0 ? '#dc3545' : '#28a745';
+                netPayOutput.style.color = result.finalAmount < 0 ? '#dc3545' : '#138808'; // Indian Green
             }
 
             if (currBalOutput) {
                 currBalOutput.value = `₹ ${result.currentBalance.toFixed(2)}`;
-                currBalOutput.style.color = result.currentBalance < 0 ? '#dc3545' : '#d39e00';
+                currBalOutput.style.color = result.currentBalance < 0 ? '#dc3545' : '#CC7A29'; // Dark Saffron
             }
         }
 
