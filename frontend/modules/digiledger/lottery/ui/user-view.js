@@ -11,8 +11,8 @@ window.LotteryUserUI = {
             { name: 'LotterySalesApp', path: '/modules/digiledger/lottery/ui/lottery-app.js' },
             { name: 'LotteryPaymentApp', path: '/modules/digiledger/lottery/ui/payment-app.js' },
             { name: 'LotteryDispatchApp', path: '/modules/digiledger/lottery/ui/DispatchWorkspace.js' },
-            // 🟢 NEW: Party Master ফাইলটা এখানে লিঙ্ক করে দেওয়া হলো
-            { name: 'PartyMaster', path: '/modules/digiledger/lottery/party-master.js' } 
+            // 🟢 UPDATED: Party Master ফাইলটা এখন মেইন রুট (Global Shared Registry) থেকে লোড হচ্ছে
+            { name: 'PartyMaster', path: '/js/party-master.js' } 
         ];
 
         modules.forEach(mod => {
