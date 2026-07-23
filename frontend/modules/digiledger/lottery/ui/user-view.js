@@ -1,12 +1,12 @@
 // 📝 user-view.js (DigiLedger Premium Dashboard - Indian Theme)
 
 window.LotteryUserUI = {
-    // 🟢 0. App Version Control (Change this number on every new update)
-    APP_VERSION: "v1.1.0 (Premium Build)",
+    // 🟢 0. App Version Control (Updated for Party Master integration)
+    APP_VERSION: "v1.1.1 (Premium Build)",
 
     // 🟢 1. Preload Modules with Cache Busting
     preloadModules: function() {
-        const timestamp = new Date().getTime(); // Forces browser to load fresh files
+        const timestamp = new Date().getTime(); 
         const modules = [
             { name: 'LotterySalesApp', path: '/modules/digiledger/lottery/ui/lottery-app.js' },
             { name: 'LotteryPaymentApp', path: '/modules/digiledger/lottery/ui/payment-app.js' },
@@ -50,7 +50,6 @@ window.LotteryUserUI = {
     mount: function() {
         this.preloadModules();
         
-        // Hide ORBIS root if exists
         const platformRoot = document.getElementById('orbis-platform-root');
         if (platformRoot) platformRoot.style.display = 'none';
 
@@ -74,15 +73,12 @@ window.LotteryUserUI = {
 
         workspace.innerHTML = `
             <style>
-                /* Premium Animations & Glass Effects */
                 @keyframes fadeUp {
                     from { opacity: 0; transform: translateY(15px); }
                     to { opacity: 1; transform: translateY(0); }
                 }
-                
                 .animate-up { animation: fadeUp 0.6s ease-out forwards; }
                 
-                /* Sidebar Styles */
                 #dl-sidebar {
                     position: fixed; top: 0; left: -280px; width: 260px; height: 100vh;
                     background: #ffffff; box-shadow: 4px 0 15px rgba(0,0,0,0.05);
@@ -97,14 +93,12 @@ window.LotteryUserUI = {
                 }
                 .sidebar-overlay.active { display: block; opacity: 1; }
                 
-                /* Indian Theme Colors */
                 :root {
                     --saffron: #FF9933; --saffron-light: #FFF4EB; --saffron-dark: #CC7A29;
                     --green: #138808; --green-light: #E8F5E9; --green-dark: #0F6B06;
                     --white: #FFFFFF; --text-main: #333333; --text-muted: #666666;
                 }
 
-                /* Unique Glassmorphism App Grid */
                 .app-grid {
                     display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 20px;
                 }
@@ -124,15 +118,15 @@ window.LotteryUserUI = {
                 .app-card .icon { font-size: 2.8rem; margin-bottom: 12px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); }
                 .app-card .title { font-size: 13px; font-weight: 700; color: var(--text-main); letter-spacing: 0.2px; }
                 
-                /* Distinct Top Borders for Cards */
                 .card-sales::before { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
                 .card-dispatch::before { background: linear-gradient(90deg, var(--saffron), #fbbf24); }
                 .card-payment::before { background: linear-gradient(90deg, var(--green), #34d399); }
                 .card-ledger::before { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
                 .card-stock::before { background: linear-gradient(90deg, #ec4899, #f472b6); }
                 .card-report::before { background: linear-gradient(90deg, #14b8a6, #2dd4bf); }
+                /* 🟢 NEW: Styling for Party Master Card */
+                .card-partymaster::before { background: linear-gradient(90deg, #f43f5e, #f97316); } 
                 
-                /* Summary Cards */
                 .summary-card {
                     flex: 1; border-radius: 16px; padding: 18px; position: relative; overflow: hidden;
                 }
@@ -140,7 +134,6 @@ window.LotteryUserUI = {
                 .sc-green { background: var(--green-light); border: 1px solid rgba(19,136,8,0.3); }
             </style>
 
-            <!-- Sidebar Menu -->
             <div class="sidebar-overlay" id="dl-overlay"></div>
             <div id="dl-sidebar">
                 <div style="background: linear-gradient(135deg, var(--saffron), #ffb366); padding: 30px 20px; color: white;">
@@ -159,10 +152,7 @@ window.LotteryUserUI = {
                 </div>
             </div>
 
-            <!-- Main App Content -->
-            <div id="dl-dynamic-view" style="padding-bottom: 50px;">
-                <!-- Content injected via navigate() -->
-            </div>
+            <div id="dl-dynamic-view" style="padding-bottom: 50px;"></div>
         `;
 
         document.getElementById('dl-overlay').addEventListener('click', () => this.toggleSidebar());
@@ -179,12 +169,11 @@ window.LotteryUserUI = {
         }
     },
 
-    // 🟢 6. Navigation Router
+    // 🟢 6. Navigation Router (Added Route for Party Master)
     navigate: function(view) {
         const contentBox = document.getElementById('dl-dynamic-view');
         if (!contentBox) return; 
         
-        // Scroll to top on navigation
         window.scrollTo(0, 0);
 
         if (view === 'sales') {
@@ -196,8 +185,20 @@ window.LotteryUserUI = {
         else if (view === 'dispatch') {
             window.LotteryDispatchApp ? window.LotteryDispatchApp.mount(contentBox) : contentBox.innerHTML = "<h3 style='padding:20px; text-align:center;'>⏳ Loading Dispatch...</h3>";
         }
+        // 🟢 NEW: Route for Party Master
+        else if (view === 'partymaster') {
+            if (window.PartyMaster && typeof window.PartyMaster.mount === 'function') {
+                window.PartyMaster.mount(contentBox);
+            } else {
+                contentBox.innerHTML = `
+                    ${this.getTopNavBar("Party Master Error")}
+                    <div style="padding:20px; text-align:center; color: #dc3545; background: white; margin: 20px; border-radius: 12px; border: 1px solid #f5c6cb;">
+                        <h3>⚠️ Party Master Module Not Found!</h3>
+                        <p>Please ensure party-master.js is loaded correctly.</p>
+                    </div>`;
+            }
+        }
         else if (view === 'ledger') {
-            // Using the Universal Header here
             contentBox.innerHTML = `
                 ${this.getTopNavBar("Party Ledger")}
                 <div style="padding: 20px;" class="animate-up">
@@ -238,7 +239,6 @@ window.LotteryUserUI = {
             const greeting = this.getGreeting();
 
             contentBox.innerHTML = `
-                <!-- Dashboard Top Header -->
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: rgba(255,255,255,0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
                     <div style="display: flex; align-items: center; gap: 15px;">
                         <button onclick="window.LotteryUserUI.toggleSidebar()" style="background: none; border: none; font-size: 1.6rem; color: var(--text-main); cursor: pointer; padding: 0;">☰</button>
@@ -250,7 +250,6 @@ window.LotteryUserUI = {
 
                 <div style="padding: 20px; max-width: 600px; margin: 0 auto;" class="animate-up">
                     
-                    <!-- Grand Welcome Section -->
                     <div style="margin-bottom: 25px;">
                         <span style="font-size: 1rem; color: var(--text-muted); font-weight: 600; letter-spacing: 0.5px;">${greeting},</span>
                         <h1 style="margin: 5px 0 0 0; font-size: 2.2rem; color: var(--text-main); background: linear-gradient(90deg, var(--saffron) 0%, var(--green) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
@@ -259,7 +258,6 @@ window.LotteryUserUI = {
                         <p style="margin: 5px 0 0 0; color: #888; font-size: 0.95rem;">Here is your business overview today.</p>
                     </div>
 
-                    <!-- Live Accounting Summary (Saffron & Green) -->
                     <div style="display: flex; gap: 15px; margin-bottom: 30px;">
                         <div class="summary-card sc-saffron">
                             <div style="font-size: 0.75rem; color: var(--saffron-dark); font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">মার্কেটে বাকি</div>
@@ -274,7 +272,6 @@ window.LotteryUserUI = {
                         </div>
                     </div>
 
-                    <!-- Action Modules Grid -->
                     <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #eee; padding-bottom: 10px;">
                         <h3 style="margin: 0; color: var(--text-main); font-size: 1.2rem; font-weight: 700;">Quick Actions</h3>
                     </div>
@@ -288,6 +285,12 @@ window.LotteryUserUI = {
                         <div class="app-card card-dispatch" onclick="window.LotteryUserUI.navigate('dispatch')">
                             <div class="icon">🚀</div>
                             <div class="title">Bulk Dispatch</div>
+                        </div>
+
+                        <!-- 🟢 NEW: Add Party Master Card (Inserted prominently) -->
+                        <div class="app-card card-partymaster" onclick="window.LotteryUserUI.navigate('partymaster')">
+                            <div class="icon">👥</div>
+                            <div class="title">Add Party Master</div>
                         </div>
 
                         <div class="app-card card-payment" onclick="window.LotteryUserUI.navigate('payment')">
@@ -311,7 +314,6 @@ window.LotteryUserUI = {
                         </div>
                     </div>
 
-                    <!-- App Version at Bottom -->
                     <div style="text-align: center; margin-top: 35px; color: #bbb; font-size: 12px; font-weight: 500;">
                         DigiLedger ${this.APP_VERSION}
                     </div>
