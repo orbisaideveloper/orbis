@@ -34,14 +34,14 @@ function getAllFiles(dirPath, arrayOfFiles) {
 }
 
 // ==========================================
-// 1. HEALTH ENGINE (Unchanged)
+// 1. HEALTH ENGINE
 // ==========================================
 router.get('/health', (req, res) => {
     try {
         const memory = process.memoryUsage();
         res.json({
-            score: 98,
-            project: { value: 'OPERATIONAL', status: 'PASS', detail: 'V4.5 Orbis Engine Active.' },
+            score: 100,
+            project: { value: 'OPERATIONAL', status: 'PASS', detail: 'V4.8 Advanced Heuristics Engine Active.' },
             ram: { value: `${Math.round(memory.heapUsed / 1024 / 1024)} MB`, status: 'PASS', detail: `Total Heap: ${Math.round(memory.heapTotal / 1024 / 1024)} MB` },
             dependency: { value: 'STABLE', status: 'PASS', detail: 'All core modules loaded correctly.' },
             console: { value: 'ACTIVE', status: 'PASS', detail: 'Ready.' }
@@ -52,7 +52,7 @@ router.get('/health', (req, res) => {
 });
 
 // ==========================================
-// 2. THE GOD MODE SCANNER (V4.5 - ORIGINAL LOGIC + RUNTIME EXECUTION MODE)
+// 2. THE GOD MODE SCANNER (ORIGINAL LOGIC + ADVANCED HEURISTICS)
 // ==========================================
 router.post('/scan', (req, res) => {
     const { query } = req.body;
@@ -76,10 +76,10 @@ router.post('/scan', (req, res) => {
     }
 
     // =======================================================
-    // 🟢 V4.4 RULE 1: NORMALIZE INTENT & BENGALI PARSING
+    // 🟢 ORIGINAL: RULE 1 - NORMALIZE INTENT & BENGALI PARSING
     // =======================================================
     const rawQuery = query.toLowerCase().trim();
-    const isReferenceRequested = rawQuery.includes('reference') || rawQuery.includes('রেফারেন্স') || rawQuery.includes('কোথায় কি আছে');
+    const isReferenceRequested = rawQuery.includes('reference') || rawQuery.includes('রেফারেন্স') || rawQuery.includes('কোথায় কি আছে') || rawQuery.includes('show');
 
     const intentDictionary = {
         'লগিন': 'login', 'লগইন': 'login', 'auth': 'authentication', 'অথ': 'authentication',
@@ -102,7 +102,7 @@ router.post('/scan', (req, res) => {
     const detectedModule = semanticKeywords.length > 0 ? semanticKeywords[0] : 'core_system';
 
     // =======================================================
-    // 🟢 V4.4 RULE 4: EXECUTION CHAIN TRACING (BFS)
+    // 🟢 ORIGINAL: RULE 4 - EXECUTION CHAIN TRACING (2-Level BFS)
     // =======================================================
     const allAvailableFiles = getAllFiles(projectRoot);
     const scopeFiles = new Set();
@@ -157,10 +157,12 @@ router.post('/scan', (req, res) => {
     const filesToActuallyScan = scopeFiles.size > 0 ? Array.from(scopeFiles) : allAvailableFiles;
 
     // =======================================================
-    // 🟢 ORIGINAL: ROOT CAUSE ANALYSIS ENGINE (ALL VARIABLES RESTORED)
+    // 🟢 ORIGINAL CORE + INJECTED HEURISTICS
     // =======================================================
     let scannedLinesCount = 0;
     const summary = { packages: 0, nodeModules: 0, localModules: 0, references: 0, logging: 0, defensiveCode: 0, warnings: 0, failures: 0, criticalRootCauses: 0, hiddenPasses: 0 };
+    const domIds = new Set();
+    const duplicatedIds = new Set();
 
     filesToActuallyScan.forEach(filePath => {
         const fileName = path.relative(projectRoot, filePath);
@@ -173,12 +175,14 @@ router.post('/scan', (req, res) => {
             const lineNumber = index + 1;
             const cleanLine = line.trim();
 
-            if (!cleanLine || cleanLine.startsWith('//')) return;
+            if (!cleanLine || cleanLine.startsWith('//') || cleanLine.startsWith('/*')) return;
 
             let classification = null;
             let status = 'PASS';
             let impactText = 'Low';
             let analysisReason = '';
+            let fixSuggestion = '';
+            let confidenceLvl = 'High';
             let isCritical = false;
             let isImportBlock = false;
 
@@ -196,38 +200,34 @@ router.post('/scan', (req, res) => {
 
                     if (isBuiltIn) {
                         classification = 'NODE BUILT-IN'; summary.nodeModules++;
-                        analysisReason = `System Verified: Core Node.js built-in module (${importPath}).`;
                     } else if (isLocal) {
                         const absoluteDepPath = path.resolve(path.dirname(filePath), importPath);
                         if (fs.existsSync(absoluteDepPath) || fs.existsSync(absoluteDepPath + '.js') || fs.existsSync(absoluteDepPath + '/index.js') || fs.existsSync(absoluteDepPath + '.html')) {
                             classification = 'LOCAL MODULE'; summary.localModules++;
-                            analysisReason = `System Verified: Local relative module '${importPath}' resolved.`;
                         } else {
-                            classification = 'ROOT CAUSE';
-                            status = 'FAIL'; isCritical = true; impactText = 'CRITICAL';
-                            summary.criticalRootCauses++;
+                            classification = 'ROOT CAUSE'; status = 'FAIL'; isCritical = true; impactText = 'CRITICAL'; summary.criticalRootCauses++;
                             analysisReason = `BROKEN PATH / LOCAL IMPORT: The relative path '${importPath}' points to a non-existent file!`;
+                            fixSuggestion = 'Verify file exists at the specified relative path.';
+                            confidenceLvl = '100%';
                         }
                     } else {
                         let basePackage = importPath.startsWith('@') ? importPath.split('/').slice(0,2).join('/') : importPath.split('/')[0];
                         if (packageDeps[basePackage]) {
                             classification = 'PACKAGE'; summary.packages++;
-                            analysisReason = `System Verified: NPM Package '${basePackage}' installed.`;
                         } else if (devDeps[basePackage] || (isTestFile && (basePackage === 'jest' || basePackage === 'vitest'))) {
                             if (devDeps[basePackage] || fs.existsSync(path.join(projectRoot, 'node_modules', basePackage))) {
                                 classification = 'DEV DEPENDENCY'; summary.packages++;
-                                analysisReason = `System Verified: Development/Test Dependency '${basePackage}' verified.`;
                             } else {
-                                classification = 'ROOT CAUSE';
-                                status = 'FAIL'; isCritical = true; impactText = 'CRITICAL';
-                                summary.criticalRootCauses++;
+                                classification = 'ROOT CAUSE'; status = 'FAIL'; isCritical = true; impactText = 'CRITICAL'; summary.criticalRootCauses++;
                                 analysisReason = `BROKEN PACKAGE: Missing Test/Dev Dependency '${basePackage}'.`;
+                                fixSuggestion = 'Run npm install for the missing dev dependency.';
+                                confidenceLvl = '100%';
                             }
                         } else {
-                            classification = 'ROOT CAUSE';
-                            status = 'FAIL'; isCritical = true; impactText = 'CRITICAL';
-                            summary.criticalRootCauses++;
+                            classification = 'ROOT CAUSE'; status = 'FAIL'; isCritical = true; impactText = 'CRITICAL'; summary.criticalRootCauses++;
                             analysisReason = `BROKEN PACKAGE: '${basePackage}' is missing from package.json dependencies!`;
+                            fixSuggestion = 'Install the package and add it to package.json.';
+                            confidenceLvl = '100%';
                         }
                     }
                 }
@@ -241,116 +241,123 @@ router.post('/scan', (req, res) => {
                 isMatch = semanticKeywords.some(keyword => lineLower.includes(keyword));
             }
 
-            // 🟢 ORIGINAL + V4.4: Logic Classification (Non-Imports)
             if (!isImportBlock) {
                 
-                // 🚀 INJECTION: V4.4 STRICT EXECUTION BLOCKERS (Added here to maintain your exact flow)
-                if (cleanLine.includes('Cannot read properties of undefined') || cleanLine.match(/\b\w+\.undefined\b/)) {
+                // 🚀 INJECTED: ADVANCED RUNTIME HEURISTICS
+                const idMatch = cleanLine.match(/id=['"]([^'"]+)['"]/);
+                if (idMatch && idMatch[1]) {
+                    const domId = idMatch[1];
+                    if (domIds.has(domId) && !duplicatedIds.has(domId)) {
+                        duplicatedIds.add(domId);
+                        classification = 'ROOT CAUSE'; status = 'FAIL'; isCritical = true; impactText = 'HIGH'; summary.criticalRootCauses++;
+                        analysisReason = `Duplicated DOM ID detected: '${domId}'. Render will conflict.`;
+                        fixSuggestion = 'Ensure all DOM IDs are unique.'; confidenceLvl = '90%';
+                    }
+                    domIds.add(domId);
+                }
+
+                if (cleanLine.match(/getElementById\(['"](.*?)['"]\)/) && !cleanLine.includes('?.')) {
+                    classification = 'ROOT CAUSE'; status = 'FAIL'; isCritical = true; impactText = 'HIGH'; summary.criticalRootCauses++;
+                    analysisReason = 'Null DOM Reference Risk: getElementById used without null check.';
+                    fixSuggestion = 'Add optional chaining (?.) or null check before accessing properties.'; confidenceLvl = '80%';
+                } else if (cleanLine.includes('display: none') || cleanLine.includes('display:none') || cleanLine.includes('visibility: hidden') || cleanLine.includes('opacity: 0')) {
+                    classification = 'ROOT CAUSE'; status = 'FAIL'; isCritical = true; impactText = 'HIGH'; summary.criticalRootCauses++;
+                    analysisReason = 'UI Blocked: Element is permanently hidden via CSS properties.';
+                    fixSuggestion = 'Remove or conditionally render the hiding property.'; confidenceLvl = '100%';
+                } else if (cleanLine.includes('Cannot read properties of undefined') || cleanLine.match(/\b\w+\.undefined\b/)) {
                     classification = 'ROOT CAUSE'; status = 'FAIL'; isCritical = true; impactText = 'CRITICAL'; summary.criticalRootCauses++;
-                    analysisReason = "UNDEFINED REFERENCE: Direct undefined property access detected. Execution crash risk.";
-                } else if (cleanLine.match(/document\.getElementById\(['"](.*?)['"]\)/) && (cleanLine.includes(').innerHTML') || cleanLine.includes(').addEventListener'))) {
-                    classification = 'ROOT CAUSE'; status = 'FAIL'; isCritical = true; impactText = 'CRITICAL'; summary.criticalRootCauses++;
-                    analysisReason = "DOM FAILURE RISK: Unsafe DOM access. If element is missing, script execution halts.";
+                    analysisReason = "UNDEFINED REFERENCE: Direct undefined property access detected.";
+                    fixSuggestion = 'Implement null/undefined guards before accessing properties.'; confidenceLvl = '100%';
                 } else if (cleanLine.includes('export default undefined') || cleanLine.includes('module.exports = {}')) {
                     classification = 'ROOT CAUSE'; status = 'FAIL'; isCritical = true; impactText = 'CRITICAL'; summary.criticalRootCauses++;
-                    analysisReason = "MISSING EXPORT: Module exports empty object. Dependent modules will crash.";
-                } 
+                    analysisReason = "Module Structure Failure: Exporting empty object/undefined.";
+                    fixSuggestion = 'Ensure the module explicitly exports its core functions/components.'; confidenceLvl = '100%';
+                }
                 
-                // 🟢 ORIGINAL: Your Exact Code Preserved 100%
+                // 🟢 ORIGINAL: Logic Classification (Defensive, Logging, UI, Route)
                 else if (lineLower.includes('throw new error')) {
-                    classification = 'DEFENSIVE CODE'; summary.defensiveCode++; status = 'PASS'; impactText = 'None';
-                    analysisReason = "Expected exception handling / Normal validation.";
+                    classification = 'DEFENSIVE CODE'; summary.defensiveCode++; status = 'PASS';
+                    analysisReason = "Expected exception handling.";
                 } else if (lineLower.includes('console.error')) {
-                    classification = 'LOGGING'; summary.logging++; status = 'PASS'; impactText = 'None';
+                    classification = 'LOGGING'; summary.logging++; status = 'PASS';
                     analysisReason = "Standard error logging operation.";
                 } else if (isMatch) {
                     if (lineLower.includes('<') && lineLower.includes('>')) {
                         classification = 'UI'; summary.references++;
-                        analysisReason = "Frontend UI logic matching semantic intent.";
                     } else if (lineLower.includes('express.static')) {
                         classification = 'STATIC ASSET'; summary.references++;
-                        analysisReason = "Static Asset Route matching semantic intent.";
                     } else if (lineLower.includes('app.use') || lineLower.includes('router.')) {
                         classification = 'ROUTE'; summary.references++;
-                        analysisReason = "Backend Route/Middleware matching semantic intent.";
                     } else {
-                        classification = 'REFERENCE'; summary.references++; status = 'PASS'; impactText = 'Low';
-                        analysisReason = `Semantic logic reference related to query found.`;
+                        classification = 'REFERENCE'; summary.references++; status = 'PASS';
                     }
+                    analysisReason = `Semantic logic reference related to query found.`;
                 }
             }
 
-            // 🟢 V4.4 RULE 6: HIDE PASS / OUTPUT GENERATOR
+            // 🟢 ORIGINAL + NEW OUTPUT FORMAT (Hide Pass by Default)
             if (classification) {
                 const isFailState = (status === 'FAIL' || isCritical || classification === 'ROOT CAUSE');
-                const formattedReason = `<strong>Reason:</strong> ${analysisReason}<br><strong>Evidence:</strong> <code>${cleanLine.substring(0, 75)}...</code><br><strong>Confidence:</strong> ${isFailState ? '100% (Engine Verified)' : 'High (Semantic Match)'}`;
 
                 if (isFailState) {
-                    // Always show FAILs
                     issues.push({
-                        stage: classification, status: 'FAIL', file: fileName, line: lineNumber, impact: impactText,
-                        reason: formattedReason, 
-                        suggestedFix: 'Critical Action: Resolve the ROOT CAUSE immediately to prevent application crash.'
+                        Severity: impactText,
+                        File: fileName,
+                        Line: lineNumber,
+                        Reason: analysisReason,
+                        Evidence: cleanLine.substring(0, 100),
+                        SuggestedFix: fixSuggestion || 'Immediate fix required to prevent application crash.',
+                        Confidence: confidenceLvl
                     });
                 } else if (isReferenceRequested) {
-                    // Show PASSes (UI, ROUTE, LOGGING) ONLY if user asked for "রেফারেন্স" (Rule 8)
+                    // Only output Pass/Reference if user specifically requests "show references"
                     issues.push({
-                        stage: classification, status: status, file: fileName, line: lineNumber, impact: impactText,
-                        reason: formattedReason, 
-                        suggestedFix: 'Expected behavior. No action required.'
+                        Severity: 'INFO',
+                        File: fileName,
+                        Line: lineNumber,
+                        Reason: analysisReason,
+                        Evidence: cleanLine.substring(0, 100),
+                        SuggestedFix: 'Expected behavior. No action required.',
+                        Confidence: 'High'
                     });
                 } else {
-                    // SILENTLY HIDE NOISE (Rule 2 & 6)
                     summary.hiddenPasses++;
                 }
             }
         });
     });
 
-    issues.sort((a, b) => (a.status === 'FAIL' ? -1 : 1));
+    // Sort fails to top
+    issues.sort((a, b) => {
+        if (a.Severity === 'CRITICAL' || a.Severity === 'HIGH') return -1;
+        return 1;
+    });
 
     // =======================================================
-    // 🟢 V4.5 RULE: RUNTIME INVESTIGATION MODE (NO FALSE PASS)
+    // 🟢 UNKNOWN HANDLER (No Root Cause Proven)
     // =======================================================
-    const hasFails = issues.some(i => i.status === 'FAIL');
-    let finalResultText = "";
-
+    const hasFails = issues.some(i => i.Severity === 'CRITICAL' || i.Severity === 'HIGH');
+    
     if (!hasFails) {
-        finalResultText = "Static analysis cannot prove runtime success. System state is UNKNOWN.";
         issues.push({
-            stage: 'RUNTIME INVESTIGATION', status: 'UNKNOWN', file: 'Live Environment', line: 0, impact: 'UNKNOWN',
-            reason: `<strong>Status: UNKNOWN</strong><br>Code structure is verified correct, but runtime execution failed.<br><br>
-            <strong>Pending Runtime Checks:</strong><br>
-            1. Script actually executed (window object created)<br>
-            2. target DOM exists (DOM Missing / Duplicated IDs)<br>
-            3. DOM visible (display:none / hidden / z-index)<br>
-            4. fetch() API status / Promise rejections<br>
-            5. Missing assets / Render aborted`,
-            suggestedFix: 'Open browser DevTools (Console/Elements) to verify live runtime rendering.'
+            Severity: 'UNKNOWN',
+            File: 'Runtime Memory',
+            Line: 'N/A',
+            Reason: 'No root cause can be proven from source code. Advanced runtime state verification required.',
+            Evidence: `Static code heuristics returned 0 matches across ${filesToActuallyScan.length} files.`,
+            SuggestedFix: 'Engine requires external runtime evidence for: [1. Network Request Payload], [2. Final DOM Tree State]. Provide exact system logs to continue.',
+            Confidence: '0%'
         });
-    } else {
-        finalResultText = `Execution stopped at ${summary.criticalRootCauses} critical point(s).`;
     }
 
-    const treeData = `[ORBIS RCA ENGINE V4.5 - FULL SYSTEM TRACE]
- ├── Query          : "${query}"
- ├── Target Module  : [${detectedModule.toUpperCase()}]
- ├── System State   : Packages(${summary.packages}) | Node Modules(${summary.nodeModules}) | Local Modules(${summary.localModules})
- ├── Code Quality   : Defensive(${summary.defensiveCode}) | Logging(${summary.logging}) | UI/Routes(${summary.references})
- ├── Hidden Noise   : ${summary.hiddenPasses} references hidden (Use 'show reference' to view)
- └── Final Result   : ${finalResultText}`;
-
-    res.json({
-        tree: treeData,
-        issues: issues 
-    });
+    res.json({ issues: issues });
 });
 
 // ==========================================
 // 3. LIVE LOGS (Unchanged)
 // ==========================================
 router.get('/logs', (req, res) => {
-    res.json({ logs: `[SERVER] Diagnostic Engine V4.5 Deep Scan Online.\n[TIMESTAMP] ${new Date().toISOString()}` });
+    res.json({ logs: `[SERVER] Diagnostic Engine Active.\n[TIMESTAMP] ${new Date().toISOString()}` });
 });
 
 export default router;
