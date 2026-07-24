@@ -108,29 +108,41 @@ window.LotteryDispatchApp = {
         const gridBody = document.getElementById('lottery-grid-body');
         if (!gridBody) return;
 
+        // 🟢 ড্রপডাউন দেখানোর ফাংশন (টাইপ না করলেও কাজ করবে)
+        function showDropdown(inputElement, filterText = "") {
+            const dropdown = inputElement.nextElementSibling;
+            
+            const filteredParties = partiesDB.filter(p => 
+                p.category === 'Lottery' && 
+                (p.name.toLowerCase().includes(filterText.toLowerCase()) || 
+                 p.id.toLowerCase().includes(filterText.toLowerCase()))
+            );
+
+            if (filteredParties.length > 0) {
+                dropdown.innerHTML = filteredParties.map(p => 
+                    `<div class="autocomplete-item" data-rate="${p.rate}" data-tds="${p.tds}" data-bal="${p.prevBal}">
+                        <strong>${p.name}</strong> <span style="color:#6b7280; font-size:12px;">(${p.id})</span>
+                    </div>`
+                ).join('');
+                dropdown.style.display = 'block';
+            } else {
+                dropdown.innerHTML = `<div class="autocomplete-item" style="color: #ef4444; pointer-events: none;">কোনো পার্টি পাওয়া যায়নি!</div>`;
+                dropdown.style.display = 'block';
+            }
+        }
+
+        // 🟢 বক্সে ক্লিক করলেই ড্রপডাউন চলে আসবে
+        gridBody.addEventListener('focusin', function(e) {
+            if (e.target.classList.contains('party-input')) {
+                showDropdown(e.target, e.target.value); 
+            }
+        });
+
+        // 🟢 টাইপ করার সময় ড্রপডাউন ফিল্টার হবে এবং হিসাব আপডেট হবে
         gridBody.addEventListener('input', function(e) {
             if (e.target.classList.contains('party-input')) {
-                const inputVal = e.target.value.toLowerCase();
-                const dropdown = e.target.nextElementSibling;
-                
-                if (inputVal.length < 1) {
-                    dropdown.style.display = 'none';
-                    return;
-                }
-
-                const filteredParties = partiesDB.filter(p => 
-                    p.category === 'Lottery' && p.name.toLowerCase().includes(inputVal)
-                );
-
-                if (filteredParties.length > 0) {
-                    dropdown.innerHTML = filteredParties.map(p => 
-                        `<div class="autocomplete-item" data-rate="${p.rate}" data-tds="${p.tds}" data-bal="${p.prevBal}">${p.name}</div>`
-                    ).join('');
-                    dropdown.style.display = 'block';
-                } else {
-                    dropdown.style.display = 'none';
-                }
-            } 
+                showDropdown(e.target, e.target.value);
+            }
             else if (e.target.classList.contains('spreadsheet-input')) {
                 const row = e.target.closest('tr');
                 if (row) calculateRowUI(row);
@@ -138,26 +150,30 @@ window.LotteryDispatchApp = {
             }
         });
 
+        // 🟢 লিস্ট থেকে নাম সিলেক্ট করলে অটো-ফিল হয়ে যাবে
         gridBody.addEventListener('click', function(e) {
-            if (e.target.classList.contains('autocomplete-item')) {
-                const row = e.target.closest('tr');
-                row.querySelector('.party-input').value = e.target.innerText;
-                row.querySelector('.rate-input').value = e.target.getAttribute('data-rate');
-                row.querySelector('.tds-input').value = e.target.getAttribute('data-tds');
-                row.querySelector('.prev-bal-input').value = e.target.getAttribute('data-bal');
+            const item = e.target.closest('.autocomplete-item');
+            if (item && item.dataset.rate) {
+                const row = item.closest('tr');
+                row.querySelector('.party-input').value = item.querySelector('strong').innerText;
+                row.querySelector('.rate-input').value = item.getAttribute('data-rate');
+                row.querySelector('.tds-input').value = item.getAttribute('data-tds');
+                row.querySelector('.prev-bal-input').value = item.getAttribute('data-bal');
 
-                e.target.parentElement.style.display = 'none'; 
+                item.closest('.autocomplete-dropdown').style.display = 'none'; 
                 calculateRowUI(row);
                 calculateTotalsUI();
             }
         });
 
+        // 🟢 ড্রপডাউনের বাইরে ক্লিক করলে সেটি বন্ধ হয়ে যাবে
         document.addEventListener('click', function(e) {
             if (!e.target.classList.contains('party-input')) {
                 document.querySelectorAll('.autocomplete-dropdown').forEach(d => d.style.display = 'none');
             }
         });
 
+        // নতুন রো (Row) অ্যাড করার লজিক
         document.getElementById('btn-add-row')?.addEventListener('click', () => {
             const newRow = `
                 <tr>
@@ -179,12 +195,13 @@ window.LotteryDispatchApp = {
             gridBody.insertAdjacentHTML('beforeend', newRow);
         });
 
+        // প্রোফাইল চেক বাটন
         const fetchPartyBtn = document.getElementById('btn-fetch-party');
         const partyInput = document.getElementById('party-mobile-input');
         if (fetchPartyBtn && partyInput) {
             fetchPartyBtn.addEventListener('click', () => {
                 const mobile = partyInput.value.trim();
-                if (mobile.length >= 10) {
+                if (mobile.length >= 2) {
                     alert("Searching dispatch details for: " + mobile);
                 } else {
                     alert("দয়া করে সঠিক মোবাইল নম্বর বা আইডি দিন।");
@@ -192,6 +209,7 @@ window.LotteryDispatchApp = {
             });
         }
 
+        // সেভ বাটন
         const saveBtn = document.getElementById('btn-save-dispatch');
         if (saveBtn) {
             saveBtn.addEventListener('click', () => {
@@ -203,9 +221,8 @@ window.LotteryDispatchApp = {
             });
         }
 
-        // 🟢 UPDATE: সম্পূর্ণ ক্যালকুলেশন লজিক LotteryCalcEngine-এ পাঠানো হলো
+        // রো ক্যালকুলেশন লজিক
         function calculateRowUI(row) {
-            // ১. UI থেকে ডেটা নিয়ে একটি অবজেক্ট তৈরি করা
             const rowData = {
                 rate: row.querySelector('.rate-input').value,
                 dispatchQty: row.querySelector('.dispatch-input').value,
@@ -215,12 +232,8 @@ window.LotteryDispatchApp = {
                 previousOutstanding: row.querySelector('.prev-bal-input').value
             };
 
-            // ২. কোর ইঞ্জিনকে কল করে হিসাব করানো (LotteryCalcEngine অবজেক্টটি যেন স্কোপে থাকে)
-            // এটি ফ্রন্টএন্ডে থাকা কোনো লজিক ছাড়াই কোর লজিক ফাইল থেকে ফলাফল নিয়ে আসবে।
             if (typeof LotteryCalcEngine !== 'undefined') {
                 const result = LotteryCalcEngine.calculateRow(rowData);
-
-                // ৩. রেজাল্ট UI-তে বসিয়ে দেওয়া
                 row.querySelector('.net-tkt-output').value = result.netTickets;
                 row.querySelector('.net-pay-output').value = '₹ ' + result.finalAmount.toFixed(2);
                 row.querySelector('.curr-bal-output').value = '₹ ' + result.currentBalance.toFixed(2);
@@ -229,7 +242,7 @@ window.LotteryDispatchApp = {
             }
         }
 
-        // Total Calculation
+        // টোটাল ক্যালকুলেশন লজিক
         function calculateTotalsUI() {
             let tDisp = 0, tRet = 0, tNet = 0, tOut = 0;
             document.querySelectorAll('#lottery-grid-body tr').forEach(row => {
