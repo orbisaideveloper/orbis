@@ -349,4 +349,16 @@ window.runRCA = async function() {
 
             document.getElementById('modal-content-area').innerHTML = `
                 <h3 style="color: white; margin-bottom: 20px; font-family: var(--font-code); border-bottom: 1px solid var(--border); padding-bottom: 10px;">
-                    🔍 Traced Logic for: <span style="color: var(--accent
+                    🔍 Traced Logic for: <span style="color: var(--accent);">"${query}"</span>
+                </h3>
+                ${resultsHTML}
+            `;
+        }
+    } catch (error) {
+        document.getElementById('modal-content-area').innerHTML = `<h3 style="color:red; text-align:center;">SERVER ERROR</h3>`;
+    }
+};
+
+function loadSystemOverview(workspace) {
+    workspace.innerHTML = `<div class="welcome-screen"><h2 class="glitch">SYSTEM ONLINE</h2><p>Click 'Run Full Scan' at the top right to analyze your code.</p></div>`;
+}
