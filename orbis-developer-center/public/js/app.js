@@ -35,7 +35,6 @@ window.copyToClipboard = function(text, element) {
     });
 };
 
-// 🟢 NEW: Safe Copy for Audit Data (Base64 என்கোডিং দিয়ে তৈরি)
 window.copyAuditData = function(base64Data, element) {
     const text = decodeURIComponent(escape(atob(base64Data)));
     navigator.clipboard.writeText(text).then(() => {
@@ -45,16 +44,41 @@ window.copyAuditData = function(base64Data, element) {
     });
 };
 
+// 🟢 NEW: ফুল স্ক্রিন ওপেন এবং ক্লোজ করার সিস্টেম
+function openFullScreenModal(contentHTML) {
+    let modal = document.getElementById('orbis-full-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'orbis-full-modal';
+        modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: var(--bg-dark); z-index: 9999; overflow-y: auto; display: none; padding: 20px; box-sizing: border-box;';
+        document.body.appendChild(modal);
+    }
+    modal.innerHTML = `
+        <div style="max-width: 1200px; margin: 0 auto; padding-bottom: 50px;">
+            <button onclick="closeModal()" style="background: var(--bg-panel); color: white; border: 1px solid var(--border); padding: 10px 20px; border-radius: 6px; cursor: pointer; margin-bottom: 20px; font-weight: bold; display: flex; align-items: center; gap: 8px;">
+                ⬅ Back to Dashboard
+            </button>
+            ${contentHTML}
+        </div>
+    `;
+    modal.style.display = 'block';
+}
+
+window.closeModal = function() {
+    const modal = document.getElementById('orbis-full-modal');
+    if (modal) modal.style.display = 'none';
+};
+
 const createListHTML = (listId, fileArray) => {
     const listItems = fileArray.map(f => `
         <li style="padding: 6px 0; border-bottom: 1px dashed #3f3f46; display: flex; justify-content: space-between; align-items: center;">
-            <span style="word-break: break-all;">📄 ${f}</span>
-            <span onclick="copyToClipboard('${f}', this)" style="cursor: pointer; background: var(--bg-dark); padding: 3px 6px; border-radius: 4px; font-size: 14px;" title="Copy File Path">📋</span>
+            <span style="word-wrap: break-word; flex: 1;">📄 ${f}</span>
+            <span onclick="copyToClipboard('${f}', this)" style="cursor: pointer; background: var(--bg-dark); padding: 3px 6px; border-radius: 4px; font-size: 14px; margin-left: 10px;" title="Copy File Path">📋</span>
         </li>
     `).join('');
     
     return `
-    <div id="${listId}" style="display: none; margin-top: 15px; background: #000; padding: 10px; border: 1px solid var(--border); border-radius: 4px; max-height: 150px; overflow-y: auto;" onclick="event.stopPropagation()">
+    <div id="${listId}" style="display: none; margin-top: 15px; background: #000; padding: 10px; border: 1px solid var(--border); border-radius: 4px; max-height: 200px; overflow-y: auto;" onclick="event.stopPropagation()">
         <ul style="list-style: none; padding: 0; margin: 0; font-size: 12px; font-family: var(--font-code); color: var(--text-muted);">
             ${listItems || '<li>No files found.</li>'}
         </ul>
@@ -101,15 +125,13 @@ async function loadInventory(workspace) {
 }
 
 async function runFullScan(workspace) {
-    document.querySelector('.breadcrumb .highlight').innerText = "Full Project Audit";
-    
+    // স্ক্রিনে একটু লোডিং দেখাই
     workspace.innerHTML = `
     <div class="terminal-box" style="border-color: #f7df1e;">
         <div class="term-header">Deep Audit Engine</div>
         <div class="term-body" style="color: #f7df1e;">
             &gt; Connecting to Sonar-style core...<br>
-            &gt; Analyzing vulnerabilities, bugs, and code smells...<br>
-            &gt; Processing abstract syntax trees...<br>
+            &gt; Generating Full Screen Report...<br>
             <span class="cursor">_</span>
         </div>
     </div>`;
@@ -123,59 +145,67 @@ async function runFullScan(workspace) {
             const gateColor = d.qualityGate === 'PASSED' ? 'var(--accent)' : '#ef4444';
             const secColor = d.securityGrade === 'A' ? 'var(--accent)' : (d.securityGrade === 'B' ? '#f7df1e' : '#ef4444');
 
-            // 🟢 FIX: Base64 encoding to prevent HTML breakage and word-break for UI overflow
+            // 🟢 FIX: ওভারফ্লো প্রব্লেম সলভ করা হয়েছে, কপি বাটন পজিশন ঠিক করা হয়েছে
             const buildIssueList = (issues, color) => issues.map(i => {
                 const copyText = `File: ${i.file}\nLine: ${i.line}\nIssue: ${i.issue}\nCode:\n${i.code}`;
                 const safeData = btoa(unescape(encodeURIComponent(copyText)));
                 
                 return `
-                <div style="background: #000; padding: 12px; margin-top: 10px; border-left: 4px solid ${color}; border-radius: 6px; display:flex; justify-content: space-between; align-items:flex-start; flex-wrap: wrap;">
-                    <div style="flex: 1; min-width: 0; padding-right: 10px;">
-                        <div style="color: var(--text-muted); font-size: 11px; word-break: break-all;">📁 ${i.file} <span style="color:white;">(Line: ${i.line})</span></div>
-                        <div style="color: ${color}; font-size: 14px; font-weight: bold; margin: 6px 0;">${i.issue}</div>
-                        <div style="background:#18181b; padding: 8px; font-size: 12px; border-radius:4px; font-family: var(--font-code); white-space: pre-wrap; word-break: break-all; border: 1px solid #27272a; color: #d4d4d8;">
-                            ${i.code.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
-                        </div>
-                    </div>
-                    <button onclick="copyAuditData('${safeData}', this)" style="background: var(--bg-panel); border: 1px solid var(--border); color: white; padding: 6px 12px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 5px; flex-shrink: 0; margin-top: 5px;" title="Copy Full Issue Details">
-                        📋 Copy Info
+                <div style="background: #000; padding: 15px; margin-top: 15px; border-left: 4px solid ${color}; border-radius: 6px; position: relative;">
+                    
+                    <button onclick="copyAuditData('${safeData}', this)" style="position: absolute; top: 15px; right: 15px; background: var(--bg-panel); border: 1px solid var(--border); color: white; padding: 6px 12px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 12px;" title="Copy Full Issue Details">
+                        📋 Copy
                     </button>
+                    
+                    <div style="padding-right: 90px;">
+                        <div style="color: var(--text-muted); font-size: 13px; word-wrap: break-word;">📁 ${i.file} <span style="color:white;">(Line: ${i.line})</span></div>
+                        <div style="color: ${color}; font-size: 16px; font-weight: bold; margin: 8px 0;">${i.issue}</div>
+                    </div>
+                    
+                    <div style="background:#18181b; padding: 12px; font-size: 13px; border-radius:4px; font-family: var(--font-code); white-space: pre-wrap; word-wrap: break-word; border: 1px solid #27272a; color: #d4d4d8; margin-top: 10px; overflow-x: auto;">
+                        ${i.code.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
+                    </div>
                 </div>
             `}).join('');
 
-            setTimeout(() => {
-                workspace.innerHTML = `
+            // Full Screen Modal-এর জন্য HTML তৈরি
+            const fullScreenHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
-                    <h2 style="color: white; font-family: var(--font-code);">🛡️ Deep Code Audit Report</h2>
-                    <div style="background: ${gateColor}; color: #000; padding: 5px 15px; font-weight: bold; border-radius: 20px; font-size: 12px;">QUALITY GATE: ${d.qualityGate}</div>
+                    <h2 style="color: white; font-family: var(--font-code); font-size: 24px;">🛡️ Deep Code Audit Report</h2>
+                    <div style="background: ${gateColor}; color: #000; padding: 8px 20px; font-weight: bold; border-radius: 20px; font-size: 14px;">QUALITY GATE: ${d.qualityGate}</div>
                 </div>
                 
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 25px;">
-                    <div style="background: var(--bg-panel); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid var(--border);">
-                        <div style="color: var(--text-muted); font-size: 11px;">SECURITY RATING</div>
-                        <div style="font-size: 32px; font-weight: bold; color: ${secColor};">${d.securityGrade}</div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px;">
+                    <div style="background: var(--bg-panel); padding: 20px; border-radius: 8px; text-align: center; border: 1px solid var(--border);">
+                        <div style="color: var(--text-muted); font-size: 12px;">SECURITY RATING</div>
+                        <div style="font-size: 40px; font-weight: bold; color: ${secColor}; margin-top: 10px;">${d.securityGrade}</div>
                     </div>
-                    <div style="background: var(--bg-panel); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid var(--border);">
-                        <div style="color: var(--text-muted); font-size: 11px;">BUGS</div>
-                        <div style="font-size: 32px; font-weight: bold; color: #ef4444;">${d.totalBugs}</div>
+                    <div style="background: var(--bg-panel); padding: 20px; border-radius: 8px; text-align: center; border: 1px solid var(--border);">
+                        <div style="color: var(--text-muted); font-size: 12px;">BUGS</div>
+                        <div style="font-size: 40px; font-weight: bold; color: #ef4444; margin-top: 10px;">${d.totalBugs}</div>
                     </div>
-                    <div style="background: var(--bg-panel); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid var(--border);">
-                        <div style="color: var(--text-muted); font-size: 11px;">CODE SMELLS</div>
-                        <div style="font-size: 32px; font-weight: bold; color: #f7df1e;">${d.totalCodeSmells}</div>
+                    <div style="background: var(--bg-panel); padding: 20px; border-radius: 8px; text-align: center; border: 1px solid var(--border);">
+                        <div style="color: var(--text-muted); font-size: 12px;">CODE SMELLS</div>
+                        <div style="font-size: 40px; font-weight: bold; color: #f7df1e; margin-top: 10px;">${d.totalCodeSmells}</div>
                     </div>
-                    <div style="background: var(--bg-panel); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid var(--border);">
-                        <div style="color: var(--text-muted); font-size: 11px;">DUPLICATIONS</div>
-                        <div style="font-size: 32px; font-weight: bold; color: var(--text-main);">${d.duplicationPercentage}%</div>
+                    <div style="background: var(--bg-panel); padding: 20px; border-radius: 8px; text-align: center; border: 1px solid var(--border);">
+                        <div style="color: var(--text-muted); font-size: 12px;">DUPLICATIONS</div>
+                        <div style="font-size: 40px; font-weight: bold; color: var(--text-main); margin-top: 10px;">${d.duplicationPercentage}%</div>
                     </div>
                 </div>
 
-                <h3 style="color: #ef4444; font-size: 16px; margin-top: 30px; border-bottom: 1px solid var(--border); padding-bottom: 10px; font-family: var(--font-code);">🚨 Security Risks (${d.totalVulnerabilities})</h3>
-                ${d.totalVulnerabilities > 0 ? buildIssueList(d.details.vulnerabilities, '#ef4444') : '<p style="color: var(--text-muted); font-size: 12px; padding: 10px 0;">No security vulnerabilities found.</p>'}
+                <h3 style="color: #ef4444; font-size: 20px; margin-top: 30px; border-bottom: 1px solid var(--border); padding-bottom: 10px; font-family: var(--font-code);">🚨 Security Risks (${d.totalVulnerabilities})</h3>
+                ${d.totalVulnerabilities > 0 ? buildIssueList(d.details.vulnerabilities, '#ef4444') : '<p style="color: var(--text-muted); padding: 10px 0;">No security vulnerabilities found.</p>'}
 
-                <h3 style="color: #f7df1e; font-size: 16px; margin-top: 30px; border-bottom: 1px solid var(--border); padding-bottom: 10px; font-family: var(--font-code);">⚠️ Bugs & Tasks (${d.totalBugs})</h3>
-                ${d.totalBugs > 0 ? buildIssueList(d.details.bugs, '#f7df1e') : '<p style="color: var(--text-muted); font-size: 12px; padding: 10px 0;">No major bugs found.</p>'}
-                `;
-            }, 1200);
+                <h3 style="color: #f7df1e; font-size: 20px; margin-top: 40px; border-bottom: 1px solid var(--border); padding-bottom: 10px; font-family: var(--font-code);">⚠️ Bugs & Tasks (${d.totalBugs})</h3>
+                ${d.totalBugs > 0 ? buildIssueList(d.details.bugs, '#f7df1e') : '<p style="color: var(--text-muted); padding: 10px 0;">No major bugs found.</p>'}
+            `;
+
+            setTimeout(() => {
+                // মেইন স্ক্রিনে রেডি মেসেজ দিয়ে, ফুল স্ক্রিন ওপেন করে দেব
+                workspace.innerHTML = `<div class="terminal-box" style="border-color: var(--accent);"><div class="term-body" style="color: var(--accent);">&gt; Report Generated. Opening Full Screen...</div></div>`;
+                openFullScreenModal(fullScreenHTML);
+            }, 800);
         }
     } catch (error) {
         workspace.innerHTML = `<div class="terminal-box" style="border-color: red;"><div class="term-body" style="color: red;">&gt; AUDIT ENGINE ERROR</div></div>`;
