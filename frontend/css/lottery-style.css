@@ -1,0 +1,65 @@
+/* 📝 lottery-style.css (Premium Glassmorphism & Responsive Fixes) */
+
+/* 1. Global Responsive Fixes */
+* { box-sizing: border-box !important; }
+body, .lms_dashboard_wrapper { max-width: 100vw; overflow-x: hidden; }
+.table-responsive, table { width: 100%; max-width: 100%; display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; white-space: nowrap; }
+input[type="text"], input[type="number"], .search-bar { width: 100%; max-width: 100%; text-overflow: ellipsis; }
+
+/* 2. Theme Variables */
+:root {
+    --lms-saffron: #FF9933; --lms-saffron-glow: rgba(255, 153, 51, 0.15); --lms-saffron-border: rgba(255, 153, 51, 0.4);
+    --lms-green: #138808; --lms-green-glow: rgba(19, 136, 8, 0.15); --lms-green-border: rgba(19, 136, 8, 0.4);
+    --lms-glass-bg: rgba(255, 255, 255, 0.65);
+    --lms-text-dark: #2C3E50; --lms-text-muted: #7F8C8D;
+}
+
+/* 3. Animations & Backgrounds */
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.lms_animate_up { animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.lms_bg_shape_1 { position: absolute; top: -50px; right: -50px; width: 250px; height: 250px; background: var(--lms-saffron-glow); border-radius: 50%; filter: blur(50px); z-index: 0; pointer-events: none;}
+.lms_bg_shape_2 { position: absolute; bottom: -50px; left: -50px; width: 300px; height: 300px; background: var(--lms-green-glow); border-radius: 50%; filter: blur(60px); z-index: 0; pointer-events: none;}
+
+/* 4. Sidebar Styles */
+#dl-sidebar {
+    position: fixed; top: 0; left: -280px; width: 260px; height: 100vh;
+    background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border-right: 1px solid rgba(255,255,255,0.6); box-shadow: 4px 0 25px rgba(0,0,0,0.05);
+    transition: left 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); z-index: 2000; display: flex; flex-direction: column;
+}
+#dl-sidebar.active { left: 0; }
+.sidebar-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.3); z-index: 1999; display: none; opacity: 0; transition: opacity 0.3s ease; backdrop-filter: blur(3px); }
+.sidebar-overlay.active { display: block; opacity: 1; }
+#dl-dynamic-view { position: relative; z-index: 1; height: 100%; overflow-y: auto; overflow-x: hidden; padding-bottom: 20px; }
+
+/* 5. Dashboard Topbar & Summaries */
+.lms_dashboard_inner { padding: 15px; max-width: 600px; margin: 0 auto; }
+.lms_topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+.lms_menu_btn { font-size: 24px; cursor: pointer; color: var(--lms-text-dark); background: none; border: none; padding: 0; }
+.lms_lang_toggle { background: var(--lms-glass-bg); backdrop-filter: blur(10px); padding: 6px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.8); font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.02); color: var(--lms-text-dark);}
+.lms_profile_icon { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, var(--lms-green), #22c55e); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; box-shadow: 0 4px 10px var(--lms-green-glow); }
+.lms_summary_row { display: flex; gap: 12px; margin-bottom: 20px; }
+.lms_summary_card { flex: 1; background: var(--lms-glass-bg); backdrop-filter: blur(16px); border-radius: 16px; padding: 15px; border: 1px solid var(--lms-saffron-border); box-shadow: 0 4px 20px rgba(0,0,0,0.03); position: relative; overflow: hidden; }
+.lms_summary_card:nth-child(2) { border-color: var(--lms-green-border); }
+.lms_summary_card h4 { margin: 0; font-size: 11px; color: var(--lms-text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;}
+.lms_summary_card h2 { margin: 5px 0 0 0; font-size: 20px; font-weight: 800; color: var(--lms-saffron); }
+.lms_summary_card:nth-child(2) h2 { color: var(--lms-green); }
+
+/* 6. New Action Cards (No Emojis, With Mini Stats) */
+.lms_grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-bottom: 20px;}
+.lms_action_card {
+    background: var(--lms-glass-bg); backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.9); border-radius: 16px; padding: 16px 12px;
+    text-align: left; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+    transition: all 0.3s ease; position: relative; overflow: hidden;
+    display: flex; flex-direction: column; justify-content: space-between; min-height: 110px;
+}
+.lms_action_card:hover { transform: translateY(-3px); box-shadow: 0 12px 25px rgba(0,0,0,0.06); border-color: var(--lms-green-border); }
+.lms_action_card .title_en { font-size: 14px; font-weight: 800; color: var(--lms-text-dark); margin: 0 0 4px 0; }
+.lms_action_card .lms_title_local { font-size: 11px; font-weight: 600; color: var(--lms-text-muted); margin: 0 0 10px 0; display: none; }
+.lms_card_stats { margin-top: auto; padding-top: 10px; border-top: 1px dashed rgba(0,0,0,0.1); font-size: 11px; font-weight: 600; color: #555; line-height: 1.4; }
+.lms_stat_highlight { color: var(--lms-saffron); font-weight: 700; }
+.lms_stat_highlight_green { color: var(--lms-green); font-weight: 700; }
