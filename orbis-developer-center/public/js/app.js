@@ -2,11 +2,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const navItems = document.querySelectorAll('.nav-item');
     const workspace = document.querySelector('.workspace');
     
-    // Top Bar-এর 'Run Full Scan' বাটন কানেক্ট করা
     const scanBtn = document.querySelector('.btn-primary');
-    if (scanBtn) {
-        scanBtn.addEventListener('click', () => runFullScan(workspace));
-    }
+    if (scanBtn) scanBtn.addEventListener('click', () => runFullScan(workspace));
 
     navItems.forEach(item => {
         item.addEventListener('click', async (e) => {
@@ -18,6 +15,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (targetText.includes('Project Inventory')) {
                 await loadInventory(workspace);
+            } else if (targetText.includes('Root Cause Engine')) {
+                loadRootCauseEngine(workspace); // 🟢 NEW: Root Cause Engine Load
             } else if (targetText.includes('System Overview')) {
                 loadSystemOverview(workspace);
             } else {
@@ -39,12 +38,11 @@ window.copyAuditData = function(base64Data, element) {
     const text = decodeURIComponent(escape(atob(base64Data)));
     navigator.clipboard.writeText(text).then(() => {
         const originalHTML = element.innerHTML;
-        element.innerHTML = '✅ Copied!';
+        element.innerHTML = '✅ Copied All!';
         setTimeout(() => { element.innerHTML = originalHTML; }, 1500);
     });
 };
 
-// 🟢 NEW: ফুল স্ক্রিন ওপেন এবং ক্লোজ করার সিস্টেম
 function openFullScreenModal(contentHTML) {
     let modal = document.getElementById('orbis-full-modal');
     if (!modal) {
@@ -69,6 +67,9 @@ window.closeModal = function() {
     if (modal) modal.style.display = 'none';
 };
 
+// ==========================================
+// 📦 PROJECT INVENTORY
+// ==========================================
 const createListHTML = (listId, fileArray) => {
     const listItems = fileArray.map(f => `
         <li style="padding: 6px 0; border-bottom: 1px dashed #3f3f46; display: flex; justify-content: space-between; align-items: center;">
@@ -77,8 +78,15 @@ const createListHTML = (listId, fileArray) => {
         </li>
     `).join('');
     
+    // 🟢 Bulk Copy for Inventory
+    const allFilesStr = fileArray.join('\\n');
+    const safeData = btoa(unescape(encodeURIComponent(allFilesStr)));
+
     return `
     <div id="${listId}" style="display: none; margin-top: 15px; background: #000; padding: 10px; border: 1px solid var(--border); border-radius: 4px; max-height: 200px; overflow-y: auto;" onclick="event.stopPropagation()">
+        <div style="text-align: right; margin-bottom: 10px;">
+            <button onclick="copyAuditData('${safeData}', this)" style="background: var(--bg-panel); color: white; padding: 4px 10px; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; font-size: 11px;">📋 Copy All List</button>
+        </div>
         <ul style="list-style: none; padding: 0; margin: 0; font-size: 12px; font-family: var(--font-code); color: var(--text-muted);">
             ${listItems || '<li>No files found.</li>'}
         </ul>
@@ -111,11 +119,6 @@ async function loadInventory(workspace) {
                         <p style="font-size: 28px; font-weight: bold; margin-top: 10px; color: #e34f26;">${data.htmlFilesCount}</p>
                         ${createListHTML('html-list', data.htmlList)}
                     </div>
-                    <div onclick="toggleList('css-list')" style="background: var(--bg-panel); padding: 20px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer;">
-                        <h3 style="color: var(--text-muted); font-size: 12px; font-family: var(--font-code);">CSS (.css)</h3>
-                        <p style="font-size: 28px; font-weight: bold; margin-top: 10px; color: #1572b6;">${data.cssFilesCount}</p>
-                        ${createListHTML('css-list', data.cssList)}
-                    </div>
                 </div>`;
             }, 500);
         }
@@ -124,14 +127,15 @@ async function loadInventory(workspace) {
     }
 }
 
+// ==========================================
+// 🚀 RUN FULL SCAN (GROUPED BY FILE)
+// ==========================================
 async function runFullScan(workspace) {
-    // স্ক্রিনে একটু লোডিং দেখাই
     workspace.innerHTML = `
     <div class="terminal-box" style="border-color: #f7df1e;">
-        <div class="term-header">Deep Audit Engine</div>
         <div class="term-body" style="color: #f7df1e;">
             &gt; Connecting to Sonar-style core...<br>
-            &gt; Generating Full Screen Report...<br>
+            &gt; Generating Filtered Report...<br>
             <span class="cursor">_</span>
         </div>
     </div>`;
@@ -145,64 +149,62 @@ async function runFullScan(workspace) {
             const gateColor = d.qualityGate === 'PASSED' ? 'var(--accent)' : '#ef4444';
             const secColor = d.securityGrade === 'A' ? 'var(--accent)' : (d.securityGrade === 'B' ? '#f7df1e' : '#ef4444');
 
-            // 🟢 FIX: ওভারফ্লো প্রব্লেম সলভ করা হয়েছে, কপি বাটন পজিশন ঠিক করা হয়েছে
-            const buildIssueList = (issues, color) => issues.map(i => {
-                const copyText = `File: ${i.file}\nLine: ${i.line}\nIssue: ${i.issue}\nCode:\n${i.code}`;
-                const safeData = btoa(unescape(encodeURIComponent(copyText)));
+            // 🟢 FIX: Group Issues by File Name
+            const buildGroupedList = (issues, color, typeLabel) => {
+                if (issues.length === 0) return '';
                 
-                return `
-                <div style="background: #000; padding: 15px; margin-top: 15px; border-left: 4px solid ${color}; border-radius: 6px; position: relative;">
-                    
-                    <button onclick="copyAuditData('${safeData}', this)" style="position: absolute; top: 15px; right: 15px; background: var(--bg-panel); border: 1px solid var(--border); color: white; padding: 6px 12px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 12px;" title="Copy Full Issue Details">
-                        📋 Copy
-                    </button>
-                    
-                    <div style="padding-right: 90px;">
-                        <div style="color: var(--text-muted); font-size: 13px; word-wrap: break-word;">📁 ${i.file} <span style="color:white;">(Line: ${i.line})</span></div>
-                        <div style="color: ${color}; font-size: 16px; font-weight: bold; margin: 8px 0;">${i.issue}</div>
-                    </div>
-                    
-                    <div style="background:#18181b; padding: 12px; font-size: 13px; border-radius:4px; font-family: var(--font-code); white-space: pre-wrap; word-wrap: break-word; border: 1px solid #27272a; color: #d4d4d8; margin-top: 10px; overflow-x: auto;">
-                        ${i.code.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
-                    </div>
-                </div>
-            `}).join('');
+                const grouped = issues.reduce((acc, i) => {
+                    if (!acc[i.file]) acc[i.file] = [];
+                    acc[i.file].push(i);
+                    return acc;
+                }, {});
 
-            // Full Screen Modal-এর জন্য HTML তৈরি
+                return Object.keys(grouped).map(fileName => {
+                    const fileIssues = grouped[fileName];
+                    
+                    // Bulk Copy Data Preparation
+                    const plainTextReport = fileIssues.map(i => `Line ${i.line}: ${i.issue}\nCode: ${i.code}`).join('\n\n');
+                    const copyText = `File: ${fileName}\n\n${plainTextReport}`;
+                    const safeData = btoa(unescape(encodeURIComponent(copyText)));
+                    
+                    const issuesHtml = fileIssues.map(i => `
+                        <div style="margin-top: 10px; padding: 12px; background: #18181b; border-left: 3px solid ${color}; border-radius: 4px;">
+                            <div style="color: ${color}; font-size: 14px; font-weight: bold; margin-bottom: 6px;">Line ${i.line} | ${i.issue}</div>
+                            <div style="font-family: var(--font-code); font-size: 12px; color: #d4d4d8; word-wrap: break-word; overflow-x: auto;">${i.code.replace(/</g, '&lt;')}</div>
+                        </div>
+                    `).join('');
+
+                    return `
+                    <div style="background: #000; padding: 15px; margin-top: 15px; border: 1px solid var(--border); border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border); padding-bottom: 10px; flex-wrap: wrap; gap: 10px;">
+                            <div style="color: white; font-weight: bold; word-break: break-all;">
+                                📁 ${fileName} 
+                                <span style="background: ${color}; color: #000; padding: 2px 8px; border-radius: 12px; font-size: 11px; margin-left: 10px;">${fileIssues.length} ${typeLabel}</span>
+                            </div>
+                            <button onclick="copyAuditData('${safeData}', this)" style="background: var(--bg-panel); border: 1px solid var(--border); color: white; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                                📋 Copy All for this File
+                            </button>
+                        </div>
+                        ${issuesHtml}
+                    </div>
+                    `;
+                }).join('');
+            };
+
             const fullScreenHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
                     <h2 style="color: white; font-family: var(--font-code); font-size: 24px;">🛡️ Deep Code Audit Report</h2>
                     <div style="background: ${gateColor}; color: #000; padding: 8px 20px; font-weight: bold; border-radius: 20px; font-size: 14px;">QUALITY GATE: ${d.qualityGate}</div>
                 </div>
                 
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px;">
-                    <div style="background: var(--bg-panel); padding: 20px; border-radius: 8px; text-align: center; border: 1px solid var(--border);">
-                        <div style="color: var(--text-muted); font-size: 12px;">SECURITY RATING</div>
-                        <div style="font-size: 40px; font-weight: bold; color: ${secColor}; margin-top: 10px;">${d.securityGrade}</div>
-                    </div>
-                    <div style="background: var(--bg-panel); padding: 20px; border-radius: 8px; text-align: center; border: 1px solid var(--border);">
-                        <div style="color: var(--text-muted); font-size: 12px;">BUGS</div>
-                        <div style="font-size: 40px; font-weight: bold; color: #ef4444; margin-top: 10px;">${d.totalBugs}</div>
-                    </div>
-                    <div style="background: var(--bg-panel); padding: 20px; border-radius: 8px; text-align: center; border: 1px solid var(--border);">
-                        <div style="color: var(--text-muted); font-size: 12px;">CODE SMELLS</div>
-                        <div style="font-size: 40px; font-weight: bold; color: #f7df1e; margin-top: 10px;">${d.totalCodeSmells}</div>
-                    </div>
-                    <div style="background: var(--bg-panel); padding: 20px; border-radius: 8px; text-align: center; border: 1px solid var(--border);">
-                        <div style="color: var(--text-muted); font-size: 12px;">DUPLICATIONS</div>
-                        <div style="font-size: 40px; font-weight: bold; color: var(--text-main); margin-top: 10px;">${d.duplicationPercentage}%</div>
-                    </div>
-                </div>
-
                 <h3 style="color: #ef4444; font-size: 20px; margin-top: 30px; border-bottom: 1px solid var(--border); padding-bottom: 10px; font-family: var(--font-code);">🚨 Security Risks (${d.totalVulnerabilities})</h3>
-                ${d.totalVulnerabilities > 0 ? buildIssueList(d.details.vulnerabilities, '#ef4444') : '<p style="color: var(--text-muted); padding: 10px 0;">No security vulnerabilities found.</p>'}
+                ${d.totalVulnerabilities > 0 ? buildGroupedList(d.details.vulnerabilities, '#ef4444', 'Risks') : '<p style="color: var(--text-muted); padding: 10px 0;">No security vulnerabilities found.</p>'}
 
                 <h3 style="color: #f7df1e; font-size: 20px; margin-top: 40px; border-bottom: 1px solid var(--border); padding-bottom: 10px; font-family: var(--font-code);">⚠️ Bugs & Tasks (${d.totalBugs})</h3>
-                ${d.totalBugs > 0 ? buildIssueList(d.details.bugs, '#f7df1e') : '<p style="color: var(--text-muted); padding: 10px 0;">No major bugs found.</p>'}
+                ${d.totalBugs > 0 ? buildGroupedList(d.details.bugs, '#f7df1e', 'Bugs') : '<p style="color: var(--text-muted); padding: 10px 0;">No major bugs found.</p>'}
             `;
 
             setTimeout(() => {
-                // মেইন স্ক্রিনে রেডি মেসেজ দিয়ে, ফুল স্ক্রিন ওপেন করে দেব
                 workspace.innerHTML = `<div class="terminal-box" style="border-color: var(--accent);"><div class="term-body" style="color: var(--accent);">&gt; Report Generated. Opening Full Screen...</div></div>`;
                 openFullScreenModal(fullScreenHTML);
             }, 800);
@@ -212,6 +214,83 @@ async function runFullScan(workspace) {
     }
 }
 
+// ==========================================
+// 🎙️ ROOT CAUSE ENGINE (Voice & Text UI)
+// ==========================================
+function loadRootCauseEngine(workspace) {
+    workspace.innerHTML = `
+    <h2 style="color: var(--accent); margin-bottom: 20px; font-family: var(--font-code);">🔍 Root Cause Engine</h2>
+    <div style="background: var(--bg-panel); padding: 25px; border: 1px solid var(--border); border-radius: 8px;">
+        <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 14px;">Describe the issue via text or voice. The system will reverse-engineer the project to find the broken logic.</p>
+        
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <input type="text" id="rca-query" placeholder="e.g., 'লটারি মডিউলে লাইন ব্রেক হচ্ছে...'" style="flex: 1; min-width: 200px; padding: 15px; background: #000; border: 1px solid var(--border); color: white; border-radius: 6px; font-family: var(--font-ui); font-size: 14px;">
+            
+            <button id="mic-btn" onclick="startVoiceInput()" style="background: #ef4444; border: none; padding: 0 20px; border-radius: 6px; cursor: pointer; font-size: 20px; transition: 0.3s;" title="Voice Input">🎤</button>
+            
+            <button onclick="runRCA()" style="background: var(--accent); border: none; padding: 0 25px; border-radius: 6px; cursor: pointer; font-weight: bold; color: black; font-family: var(--font-code);">⚡ Analyze Code</button>
+        </div>
+    </div>
+    <div id="rca-results" style="margin-top: 30px;"></div>
+    `;
+}
+
+// Voice Recognition Setup (Web Speech API)
+window.startVoiceInput = function() {
+    const micBtn = document.getElementById('mic-btn');
+    const inputField = document.getElementById('rca-query');
+    
+    if (!('webkitSpeechRecognition' in window)) {
+        alert("Your browser does not support Voice Input. Please type your query.");
+        return;
+    }
+    
+    const recognition = new webkitSpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'bn-IN'; // ডিফল্ট বাংলা, তবে সব ভাষা ধরবে
+    
+    recognition.onstart = function() {
+        micBtn.style.background = '#00ff66';
+        micBtn.innerHTML = '🎙️';
+        inputField.placeholder = "Listening...";
+    };
+    
+    recognition.onresult = function(event) {
+        const transcript = event.results[0][0].transcript;
+        inputField.value = transcript;
+    };
+    
+    recognition.onend = function() {
+        micBtn.style.background = '#ef4444';
+        micBtn.innerHTML = '🎤';
+        inputField.placeholder = "e.g., 'লটারি মডিউলে লাইন ব্রেক হচ্ছে...'";
+    };
+    
+    recognition.start();
+};
+
+window.runRCA = function() {
+    const query = document.getElementById('rca-query').value;
+    const resultsDiv = document.getElementById('rca-results');
+    if (!query) {
+        resultsDiv.innerHTML = `<span style="color:#ef4444;">Please enter a description or use voice input.</span>`;
+        return;
+    }
+    
+    // UI Loading State (Next step e Backend banabo er jnno)
+    resultsDiv.innerHTML = `
+    <div class="terminal-box" style="border-color: #f7df1e;">
+        <div class="term-header">RCA Tracer Active</div>
+        <div class="term-body" style="color: #f7df1e;">
+            &gt; Processing NLP Input: "${query}"<br>
+            &gt; Mapping to internal architecture...<br>
+            &gt; Connecting to Backend Server (Awaiting Lego Block)...<br>
+            <span class="cursor">_</span>
+        </div>
+    </div>`;
+};
+
 function loadSystemOverview(workspace) {
-    workspace.innerHTML = `<div class="welcome-screen"><h2 class="glitch">SYSTEM ONLINE</h2><p>Lego Architecture Active. Click 'Run Full Scan' at the top right to analyze your code.</p></div>`;
+    workspace.innerHTML = `<div class="welcome-screen"><h2 class="glitch">SYSTEM ONLINE</h2><p>Lego Architecture Active. Explore the menu to scan or reverse-engineer your project.</p></div>`;
 }
