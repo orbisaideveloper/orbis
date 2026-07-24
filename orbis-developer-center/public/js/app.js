@@ -27,7 +27,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// 📋 গ্লোবাল কপি ফাংশন (যেকোনো ডেটা কপি করার জন্য)
 window.copyToClipboard = function(text, element) {
     navigator.clipboard.writeText(text).then(() => {
         const originalHTML = element.innerHTML;
@@ -36,7 +35,16 @@ window.copyToClipboard = function(text, element) {
     });
 };
 
-// হেল্পার ফাংশন (Copy আইকন সহ লিস্ট তৈরি করার জন্য)
+// 🟢 NEW: Safe Copy for Audit Data (Base64 என்கোডিং দিয়ে তৈরি)
+window.copyAuditData = function(base64Data, element) {
+    const text = decodeURIComponent(escape(atob(base64Data)));
+    navigator.clipboard.writeText(text).then(() => {
+        const originalHTML = element.innerHTML;
+        element.innerHTML = '✅ Copied!';
+        setTimeout(() => { element.innerHTML = originalHTML; }, 1500);
+    });
+};
+
 const createListHTML = (listId, fileArray) => {
     const listItems = fileArray.map(f => `
         <li style="padding: 6px 0; border-bottom: 1px dashed #3f3f46; display: flex; justify-content: space-between; align-items: center;">
@@ -58,9 +66,6 @@ window.toggleList = function(id) {
     el.style.display = el.style.display === 'none' ? 'block' : 'none';
 };
 
-// ==========================================
-// 📦 PROJECT INVENTORY (With Copy Feature)
-// ==========================================
 async function loadInventory(workspace) {
     workspace.innerHTML = `<div class="terminal-box" style="border-color: var(--accent);"><div class="term-body">&gt; Initializing File Scanner...<span class="cursor">_</span></div></div>`;
     try {
@@ -95,9 +100,6 @@ async function loadInventory(workspace) {
     }
 }
 
-// ==========================================
-// 🚀 RUN FULL SCAN (SONARCLOUD STYLE)
-// ==========================================
 async function runFullScan(workspace) {
     document.querySelector('.breadcrumb .highlight').innerText = "Full Project Audit";
     
@@ -121,26 +123,34 @@ async function runFullScan(workspace) {
             const gateColor = d.qualityGate === 'PASSED' ? 'var(--accent)' : '#ef4444';
             const secColor = d.securityGrade === 'A' ? 'var(--accent)' : (d.securityGrade === 'B' ? '#f7df1e' : '#ef4444');
 
-            // ইস্যু লিস্ট তৈরি করা (কপি বাটনসহ)
-            const buildIssueList = (issues, color) => issues.map(i => `
-                <div style="background: #000; padding: 10px; margin-top: 8px; border-left: 3px solid ${color}; border-radius: 4px; display:flex; justify-content: space-between; align-items:flex-start;">
-                    <div>
-                        <div style="color: var(--text-muted); font-size: 11px;">${i.file} (Line: ${i.line})</div>
-                        <div style="color: ${color}; font-size: 13px; font-weight: bold; margin: 4px 0;">${i.issue}</div>
-                        <div style="background:#18181b; padding: 5px; font-size: 11px; border-radius:4px; font-family: monospace;">${i.code.replace(/</g, '&lt;')}</div>
+            // 🟢 FIX: Base64 encoding to prevent HTML breakage and word-break for UI overflow
+            const buildIssueList = (issues, color) => issues.map(i => {
+                const copyText = `File: ${i.file}\nLine: ${i.line}\nIssue: ${i.issue}\nCode:\n${i.code}`;
+                const safeData = btoa(unescape(encodeURIComponent(copyText)));
+                
+                return `
+                <div style="background: #000; padding: 12px; margin-top: 10px; border-left: 4px solid ${color}; border-radius: 6px; display:flex; justify-content: space-between; align-items:flex-start; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 0; padding-right: 10px;">
+                        <div style="color: var(--text-muted); font-size: 11px; word-break: break-all;">📁 ${i.file} <span style="color:white;">(Line: ${i.line})</span></div>
+                        <div style="color: ${color}; font-size: 14px; font-weight: bold; margin: 6px 0;">${i.issue}</div>
+                        <div style="background:#18181b; padding: 8px; font-size: 12px; border-radius:4px; font-family: var(--font-code); white-space: pre-wrap; word-break: break-all; border: 1px solid #27272a; color: #d4d4d8;">
+                            ${i.code.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
+                        </div>
                     </div>
-                    <span onclick="copyToClipboard('File: ${i.file}\\nLine: ${i.line}\\nIssue: ${i.issue}\\nCode: ${i.code.replace(/'/g, "\\'")}', this)" style="cursor: pointer; padding: 5px; font-size: 16px; margin-left: 10px;" title="Copy Details">📋</span>
+                    <button onclick="copyAuditData('${safeData}', this)" style="background: var(--bg-panel); border: 1px solid var(--border); color: white; padding: 6px 12px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 5px; flex-shrink: 0; margin-top: 5px;" title="Copy Full Issue Details">
+                        📋 Copy Info
+                    </button>
                 </div>
-            `).join('');
+            `}).join('');
 
             setTimeout(() => {
                 workspace.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
                     <h2 style="color: white; font-family: var(--font-code);">🛡️ Deep Code Audit Report</h2>
                     <div style="background: ${gateColor}; color: #000; padding: 5px 15px; font-weight: bold; border-radius: 20px; font-size: 12px;">QUALITY GATE: ${d.qualityGate}</div>
                 </div>
                 
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 25px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 25px;">
                     <div style="background: var(--bg-panel); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid var(--border);">
                         <div style="color: var(--text-muted); font-size: 11px;">SECURITY RATING</div>
                         <div style="font-size: 32px; font-weight: bold; color: ${secColor};">${d.securityGrade}</div>
@@ -159,13 +169,11 @@ async function runFullScan(workspace) {
                     </div>
                 </div>
 
-                <!-- Vulnerabilities / Security Risks -->
-                <h3 style="color: #ef4444; font-size: 14px; margin-top: 20px; font-family: var(--font-code);">🚨 Security Risks (${d.totalVulnerabilities})</h3>
-                ${d.totalVulnerabilities > 0 ? buildIssueList(d.details.vulnerabilities, '#ef4444') : '<p style="color: var(--text-muted); font-size: 12px;">No security vulnerabilities found.</p>'}
+                <h3 style="color: #ef4444; font-size: 16px; margin-top: 30px; border-bottom: 1px solid var(--border); padding-bottom: 10px; font-family: var(--font-code);">🚨 Security Risks (${d.totalVulnerabilities})</h3>
+                ${d.totalVulnerabilities > 0 ? buildIssueList(d.details.vulnerabilities, '#ef4444') : '<p style="color: var(--text-muted); font-size: 12px; padding: 10px 0;">No security vulnerabilities found.</p>'}
 
-                <!-- Bugs / TODOs -->
-                <h3 style="color: #f7df1e; font-size: 14px; margin-top: 20px; font-family: var(--font-code);">⚠️ Bugs & Tasks (${d.totalBugs})</h3>
-                ${d.totalBugs > 0 ? buildIssueList(d.details.bugs, '#f7df1e') : '<p style="color: var(--text-muted); font-size: 12px;">No major bugs found.</p>'}
+                <h3 style="color: #f7df1e; font-size: 16px; margin-top: 30px; border-bottom: 1px solid var(--border); padding-bottom: 10px; font-family: var(--font-code);">⚠️ Bugs & Tasks (${d.totalBugs})</h3>
+                ${d.totalBugs > 0 ? buildIssueList(d.details.bugs, '#f7df1e') : '<p style="color: var(--text-muted); font-size: 12px; padding: 10px 0;">No major bugs found.</p>'}
                 `;
             }, 1200);
         }
