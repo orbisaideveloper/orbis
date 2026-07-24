@@ -6,7 +6,7 @@
 export class LotteryCalcEngine {
     /**
      * Automatically calculates the entire statement for a single transaction row.
-     * @param {Object} rowData - Contains rate, dispatchQty, returnQty, commissionRate, tdsRate, previousOutstanding, and partyId
+     * @param {Object} rowData - Contains rate, dispatchQty, returnQty, commissionAmount, tdsRate, previousOutstanding, and partyId
      */
     static calculateRow(rowData) {
         // ১. Party ID এবং ডিফল্ট ভ্যালু সেট করা
@@ -14,7 +14,10 @@ export class LotteryCalcEngine {
         const rate = parseFloat(rowData.rate) || 0;
         const dispatchQty = parseInt(rowData.dispatchQty) || 0;
         const returnQty = parseInt(rowData.returnQty) || 0;
-        const commRate = parseFloat(rowData.commissionRate) || 0; 
+        
+        // কমিশন এখন আর পার্সেন্টেজ নয়, সরাসরি অ্যামাউন্ট (UI থেকে input আসবে)
+        // আগের commissionRate ফিল্ডটিকেই আমরা commissionAmount হিসেবে ধরছি
+        const commissionAmount = parseFloat(rowData.commissionAmount) || parseFloat(rowData.commissionRate) || 0; 
         
         // ডাইনামিক TDS এবং Previous Outstanding (ম্যানুয়াল এন্ট্রির জন্য)
         const tdsRateInput = parseFloat(rowData.tdsRate) || 0; 
@@ -27,14 +30,16 @@ export class LotteryCalcEngine {
         const grossSales = netTickets * rate;
 
         // ৪. Commission Calculation
-        const commissionAmount = grossSales * (commRate / 100);
+        // (পার্সেন্টেজের হিসাব বাদ দেওয়া হয়েছে, ইনপুট থেকে সরাসরি commissionAmount নেওয়া হয়েছে)
 
-        // ৫. TDS Calculation (ডাইনামিক রেট অনুযায়ী)
+        // ৫. TDS Calculation (একমাত্র কমিশনের উপর বেস করে ডাইনামিক রেট অনুযায়ী)
+        // উদাহরণ: কমিশন ১০০ টাকা এবং TDS ২% হলে, TDS অ্যামাউন্ট হবে ২ টাকা
         const tdsAmount = commissionAmount * (tdsRateInput / 100);
 
         // ৬. Final Net Payable Amount for the transaction
-        // Formula: Gross Sales - (Commission - TDS)
-        const netPayable = grossSales - (commissionAmount - tdsAmount);
+        // Formula: Gross Sales - (Commission + TDS) 
+        // উদাহরণ: কমিশন ১০০ + TDS ২ = মোট ১০২ টাকা Gross Sales থেকে মাইনাস হবে
+        const netPayable = grossSales - (commissionAmount + tdsAmount);
 
         // ৭. Current Balance Calculation
         const currentBalance = prevOutstanding + netPayable;
