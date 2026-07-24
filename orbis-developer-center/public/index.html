@@ -2,61 +2,40 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ORBIS | Developer Command Center</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ORBIS | Admin Center</title>
     <link rel="stylesheet" href="css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;600&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="app-container">
-        <!-- Sidebar Navigation -->
         <aside class="sidebar">
             <div class="brand">
-                <span class="logo-icon">⚡</span>
+                <span style="font-size: 28px;">⚡</span>
                 <div class="brand-text">
                     <h1>ORBIS</h1>
-                    <p>DEV CORE v1.0</p>
+                    <p>Premium Admin Core</p>
                 </div>
             </div>
             <nav class="nav-menu">
-                <a href="#" class="nav-item active"><span>📊</span> System Overview</a>
-                <a href="#" class="nav-item"><span>📦</span> Project Inventory</a>
-                <a href="#" class="nav-item"><span>🔍</span> Root Cause Engine</a>
-                <a href="#" class="nav-item"><span>📁</span> File Explorer <span class="badge">Live</span></a>
+                <a href="#" class="nav-item active">📊 Overview</a>
+                <a href="#" class="nav-item">📦 Inventory</a>
+                <a href="#" class="nav-item">🔍 Root Cause</a>
             </nav>
-            <div class="system-status">
-                <div class="status-indicator online"></div>
-                <span>Engine Online</span>
-            </div>
         </aside>
 
-        <!-- Main Content Area -->
         <main class="main-content">
             <header class="top-bar">
-                <div class="breadcrumb">ORBIS &gt; <span class="highlight">System Overview</span></div>
-                <div class="actions">
-                    <button class="btn btn-primary">▶ Run Full Scan</button>
-                </div>
+                <div class="breadcrumb" style="font-weight:600;">ORBIS &gt; <span class="highlight" style="color:var(--color-blue);">Overview</span></div>
+                <button class="btn-primary">▶ Run Full Scan</button>
             </header>
-
             <div class="workspace">
-                <div class="welcome-screen">
-                    <h2 class="glitch">INITIALIZING SYSTEM...</h2>
-                    <p>Lego Architecture Active. Awaiting Module Execution.</p>
-                    <div class="terminal-box">
-                        <div class="term-header">Terminal [root@orbis]</div>
-                        <div class="term-body">
-                            &gt; Engine connected successfully.<br>
-                            &gt; Ready to analyze source code.<br>
-                            <span class="cursor">_</span>
-                        </div>
-                    </div>
+                <div style="text-align:center; margin-top:50px;">
+                    <h2 style="color:var(--text-main);">System Online</h2>
+                    <p style="color:var(--text-muted); margin-top:10px;">Click 'Run Full Scan' to analyze.</p>
                 </div>
             </div>
         </main>
     </div>
-    
-    <!-- 🟢 FIX: জাভাস্ক্রিপ্ট কানেক্ট করা হলো -->
     <script src="js/app.js"></script>
 </body>
 </html>

@@ -1,15 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // 🟢 ডাইনামিক অ্যানিমেশন স্টাইল অ্যাড করা হলো (স্ক্যানিং স্পিনার)
-    const style = document.createElement('style');
-    style.innerHTML = `
-        .orbis-spinner { width: 50px; height: 50px; border: 4px solid var(--bg-panel); border-top: 4px solid var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin: 20px auto; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .audit-card { background: var(--bg-panel); padding: 20px; border-radius: 8px; text-align: center; border: 1px solid var(--border); cursor: pointer; transition: 0.3s; }
-        .audit-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-        .audit-card.active { border-color: var(--accent); background: #000; }
-    `;
-    document.head.appendChild(style);
-
     const navItems = document.querySelectorAll('.nav-item');
     const workspace = document.querySelector('.workspace');
     
@@ -24,26 +13,21 @@ document.addEventListener('DOMContentLoaded', () => {
             const targetText = item.innerText.trim();
             document.querySelector('.breadcrumb .highlight').innerText = targetText;
 
-            if (targetText.includes('Project Inventory')) {
+            if (targetText.includes('Inventory')) {
                 await loadInventory();
-            } else if (targetText.includes('Root Cause Engine')) {
+            } else if (targetText.includes('Root Cause')) {
                 loadRootCauseEngine(workspace);
-            } else if (targetText.includes('System Overview')) {
-                loadSystemOverview(workspace);
             } else {
-                workspace.innerHTML = `<div class="welcome-screen"><h2 style="color: #ef4444;">MODULE STANDBY</h2></div>`;
+                workspace.innerHTML = `<div style="text-align:center; margin-top:50px;"><h2 style="color:var(--text-main);">System Online</h2><p style="color:var(--text-muted); margin-top:10px;">Select an option from the menu.</p></div>`;
             }
         });
     });
 });
 
-// ==========================================
-// 📋 গ্লোবাল কপি ফাংশন
-// ==========================================
 window.copyToClipboard = function(text, element) {
     navigator.clipboard.writeText(text).then(() => {
         const originalHTML = element.innerHTML;
-        element.innerHTML = '✅';
+        element.innerHTML = '✅ Copied!';
         setTimeout(() => { element.innerHTML = originalHTML; }, 1500);
     });
 };
@@ -57,21 +41,18 @@ window.copyAuditData = function(base64Data, element) {
     });
 };
 
-// ==========================================
-// 🪟 ফুল স্ক্রিন মডাল ইঞ্জিন
-// ==========================================
 function openFullScreenModal(contentHTML) {
     let modal = document.getElementById('orbis-full-modal');
     if (!modal) {
         modal = document.createElement('div');
         modal.id = 'orbis-full-modal';
-        modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: var(--bg-dark); z-index: 9999; overflow-y: auto; display: none; padding: 20px; box-sizing: border-box;';
+        modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: var(--bg-body); z-index: 9999; overflow-y: auto; display: none; padding: 20px; box-sizing: border-box;';
         document.body.appendChild(modal);
     }
     modal.innerHTML = `
         <div style="max-width: 1200px; margin: 0 auto; padding-bottom: 50px;">
-            <button onclick="closeModal()" style="background: var(--bg-panel); color: white; border: 1px solid var(--border); padding: 10px 20px; border-radius: 6px; cursor: pointer; margin-bottom: 20px; font-weight: bold; display: flex; align-items: center; gap: 8px;">
-                ⬅ Back to Dashboard
+            <button onclick="closeModal()" style="background: var(--bg-panel); color: var(--text-main); border: 1px solid var(--border); padding: 10px 20px; border-radius: 8px; cursor: pointer; margin-bottom: 20px; font-weight: bold; display: flex; align-items: center; gap: 8px; box-shadow: var(--shadow-soft);">
+                ⬅ Back
             </button>
             <div id="modal-content-area">${contentHTML}</div>
         </div>
@@ -88,44 +69,17 @@ window.showLoadingScreen = function(title) {
     openFullScreenModal(`
         <div style="text-align: center; margin-top: 100px;">
             <div class="orbis-spinner"></div>
-            <h2 style="color: var(--accent); font-family: var(--font-code); margin-top: 20px;">${title}</h2>
-            <p style="color: var(--text-muted); margin-top: 10px;">Extracting real-time system data...</p>
+            <h2 style="color: var(--text-main); font-weight: 600; margin-top: 20px;">${title}</h2>
+            <p style="color: var(--text-muted); margin-top: 10px;">Please wait while scanning...</p>
         </div>
     `);
 };
 
 // ==========================================
-// 📦 PROJECT INVENTORY (Full Screen Mode)
+// 📦 PROJECT INVENTORY (Light Theme Cards)
 // ==========================================
-const createInventoryListHTML = (listId, fileArray) => {
-    const listItems = fileArray.map(f => `
-        <li style="padding: 6px 0; border-bottom: 1px dashed #3f3f46; display: flex; justify-content: space-between; align-items: center;">
-            <span style="word-wrap: break-word; flex: 1;">📄 ${f}</span>
-            <span onclick="copyToClipboard('${f}', this)" style="cursor: pointer; background: var(--bg-dark); padding: 3px 6px; border-radius: 4px; font-size: 14px; margin-left: 10px;" title="Copy File Path">📋</span>
-        </li>
-    `).join('');
-    
-    const allFilesStr = fileArray.join('\n');
-    const safeData = btoa(unescape(encodeURIComponent(allFilesStr)));
-
-    return `
-    <div id="${listId}" style="display: none; margin-top: 15px; background: #000; padding: 10px; border: 1px solid var(--border); border-radius: 4px; max-height: 300px; overflow-y: auto;" onclick="event.stopPropagation()">
-        <div style="text-align: right; margin-bottom: 10px;">
-            <button onclick="copyAuditData('${safeData}', this)" style="background: var(--bg-panel); color: white; padding: 4px 10px; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; font-size: 11px;">📋 Copy All List</button>
-        </div>
-        <ul style="list-style: none; padding: 0; margin: 0; font-size: 12px; font-family: var(--font-code); color: var(--text-muted);">
-            ${listItems || '<li>No files found.</li>'}
-        </ul>
-    </div>`;
-};
-
-window.toggleList = function(id) {
-    const el = document.getElementById(id);
-    el.style.display = el.style.display === 'none' ? 'block' : 'none';
-};
-
 async function loadInventory() {
-    showLoadingScreen("Scanning File Directory");
+    showLoadingScreen("Scanning Inventory");
     try {
         const response = await fetch('/developer-center/api/inventory');
         const result = await response.json();
@@ -133,18 +87,27 @@ async function loadInventory() {
         if (result.status === 'SUCCESS') {
             const data = result.data;
             const contentHTML = `
-                <h2 style="color: var(--accent); margin-bottom: 20px; font-family: var(--font-code);">📦 Project Inventory</h2>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px;">
-                    <div onclick="toggleList('js-list')" style="background: var(--bg-panel); padding: 20px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer;">
-                        <h3 style="color: var(--text-muted); font-size: 12px; font-family: var(--font-code);">JAVASCRIPT (.js)</h3>
-                        <p style="font-size: 28px; font-weight: bold; margin-top: 10px; color: #f7df1e;">${data.jsFilesCount}</p>
-                        ${createInventoryListHTML('js-list', data.jsList)}
+                <h2 style="color: var(--text-main); margin-bottom: 25px; font-weight: 700;">📦 Project Inventory</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px;">
+                    
+                    <div style="background: var(--bg-panel); padding: 25px; border-radius: var(--radius); box-shadow: var(--shadow-soft); border-top: 5px solid var(--color-yellow); text-align: center;">
+                        <div style="font-size: 30px; margin-bottom: 10px;">🟨</div>
+                        <h3 style="color: var(--text-muted); font-size: 14px; font-weight: 600;">JAVASCRIPT (.js)</h3>
+                        <p style="font-size: 32px; font-weight: 700; margin-top: 5px; color: var(--text-main);">${data.jsFilesCount}</p>
                     </div>
-                    <div onclick="toggleList('html-list')" style="background: var(--bg-panel); padding: 20px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer;">
-                        <h3 style="color: var(--text-muted); font-size: 12px; font-family: var(--font-code);">HTML (.html)</h3>
-                        <p style="font-size: 28px; font-weight: bold; margin-top: 10px; color: #e34f26;">${data.htmlFilesCount}</p>
-                        ${createInventoryListHTML('html-list', data.htmlList)}
+                    
+                    <div style="background: var(--bg-panel); padding: 25px; border-radius: var(--radius); box-shadow: var(--shadow-soft); border-top: 5px solid var(--color-red); text-align: center;">
+                        <div style="font-size: 30px; margin-bottom: 10px;">🟥</div>
+                        <h3 style="color: var(--text-muted); font-size: 14px; font-weight: 600;">HTML (.html)</h3>
+                        <p style="font-size: 32px; font-weight: 700; margin-top: 5px; color: var(--text-main);">${data.htmlFilesCount}</p>
                     </div>
+                    
+                    <div style="background: var(--bg-panel); padding: 25px; border-radius: var(--radius); box-shadow: var(--shadow-soft); border-top: 5px solid var(--color-blue); text-align: center;">
+                        <div style="font-size: 30px; margin-bottom: 10px;">🟦</div>
+                        <h3 style="color: var(--text-muted); font-size: 14px; font-weight: 600;">CSS (.css)</h3>
+                        <p style="font-size: 32px; font-weight: 700; margin-top: 5px; color: var(--text-main);">${data.cssFilesCount}</p>
+                    </div>
+
                 </div>`;
             document.getElementById('modal-content-area').innerHTML = contentHTML;
         }
@@ -154,17 +117,15 @@ async function loadInventory() {
 }
 
 // ==========================================
-// 🚀 RUN FULL SCAN (Interactive Top Cards & Sorter)
+// 🚀 RUN FULL SCAN (Interactive Light Cards)
 // ==========================================
-window.globalAuditData = null; // ডেটা সেভ রাখার জন্য
+window.globalAuditData = null; 
 
 async function runFullScan() {
-    showLoadingScreen("Running Deep SonarCloud Scan");
-
+    showLoadingScreen("Running Full Deep Scan");
     try {
         const response = await fetch('/developer-center/api/audit');
         const result = await response.json();
-        
         if (result.status === 'SUCCESS') {
             window.globalAuditData = result.data;
             renderAuditDashboard();
@@ -174,45 +135,43 @@ async function runFullScan() {
     }
 }
 
-// 🟢 কার্ডের ড্যাশবোর্ড রেন্ডার
 window.renderAuditDashboard = function(activeCategory = 'vulnerabilities') {
     const d = window.globalAuditData;
     if(!d) return;
 
-    const gateColor = d.qualityGate === 'PASSED' ? 'var(--accent)' : '#ef4444';
-    const secColor = d.securityGrade === 'A' ? 'var(--accent)' : (d.securityGrade === 'B' ? '#f7df1e' : '#ef4444');
-
     const issuesToRender = activeCategory === 'vulnerabilities' ? d.details.vulnerabilities : (activeCategory === 'bugs' ? d.details.bugs : (d.details.codeSmells || []));
-    const listColor = activeCategory === 'vulnerabilities' ? '#ef4444' : (activeCategory === 'bugs' ? '#f7df1e' : '#1572b6');
+    const listColor = activeCategory === 'vulnerabilities' ? 'var(--color-red)' : (activeCategory === 'bugs' ? 'var(--color-yellow)' : 'var(--color-blue)');
     const listTitle = activeCategory === 'vulnerabilities' ? 'Security Risks' : (activeCategory === 'bugs' ? 'Bugs & Tasks' : 'Code Smells');
 
     const fullScreenHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
-            <h2 style="color: white; font-family: var(--font-code); font-size: 24px;">🛡️ Deep Code Audit Report</h2>
-            <div style="background: ${gateColor}; color: #000; padding: 8px 20px; font-weight: bold; border-radius: 20px; font-size: 14px;">QUALITY GATE: ${d.qualityGate}</div>
-        </div>
+        <h2 style="color: var(--text-main); margin-bottom: 25px; font-weight: 700;">🛡️ Deep Audit Report</h2>
         
-        <!-- 🟢 Interactive Top Cards -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 30px;">
-            <div class="audit-card ${activeCategory === 'vulnerabilities' ? 'active' : ''}" onclick="renderAuditDashboard('vulnerabilities')" style="border-color: ${activeCategory === 'vulnerabilities' ? '#ef4444' : 'var(--border)'}">
-                <div style="color: var(--text-muted); font-size: 12px;">SECURITY RISKS</div>
-                <div style="font-size: 32px; font-weight: bold; color: #ef4444; margin-top: 10px;">${d.totalVulnerabilities}</div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 20px; margin-bottom: 30px;">
+            
+            <div onclick="renderAuditDashboard('vulnerabilities')" style="background: var(--bg-panel); padding: 25px; border-radius: var(--radius); box-shadow: var(--shadow-soft); border-top: 5px solid var(--color-red); text-align: center; cursor: pointer; border-bottom: ${activeCategory === 'vulnerabilities' ? '3px solid var(--color-red)' : 'none'};">
+                <div style="font-size: 28px; margin-bottom: 10px;">🚨</div>
+                <div style="color: var(--text-muted); font-size: 13px; font-weight: 600;">SECURITY RISKS</div>
+                <div style="font-size: 36px; font-weight: 700; color: var(--color-red); margin-top: 5px;">${d.totalVulnerabilities}</div>
             </div>
-            <div class="audit-card ${activeCategory === 'bugs' ? 'active' : ''}" onclick="renderAuditDashboard('bugs')" style="border-color: ${activeCategory === 'bugs' ? '#f7df1e' : 'var(--border)'}">
-                <div style="color: var(--text-muted); font-size: 12px;">BUGS & TODOs</div>
-                <div style="font-size: 32px; font-weight: bold; color: #f7df1e; margin-top: 10px;">${d.totalBugs}</div>
+            
+            <div onclick="renderAuditDashboard('bugs')" style="background: var(--bg-panel); padding: 25px; border-radius: var(--radius); box-shadow: var(--shadow-soft); border-top: 5px solid var(--color-yellow); text-align: center; cursor: pointer; border-bottom: ${activeCategory === 'bugs' ? '3px solid var(--color-yellow)' : 'none'};">
+                <div style="font-size: 28px; margin-bottom: 10px;">⚠️</div>
+                <div style="color: var(--text-muted); font-size: 13px; font-weight: 600;">BUGS & TODOs</div>
+                <div style="font-size: 36px; font-weight: 700; color: var(--color-yellow); margin-top: 5px;">${d.totalBugs}</div>
             </div>
-            <div class="audit-card">
-                <div style="color: var(--text-muted); font-size: 12px;">DUPLICATIONS</div>
-                <div style="font-size: 32px; font-weight: bold; color: var(--text-main); margin-top: 10px;">${d.duplicationPercentage}%</div>
+
+            <div style="background: var(--bg-panel); padding: 25px; border-radius: var(--radius); box-shadow: var(--shadow-soft); border-top: 5px solid var(--color-blue); text-align: center;">
+                <div style="font-size: 28px; margin-bottom: 10px;">♻️</div>
+                <div style="color: var(--text-muted); font-size: 13px; font-weight: 600;">DUPLICATIONS</div>
+                <div style="font-size: 36px; font-weight: 700; color: var(--color-blue); margin-top: 5px;">${d.duplicationPercentage}%</div>
             </div>
         </div>
 
-        <h3 style="color: ${listColor}; font-size: 20px; margin-top: 30px; border-bottom: 1px solid var(--border); padding-bottom: 10px; font-family: var(--font-code);">
-            ${listTitle} (${issuesToRender.length})
+        <h3 style="color: var(--text-main); font-size: 20px; margin-top: 30px; margin-bottom: 15px; font-weight: 700;">
+            ${listTitle} Details
         </h3>
         
-        <div id="audit-list-container" style="margin-top:20px;">
+        <div id="audit-list-container">
             ${buildSortedGroupedList(issuesToRender, listColor, listTitle)}
         </div>
     `;
@@ -220,18 +179,14 @@ window.renderAuditDashboard = function(activeCategory = 'vulnerabilities') {
     document.getElementById('modal-content-area').innerHTML = fullScreenHTML;
 };
 
-// 🟢 ফাইল অনুযায়ী গ্রুপ এবং সর্ট (বেশি এরর আগে)
 const buildSortedGroupedList = (issues, color, typeLabel) => {
-    if (issues.length === 0) return `<p style="color: var(--text-muted); padding: 10px 0;">No issues found in this category! 🎉</p>`;
+    if (issues.length === 0) return `<div style="background: var(--bg-panel); padding: 20px; border-radius: var(--radius); box-shadow: var(--shadow-soft); text-align: center; color: var(--color-green); font-weight: 600;">🎉 No issues found in this category!</div>`;
     
-    // Grouping
     const grouped = issues.reduce((acc, i) => {
         if (!acc[i.file]) acc[i.file] = [];
-        acc[i.file].push(i);
-        return acc;
+        acc[i.file].push(i); return acc;
     }, {});
 
-    // 🟢 Sorting: যে ফাইলে বেশি এরর, সেটা আগে আসবে
     const sortedFiles = Object.entries(grouped).sort((a, b) => b[1].length - a[1].length);
 
     return sortedFiles.map(([fileName, fileIssues]) => {
@@ -240,21 +195,21 @@ const buildSortedGroupedList = (issues, color, typeLabel) => {
         const safeData = btoa(unescape(encodeURIComponent(copyText)));
         
         const issuesHtml = fileIssues.map(i => `
-            <div style="margin-top: 10px; padding: 12px; background: #18181b; border-left: 3px solid ${color}; border-radius: 4px;">
-                <div style="color: ${color}; font-size: 14px; font-weight: bold; margin-bottom: 6px;">Line ${i.line} | ${i.issue}</div>
-                <div style="font-family: var(--font-code); font-size: 12px; color: #d4d4d8; word-wrap: break-word; overflow-x: auto;">${i.code.replace(/</g, '&lt;')}</div>
+            <div style="margin-top: 12px; padding: 15px; background: #f8fafc; border-left: 4px solid ${color}; border-radius: 8px;">
+                <div style="color: var(--text-main); font-size: 14px; font-weight: 700; margin-bottom: 8px;">Line ${i.line} | ${i.issue}</div>
+                <div style="font-family: var(--font-code); font-size: 13px; color: #475569; background: #e2e8f0; padding: 10px; border-radius: 6px; word-wrap: break-word; overflow-x: auto;">${i.code.replace(/</g, '&lt;')}</div>
             </div>
         `).join('');
 
         return `
-        <div style="background: #000; padding: 15px; margin-top: 15px; border: 1px solid var(--border); border-radius: 8px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border); padding-bottom: 10px; flex-wrap: wrap; gap: 10px;">
-                <div style="color: white; font-weight: bold; word-break: break-all;">
+        <div style="background: var(--bg-panel); padding: 20px; margin-bottom: 20px; border-radius: var(--radius); box-shadow: var(--shadow-soft);">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                <div style="color: var(--text-main); font-weight: 700; font-size: 16px; word-break: break-all;">
                     📁 ${fileName} 
-                    <span style="background: ${color}; color: #000; padding: 2px 8px; border-radius: 12px; font-size: 11px; margin-left: 10px;">${fileIssues.length} ${typeLabel}</span>
+                    <span style="background: #f1f5f9; color: var(--text-main); padding: 4px 10px; border-radius: 20px; font-size: 12px; margin-left: 10px; border: 1px solid var(--border);">${fileIssues.length} ${typeLabel}</span>
                 </div>
-                <button onclick="copyAuditData('${safeData}', this)" style="background: var(--bg-panel); border: 1px solid var(--border); color: white; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">
-                    📋 Copy All from File
+                <button onclick="copyAuditData('${safeData}', this)" style="background: #f8fafc; border: 1px solid var(--border); color: var(--text-main); padding: 8px 15px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                    📋 Copy All
                 </button>
             </div>
             ${issuesHtml}
@@ -264,35 +219,57 @@ const buildSortedGroupedList = (issues, color, typeLabel) => {
 };
 
 // ==========================================
-// 🎙️ ROOT CAUSE ENGINE
+// 🎙️ ROOT CAUSE ENGINE (Fixed Voice API & UI)
 // ==========================================
 function loadRootCauseEngine(workspace) {
     workspace.innerHTML = `
-    <h2 style="color: var(--accent); margin-bottom: 20px; font-family: var(--font-code);">🔍 Root Cause Engine</h2>
-    <div style="background: var(--bg-panel); padding: 25px; border: 1px solid var(--border); border-radius: 8px;">
-        <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 14px;">Describe the issue via text or voice. The system will search real codebase to reverse-engineer the broken logic.</p>
+    <h2 style="color: var(--text-main); margin-bottom: 20px; font-weight: 700;">🔍 Root Cause Engine</h2>
+    <div style="background: var(--bg-panel); padding: 30px; border-radius: var(--radius); box-shadow: var(--shadow-soft);">
+        <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 15px;">Describe the issue via text or voice to reverse-engineer broken logic.</p>
         
-        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <input type="text" id="rca-query" placeholder="e.g., 'লটারি মডিউলে লাইন ব্রেক হচ্ছে...'" style="flex: 1; min-width: 200px; padding: 15px; background: #000; border: 1px solid var(--border); color: white; border-radius: 6px; font-family: var(--font-ui); font-size: 14px;">
-            <button id="mic-btn" onclick="startVoiceInput()" style="background: #ef4444; border: none; padding: 0 20px; border-radius: 6px; cursor: pointer; font-size: 20px; transition: 0.3s;" title="Voice Input">🎤</button>
-            <button onclick="runRCA()" style="background: var(--accent); border: none; padding: 0 25px; border-radius: 6px; cursor: pointer; font-weight: bold; color: black; font-family: var(--font-code);">⚡ Search Real Code</button>
+        <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: stretch;">
+            <div style="flex: 1; min-width: 200px; display: flex; background: #f1f5f9; border-radius: 12px; border: 1px solid var(--border); overflow: hidden;">
+                <button id="mic-btn" onclick="startVoiceInput()" style="background: transparent; border: none; padding: 0 15px; cursor: pointer; font-size: 20px; transition: 0.3s; border-right: 1px solid var(--border);" title="Voice Input">🎤</button>
+                <input type="text" id="rca-query" placeholder="e.g., 'লটারি মডিউলে লাইন ব্রেক হচ্ছে...'" style="flex: 1; padding: 15px; background: transparent; border: none; color: var(--text-main); font-family: var(--font-ui); font-size: 15px; outline: none;">
+            </div>
+            
+            <button onclick="runRCA()" style="background: var(--color-blue); border: none; padding: 0 30px; border-radius: 12px; cursor: pointer; font-weight: 600; color: white; font-size: 15px; box-shadow: 0 4px 10px rgba(66, 133, 244, 0.3);">⚡ Search Code</button>
         </div>
     </div>
     `;
 }
 
+// 🟢 FIX: Cross-browser Speech Recognition
 window.startVoiceInput = function() {
     const micBtn = document.getElementById('mic-btn');
     const inputField = document.getElementById('rca-query');
     
-    if (!('webkitSpeechRecognition' in window)) {
-        alert("Your browser does not support Voice Input."); return;
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    
+    if (!SpeechRecognition) {
+        alert("Your browser does not support Voice Input natively. Please type the query.");
+        return;
     }
-    const recognition = new webkitSpeechRecognition();
+    
+    const recognition = new SpeechRecognition();
     recognition.lang = 'bn-IN'; 
-    recognition.onstart = function() { micBtn.style.background = '#00ff66'; micBtn.innerHTML = '🎙️'; };
-    recognition.onresult = function(event) { inputField.value = event.results[0][0].transcript; };
-    recognition.onend = function() { micBtn.style.background = '#ef4444'; micBtn.innerHTML = '🎤'; };
+    
+    recognition.onstart = function() { 
+        micBtn.style.background = '#dcfce7'; 
+        micBtn.innerHTML = '🎙️'; 
+        inputField.placeholder = "Listening to your voice...";
+    };
+    
+    recognition.onresult = function(event) { 
+        inputField.value = event.results[0][0].transcript; 
+    };
+    
+    recognition.onend = function() { 
+        micBtn.style.background = 'transparent'; 
+        micBtn.innerHTML = '🎤'; 
+        inputField.placeholder = "e.g., 'লটারি মডিউলে লাইন ব্রেক হচ্ছে...'";
+    };
+    
     recognition.start();
 };
 
@@ -313,17 +290,20 @@ window.runRCA = async function() {
         if (result.status === 'SUCCESS') {
             const findings = result.data;
             if (findings.length === 0) {
-                document.getElementById('modal-content-area').innerHTML = `<h3 style="color:var(--accent);">✅ No matching logic or errors found.</h3>`;
+                document.getElementById('modal-content-area').innerHTML = `
+                <div style="background: var(--bg-panel); padding: 30px; border-radius: var(--radius); box-shadow: var(--shadow-soft); text-align: center;">
+                    <div style="font-size: 40px; margin-bottom: 15px;">✅</div>
+                    <h3 style="color: var(--color-green);">System Healthy</h3>
+                    <p style="color: var(--text-muted); margin-top: 10px;">No exact logic breaks found for "${query}".</p>
+                </div>`;
                 return;
             }
 
             const grouped = findings.reduce((acc, i) => {
                 if (!acc[i.file]) acc[i.file] = [];
-                acc[i.file].push(i);
-                return acc;
+                acc[i.file].push(i); return acc;
             }, {});
             
-            // Sort by occurrences
             const sortedFiles = Object.entries(grouped).sort((a, b) => b[1].length - a[1].length);
 
             const resultsHTML = sortedFiles.map(([fileName, fileIssues]) => {
@@ -331,26 +311,27 @@ window.runRCA = async function() {
                 const safeData = btoa(unescape(encodeURIComponent(copyText)));
                 
                 const linesHtml = fileIssues.map(i => `
-                    <div style="margin-top: 10px; padding: 10px; background: #000; border-left: 2px solid var(--accent); border-radius: 4px;">
-                        <div style="color: var(--text-muted); font-size: 11px; margin-bottom: 5px;">Line ${i.line}</div>
-                        <div style="font-family: var(--font-code); font-size: 12px; color: #d4d4d8; word-wrap: break-word; overflow-x: auto;">${i.code.replace(/</g, '&lt;')}</div>
+                    <div style="margin-top: 12px; padding: 15px; background: #f8fafc; border-left: 4px solid var(--color-blue); border-radius: 8px;">
+                        <div style="color: var(--text-main); font-size: 13px; font-weight: 700; margin-bottom: 5px;">Line ${i.line}</div>
+                        <div style="font-family: var(--font-code); font-size: 13px; color: #475569; background: #e2e8f0; padding: 10px; border-radius: 6px; word-wrap: break-word; overflow-x: auto;">${i.code.replace(/</g, '&lt;')}</div>
                     </div>
                 `).join('');
 
                 return `
-                <div style="background: var(--bg-panel); padding: 15px; margin-top: 15px; border: 1px solid var(--border); border-radius: 8px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border); padding-bottom: 10px; flex-wrap: wrap; gap: 10px;">
-                        <div style="color: white; font-weight: bold; word-break: break-all;">📁 ${fileName} <span style="background: var(--accent); color: #000; padding: 2px 8px; border-radius: 12px; font-size: 11px;">${fileIssues.length} Matches</span></div>
-                        <button onclick="copyAuditData('${safeData}', this)" style="background: #000; border: 1px solid var(--border); color: white; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">📋 Copy Logic</button>
+                <div style="background: var(--bg-panel); padding: 20px; margin-bottom: 20px; border-radius: var(--radius); box-shadow: var(--shadow-soft);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                        <div style="color: var(--text-main); font-weight: 700; font-size: 16px; word-break: break-all;">
+                            📁 ${fileName} 
+                            <span style="background: #eff6ff; color: var(--color-blue); padding: 4px 10px; border-radius: 20px; font-size: 12px; margin-left: 10px; font-weight: 600;">${fileIssues.length} Matches</span>
+                        </div>
+                        <button onclick="copyAuditData('${safeData}', this)" style="background: #f8fafc; border: 1px solid var(--border); color: var(--text-main); padding: 8px 15px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600;">📋 Copy Logic</button>
                     </div>
                     ${linesHtml}
                 </div>`;
             }).join('');
 
             document.getElementById('modal-content-area').innerHTML = `
-                <h3 style="color: white; margin-bottom: 20px; font-family: var(--font-code); border-bottom: 1px solid var(--border); padding-bottom: 10px;">
-                    🔍 Traced Logic for: <span style="color: var(--accent);">"${query}"</span>
-                </h3>
+                <h2 style="color: var(--text-main); margin-bottom: 25px; font-weight: 700;">🔍 Traced Logic for: <span style="color: var(--color-blue);">"${query}"</span></h2>
                 ${resultsHTML}
             `;
         }
@@ -358,7 +339,3 @@ window.runRCA = async function() {
         document.getElementById('modal-content-area').innerHTML = `<h3 style="color:red; text-align:center;">SERVER ERROR</h3>`;
     }
 };
-
-function loadSystemOverview(workspace) {
-    workspace.innerHTML = `<div class="welcome-screen"><h2 class="glitch">SYSTEM ONLINE</h2><p>Click 'Run Full Scan' at the top right to analyze your code.</p></div>`;
-}
