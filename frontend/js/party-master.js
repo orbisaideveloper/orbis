@@ -1,6 +1,6 @@
-// DigiLedger: Simple Party Master (Mobile Number as ID + Contact Picker)
+// 📝 frontend/js/party-master.js (DigiLedger: Simple Party Master)
 
-window.PartyMasterApp = {
+window.PartyMaster = {
     mount: function(container) {
         const topNavBar = window.LotteryUserUI ? window.LotteryUserUI.getTopNavBar("👥 Add New Party") : "";
 
