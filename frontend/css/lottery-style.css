@@ -63,3 +63,47 @@ input[type="text"], input[type="number"], .search-bar { width: 100%; max-width: 
 .lms_card_stats { margin-top: auto; padding-top: 10px; border-top: 1px dashed rgba(0,0,0,0.1); font-size: 11px; font-weight: 600; color: #555; line-height: 1.4; }
 .lms_stat_highlight { color: var(--lms-saffron); font-weight: 700; }
 .lms_stat_highlight_green { color: var(--lms-green); font-weight: 700; }
+/* =========================================
+   Auto-complete Dropdown (Glassmorphism)
+========================================= */
+.lms_search_container {
+    position: relative;
+    width: 100%;
+}
+
+.lms_suggestion_box {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    max-height: 250px;
+    overflow-y: auto;
+    z-index: 9999;
+    display: none; /* JavaScript দিয়ে অন/অফ হবে */
+    list-style: none;
+    padding: 5px 0;
+    margin: 5px 0 0 0;
+}
+
+.lms_suggestion_item {
+    padding: 12px 15px;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    transition: background 0.2s ease;
+    color: var(--lms-text-dark);
+    font-size: 14px;
+}
+
+.lms_suggestion_item:hover {
+    background: rgba(19, 136, 8, 0.1); /* হালকা সবুজ হোভার ইফেক্ট */
+}
+
+.lms_suggestion_item:last-child {
+    border-bottom: none;
+}

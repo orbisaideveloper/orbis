@@ -294,3 +294,76 @@ window.LotterySalesApp = {
         }
     }
 };
+// 🟢 ডামি ডেটা (ভবিষ্যতে এটি আপনার API বা ডেটাবেস থেকে আসবে)
+const partyData = [
+    { id: '101', name: 'Ramesh Store', mobile: '9876543210', due: 5000 },
+    { id: '102', name: 'Suresh Agency', mobile: '8765432109', due: 1200 },
+    { id: '103', name: 'Bikash Lottery', mobile: '7654321098', due: 0 },
+    { id: '104', name: 'Rahul Traders', mobile: '6543210987', due: 15400 }
+];
+
+// 🟢 অটো-কমপ্লিট ফাংশন
+function setupPartyAutoComplete(inputId, suggestionBoxId) {
+    const inputField = document.getElementById(inputId);
+    const suggestionBox = document.getElementById(suggestionBoxId);
+
+    if(!inputField || !suggestionBox) return;
+
+    // ইউজার যখন টাইপ করবে...
+    inputField.addEventListener('input', function() {
+        const query = this.value.toLowerCase().trim();
+        suggestionBox.innerHTML = ''; // আগের রেজাল্ট মুছে ফেলা
+
+        // কমপক্ষে ২টা অক্ষর না লিখলে খুঁজবে না
+        if (query.length < 2) {
+            suggestionBox.style.display = 'none';
+            return;
+        }
+
+        // 🔍 ফিল্টার লজিক (নাম বা মোবাইল নম্বর দিয়ে খুঁজবে)
+        const matches = partyData.filter(party => 
+            party.name.toLowerCase().includes(query) || 
+            party.mobile.includes(query)
+        );
+
+        if (matches.length > 0) {
+            suggestionBox.style.display = 'block';
+            
+            matches.forEach(match => {
+                const li = document.createElement('li');
+                li.className = 'lms_suggestion_item';
+                li.innerHTML = `
+                    <div style="font-weight: 700;">${match.name}</div>
+                    <div style="font-size: 11px; color: var(--lms-text-muted);">📞 ${match.mobile} | ID: ${match.id}</div>
+                `;
+                
+                // 🖱️ পার্টি সিলেক্ট করলে যা হবে...
+                li.addEventListener('click', function() {
+                    inputField.value = match.name; // ইনপুট বক্সে নাম বসবে
+                    inputField.dataset.partyId = match.id; // হিডেন অ্যাট্রিবিউট হিসেবে ID সেভ হবে
+                    suggestionBox.style.display = 'none'; // ড্রপডাউন বন্ধ হবে
+                    
+                    // (ভবিষ্যতে এখানে সিলেক্ট করা পার্টির বাকি তথ্য বা Outstanding ব্যালেন্স অটো-ফিল করার কোড অ্যাড করা যাবে)
+                    console.log("Selected Party ID:", match.id); 
+                });
+                
+                suggestionBox.appendChild(li);
+            });
+        } else {
+            // যদি কিছু না পাওয়া যায়
+            suggestionBox.style.display = 'block';
+            suggestionBox.innerHTML = `<li class="lms_suggestion_item" style="color: red; text-align: center;">No party found!</li>`;
+        }
+    });
+
+    // 🔒 সার্চ বক্সের বাইরে ক্লিক করলে ড্রপডাউন বন্ধ হয়ে যাবে
+    document.addEventListener('click', function(e) {
+        if (e.target !== inputField && e.target !== suggestionBox) {
+            suggestionBox.style.display = 'none';
+        }
+    });
+}
+
+// 🟢 পেজ লোড হওয়ার পর ফাংশনটি কল করতে হবে
+// আপনার মডিউলের mount() ফাংশনের ভেতরে এটি কল করবেন:
+// setTimeout(() => { setupPartyAutoComplete('party-search-input', 'party-suggestions'); }, 500);
