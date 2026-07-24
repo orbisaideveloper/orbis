@@ -1,4 +1,4 @@
-// 📝 frontend/js/party-master.js (DigiLedger: Simple Party Master)
+// 📝 frontend/js/party-master.js (DigiLedger: Simple Party Master - Offline First Integrated)
 
 window.PartyMaster = {
     mount: function(container) {
@@ -19,6 +19,7 @@ window.PartyMaster = {
 
           .btn-save { background: linear-gradient(135deg, #0052cc, #003d99); color: white; width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; font-size: 1.1rem; cursor: pointer; margin-top: 10px; box-shadow: 0 4px 10px rgba(0, 82, 204, 0.2); transition: transform 0.2s; }
           .btn-save:hover { transform: translateY(-2px); }
+          .btn-save:disabled { background: #999; cursor: not-allowed; box-shadow: none; transform: none; }
         </style>
 
         <div class="lottery-workspace">
@@ -39,11 +40,11 @@ window.PartyMaster = {
 
             <div class="form-group">
                 <label class="form-label">
-                    Mobile Number (Primary ID)
+                    Mobile Number
                     <button class="btn-contact" id="btn-pick-contact">📖 Pick from Contacts</button>
                 </label>
                 <input type="tel" class="form-control" id="party-mobile" placeholder="10-digit mobile number">
-                <small style="color: #888; font-size: 0.8rem; margin-top: 4px; display: block;">এই নম্বরটিই ইউজারের পার্মানেন্ট আইডি হিসেবে কাজ করবে।</small>
+                <small style="color: #888; font-size: 0.8rem; margin-top: 4px; display: block;">পার্টির সাথে যোগাযোগের জন্য সঠিক নম্বর দিন।</small>
             </div>
 
             <div class="form-group">
@@ -73,7 +74,7 @@ window.PartyMaster = {
         const saveBtn = document.getElementById('btn-save-party');
         const contactBtn = document.getElementById('btn-pick-contact');
 
-        // 🟢 Contact Picker API Logic
+        // 🟢 Contact Picker API Logic (অপরিবর্তিত রাখা হয়েছে)
         if (contactBtn) {
             contactBtn.addEventListener('click', async () => {
                 const supported = ('contacts' in navigator && 'ContactsManager' in window);
@@ -93,9 +94,9 @@ window.PartyMaster = {
                             
                             // Set Phone Number (Format to last 10 digits)
                             if (contact.tel && contact.tel.length > 0) {
-                                let phone = contact.tel[0].replace(/\D/g, ''); // Remove all non-numeric characters
+                                let phone = contact.tel[0].replace(/\D/g, ''); 
                                 if (phone.length >= 10) {
-                                    phone = phone.slice(-10); // Get strictly the 10-digit Indian mobile number
+                                    phone = phone.slice(-10); 
                                 }
                                 mobileInput.value = phone;
                             }
@@ -110,9 +111,9 @@ window.PartyMaster = {
             });
         }
 
-        // 🟢 Save Party Logic
+        // 🟢 Save Party Logic (আপডেট করা হয়েছে Offline Queue এর জন্য)
         if (saveBtn) {
-            saveBtn.addEventListener('click', () => {
+            saveBtn.addEventListener('click', async () => {
                 const name = nameInput.value.trim();
                 const mobile = mobileInput.value.trim();
                 const category = categoryInput.value;
@@ -120,12 +121,11 @@ window.PartyMaster = {
 
                 // Validation
                 if (!category) return alert("দয়া করে ক্যাটাগরি সিলেক্ট করুন!");
-                if (mobile.length !== 10) return alert("দয়া করে সঠিক ১০-সংখ্যার মোবাইল নম্বর দিন! এটিই মেইন আইডি।");
+                if (mobile.length !== 10) return alert("দয়া করে সঠিক ১০-সংখ্যার মোবাইল নম্বর দিন!");
                 if (!name) return alert("দয়া করে পার্টির নাম দিন!");
 
-                // Payload for Backend
+                // Payload for Database Service (ORB-ID স্বয়ংক্রিয়ভাবে জেনারেট হবে)
                 const partyData = {
-                    unique_id: mobile, // Mobile Number is the Primary ID now
                     category: category,
                     name: name,
                     mobile: mobile,
@@ -133,22 +133,37 @@ window.PartyMaster = {
                     created_at: new Date().toISOString()
                 };
 
-                // UI Update
-                saveBtn.innerText = "⏳ Saving Profile...";
+                // UI Update: Button Disabled and Text Changed
+                saveBtn.innerText = "⏳ Saving to Queue...";
+                saveBtn.disabled = true;
                 
-                // 🔗 Simulated API Call
-                setTimeout(() => {
-                    console.log("Party Saved successfully:", partyData);
-                    alert(`✅ ${name} (${mobile}) has been successfully saved!`);
-                    
-                    // Reset Form for next entry
-                    nameInput.value = '';
-                    mobileInput.value = '';
-                    balanceInput.value = '0';
-                    categoryInput.value = '';
-                    
+                try {
+                    // 🔗 কল করা হচ্ছে আমাদের নতুন DatabaseService কে
+                    if (window.DatabaseService) {
+                        const result = await window.DatabaseService.saveParty(partyData);
+                        
+                        if (result.success) {
+                            alert(`✅ ${name} has been saved locally!\nORB-ID: ${result.orb_id}\n\n(It will sync to server automatically)`);
+                            
+                            // Reset Form for next entry
+                            nameInput.value = '';
+                            mobileInput.value = '';
+                            balanceInput.value = '0';
+                            categoryInput.value = '';
+                        } else {
+                            alert('❌ Error saving party: ' + result.error);
+                        }
+                    } else {
+                        alert("❌ System Error: Database Service not found! Please check connection.");
+                    }
+                } catch (error) {
+                    console.error("Save Error:", error);
+                    alert("❌ Unexpected error occurred while saving.");
+                } finally {
+                    // UI Restore
                     saveBtn.innerText = "💾 Save Party Profile";
-                }, 800);
+                    saveBtn.disabled = false;
+                }
             });
         }
     }
