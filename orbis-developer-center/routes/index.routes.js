@@ -4,7 +4,8 @@ import { fileURLToPath } from 'node:url';
 
 import inventoryRoutes from './inventory.routes.js';
 import auditRoutes from './audit.routes.js';
-import rcaRoutes from './rca.routes.js'; // 🟢 NEW: Root Cause Engine (RCA) কানেক্ট করা হলো
+import rcaRoutes from './rca.routes.js'; 
+import explorerRoutes from './explorer.routes.js'; // 🟢 NEW: File Explorer Block
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -33,6 +34,7 @@ router.get('/api/core-status', (req, res) => {
 // ==========================================
 router.use('/api/inventory', inventoryRoutes);
 router.use('/api/audit', auditRoutes);
-router.use('/api/rca', rcaRoutes); // 🟢 NEW: RCA API রাউট
+router.use('/api/rca', rcaRoutes); 
+router.use('/api/explorer', explorerRoutes); // 🟢 NEW API MOUNTED
 
 export default router;
