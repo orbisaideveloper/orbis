@@ -1,6 +1,6 @@
 # ORBIS Branding
 
-**Status:** Draft v1.0  
+**Status:** Approved Draft v1.0
 **Repository:** ORBIS Legacy  
 **Purpose:** Official Brand Reference
 
@@ -48,7 +48,8 @@ The following official assets will be created from this Brand Board:
 - Documentation archive: **ORBIS Legacy**
 - All future branding must follow this Brand Board.
 - Brand changes require approval before implementation.
-
+- This document is the single source of truth for all ORBIS branding decisions.
+  
 ---
 
 ## Version History
