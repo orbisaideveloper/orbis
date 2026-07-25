@@ -1,29 +1,37 @@
 // 📝 frontend/js/database-service.js
 // DIGILEDGER SHARED DATABASE SERVICE & SUPERVISOR QUEUE
 
+// 🔴 আপনার আসল Supabase URL এবং ANON KEY এখানে বসাতে হবে 🔴
+const SUPABASE_URL = 'YOUR_SUPABASE_PROJECT_URL'; 
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+
+// ১. ক্লায়েন্ট ইনিশিয়ালাইজ করা (যেহেতু index.html-এ Supabase CDN আছে)
+if (window.supabase) {
+    window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    console.log('🟢 ORBIS: Frontend Supabase Client Initialized');
+} else {
+    console.error('❌ Supabase CDN missing in index.html!');
+}
+
 window.DatabaseService = {
     queueKey: 'orbis_offline_queue',
 
     // Party সেভ করার সেন্ট্রাল ফাংশন (প্রথমে Queue-তে যাবে)
     saveParty: async function(partyData) {
         try {
-            // ১. ORB-ID তৈরি করা (যদি না থাকে)
             if (!partyData.orb_id) {
                 partyData.orb_id = 'ORB-PTY-' + Date.now().toString(36).toUpperCase();
             }
 
-            // ডিরেক্টিভ অনুযায়ী স্ট্যাটাস PENDING মার্ক করা
             partyData.sync_status = 'PENDING';
             partyData.updated_at = new Date().toISOString();
 
-            // ২. লোকাল স্টোরেজে (Supervisor Queue) সেভ করা
             let queue = this.getQueue();
             queue.push({ type: 'PARTY', data: partyData });
             localStorage.setItem(this.queueKey, JSON.stringify(queue));
 
             console.log('✅ Offline: Party added to Supervisor Queue', partyData);
 
-            // ৩. ব্যাকগ্রাউন্ড সিঙ্ক করার চেষ্টা
             this.attemptSync();
 
             return { success: true, orb_id: partyData.orb_id, message: 'Saved Offline Successfully' };
@@ -33,7 +41,6 @@ window.DatabaseService = {
         }
     },
 
-    // Queue থেকে পেন্ডিং ডেটা বের করা
     getQueue: function() {
         try { 
             return JSON.parse(localStorage.getItem(this.queueKey)) || []; 
@@ -54,24 +61,22 @@ window.DatabaseService = {
 
         console.log(`🔄 Supervisor: Syncing ${queue.length} pending records to Supabase...`);
 
-        let remainingQueue = [...queue]; // Queue এর একটি কপি তৈরি করা হলো
+        let remainingQueue = [...queue]; 
 
         for (let i = 0; i < queue.length; i++) {
             let item = queue[i];
             
             if (item.type === 'PARTY') {
                 try {
-                    // সিঙ্ক স্ট্যাটাস আপডেট করা
                     item.data.sync_status = 'SYNCED';
 
                     // 🔗 Supabase-এ ডেটা পাঠানো (Upsert)
-                    // (আপনার প্রোজেক্টে Supabase ক্লায়েন্ট যদি অন্যভাবে ইনিশিয়ালাইজ করা থাকে, তবে window.supabase পরিবর্তন হতে পারে)
-                    if (!window.supabase) {
-                        console.error('❌ Supabase client (window.supabase) is missing!');
-                        throw new Error("Supabase client not found");
+                    if (!window.supabaseClient) {
+                        throw new Error("Supabase client not initialized. Check API keys.");
                     }
 
-                    const { data, error } = await window.supabase
+                    // 'parties' টেবিলে ডেটা পাঠানো হচ্ছে
+                    const { data, error } = await window.supabaseClient
                         .from('parties')
                         .upsert([item.data]); 
 
@@ -79,23 +84,44 @@ window.DatabaseService = {
 
                     console.log(`✅ Synced Party: ${item.data.name}`);
                     
-                    // সফল হলে Queue থেকে মুছে ফেলা
                     remainingQueue = remainingQueue.filter(q => q.data.orb_id !== item.data.orb_id);
                     
                 } catch (err) {
                     console.error(`❌ Sync Failed for ${item.data.name}:`, err.message);
-                    // ফেইল করলে Queue-তেই রেখে দেওয়া হবে পরের বারের জন্য
                     item.data.sync_status = 'PENDING';
                 }
             }
         }
 
-        // লোকাল স্টোরেজে আপডেট করা Queue সেভ করা
         localStorage.setItem(this.queueKey, JSON.stringify(remainingQueue));
         
         if (remainingQueue.length === 0) {
              console.log('🎉 Supervisor: All offline data synced successfully!');
         }
+    },
+
+    // 🟢 Party-master.js এর জন্য ডাটাবেস থেকে লিস্ট আনার ফাংশন
+    getAllParties: async function() {
+        // ইন্টারনেট থাকলে এবং Supabase কানেক্টেড থাকলে সরাসরি ডাটাবেস থেকে আনবে
+        if (navigator.onLine && window.supabaseClient) {
+            try {
+                const { data, error } = await window.supabaseClient
+                    .from('parties')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                
+                if (!error && data) {
+                    return data;
+                }
+            } catch (err) {
+                console.error('❌ Failed to fetch from Supabase:', err.message);
+            }
+        }
+
+        // অফলাইনে থাকলে বা ডাটাবেস থেকে আনতে না পারলে লোকাল কিউ থেকে ডেটা দেখাবে
+        console.log('⚠️ Fetching parties from local offline queue');
+        let queue = this.getQueue();
+        return queue.filter(item => item.type === 'PARTY').map(item => item.data);
     }
 };
 

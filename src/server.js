@@ -186,6 +186,52 @@ app.get('/admin/login', (req, res) => {
 // ==============================================================
 // 🟢 ROUTES (API & DEV CENTER)
 // ==============================================================
+
+// 🟢 DIGILEDGER PARTY SYNC API (Frontend -> Render -> Supabase)
+app.post('/api/save-party', async (req, res) => {
+    try {
+        if (!supabase) throw new Error("Supabase is not configured on the server.");
+        
+        const partyData = req.body;
+        
+        // Render সার্ভার থেকে Supabase-এ ডেটা পাঠানো হচ্ছে (Upsert)
+        const { data, error } = await supabase
+            .from('parties')
+            .upsert([partyData]);
+            
+        if (error) throw error;
+        
+        logSystemEvent('OK', 'DigiLedger', `Party saved to Supabase via Render: ${partyData.name}`);
+        res.status(200).json({ success: true, message: "Saved to Supabase securely" });
+        
+    } catch (error) {
+        logSystemEvent('ERR', 'DigiLedger', `Failed to save party: ${error.message}`);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+app.get('/api/get-parties', async (req, res) => {
+    try {
+        if (!supabase) throw new Error("Supabase is not configured on the server.");
+        
+        // Supabase থেকে সব পার্টির লিস্ট নিয়ে আসা হচ্ছে
+        const { data, error } = await supabase
+            .from('parties')
+            .select('*')
+            .order('created_at', { ascending: false });
+            
+        if (error) throw error;
+        
+        logSystemEvent('INFO', 'DigiLedger', `Fetched ${data.length} parties from Supabase`);
+        res.status(200).json(data);
+        
+    } catch (error) {
+        logSystemEvent('ERR', 'DigiLedger', `Failed to fetch parties: ${error.message}`);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// 🟢 EXISTING ROUTES
 app.use('/api/admin', adminRoutes);
 app.use('/api/lottery', lotteryRoutes);
 app.use('/api/diagnostics', diagnosticsRoutes); 
