@@ -16,9 +16,9 @@ The file `orbis-brand-kit-v1.0.png` is the current official Brand Board and will
 
 ## Current Status
 
-This Brand Board is currently marked as **Draft v1.0**.
+This Brand Board is currently marked as **Approved Draft v1.0**.
 
-It is a design reference and not the final production asset.
+It is the official branding reference for the ORBIS platform and is not yet the final production asset. Future production assets (SVG, PNG, App Icons, Splash Screens, Favicon, etc.) will be created from this Brand Board..
 
 ---
 
