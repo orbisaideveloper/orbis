@@ -56,3 +56,30 @@ The following official assets will be created from this Brand Board:
 ### v1.0
 - Initial ORBIS Brand Board created.
 - Selected as the official branding reference for future development.
+
+- ---
+
+## Official Brand Board
+
+The official ORBIS Brand Board is stored in this folder.
+
+Reference File:
+
+- `orbis-brand-kit-v1.0.png`
+
+This image is the official visual reference for:
+
+- ORBIS Logo
+- App Icon
+- Logo Symbol
+- Wordmark
+- Splash Screen
+- Banner
+- Favicon
+- Brand Colors
+- Typography
+- Brand Guidelines
+
+All future branding assets must be created using this Brand Board as the single source of truth.
+
+No logo, icon, color palette, typography, or branding element should be redesigned without updating this Brand Board and receiving approval.
