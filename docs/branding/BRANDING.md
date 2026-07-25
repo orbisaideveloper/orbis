@@ -57,7 +57,7 @@ The following official assets will be created from this Brand Board:
 - Initial ORBIS Brand Board created.
 - Selected as the official branding reference for future development.
 
-- ---
+---
 
 ## Official Brand Board
 
@@ -83,3 +83,5 @@ This image is the official visual reference for:
 All future branding assets must be created using this Brand Board as the single source of truth.
 
 No logo, icon, color palette, typography, or branding element should be redesigned without updating this Brand Board and receiving approval.
+
+![ORBIS Brand Board](orbis-brand-kit-v1.0.png)
